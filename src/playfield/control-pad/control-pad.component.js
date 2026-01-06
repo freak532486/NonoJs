@@ -37,7 +37,7 @@ export class ControlPad {
             this.setBlackChecked(this.isBlackChecked() ? false : true);
         })
         
-        const btnWhite = this.getButton(ControlPadButton.BLACK);
+        const btnWhite = this.getButton(ControlPadButton.WHITE);
         this.setWhiteChecked(false);
         btnWhite.addEventListener("click", ev => {
             if (ev.button != 0) {
@@ -87,6 +87,8 @@ export class ControlPad {
             case ControlPadButton.BLACK: buttonId = "control-black"; break;
             case ControlPadButton.WHITE: buttonId = "control-white"; break;
             case ControlPadButton.ERASE: buttonId = "control-erase"; break;
+            case ControlPadButton.UNDO: buttonId = "control-undo"; break;
+            case ControlPadButton.REDO: buttonId = "control-redo"; break;
         }
 
         if (!buttonId) {
@@ -105,6 +107,10 @@ export class ControlPad {
     setWhiteChecked(checked) {
         const btnWhite = /** @type {HTMLInputElement} */ (this.view.querySelector("#control-white"));
         btnWhite.setAttribute("data-checked", checked ? "true" : "false");
+
+        if (checked && this.isBlackChecked()) {
+            this.setBlackChecked(false);
+        }
     }
 
     isBlackChecked() {
@@ -116,5 +122,9 @@ export class ControlPad {
     setBlackChecked(checked) {
         const btnBlack = /** @type {HTMLInputElement} */ (this.view.querySelector("#control-black"));
         btnBlack.setAttribute("data-checked", checked ? "true" : "false");
+
+        if (checked && this.isWhiteChecked()) {
+            this.setWhiteChecked(false);
+        }
     }
 }

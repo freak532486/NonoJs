@@ -77,8 +77,6 @@ export class PlayfieldComponent {
         controlPad.setButtonFunction(ControlPadButton.BLACK, () => {
                 const p = this.#nonogramBoard.selection;
                 if (!controlPad.isBlackChecked()) {
-                    controlPad.getButton(ControlPadButton.WHITE).checked = false;
-                    
                     /* Clear previous white line */
                     if (this.#lineType == CellKnowledge.DEFINITELY_WHITE) {
                         this.#line.length = 0;
@@ -102,8 +100,6 @@ export class PlayfieldComponent {
         controlPad.setButtonFunction(ControlPadButton.WHITE, () => { 
                 const p = this.#nonogramBoard.selection;
                 if (!controlPad.isWhiteChecked()) {
-                    controlPad.getButton(ControlPadButton.BLACK).checked = false;
-                    
                     /* Clear previous white line */
                     if (this.#lineType == CellKnowledge.DEFINITELY_BLACK) {
                         this.#line.length = 0;
@@ -131,21 +127,8 @@ export class PlayfieldComponent {
         const nonogramRoot = /** @type {HTMLElement} */ (this.#view.querySelector("#nonogram-root"));
         this.#zoomWindow = new ZoomWindow(this.#nonogramBoard.view, nonogramRoot);
 
-        /* Create menu */
-        this.#menu = new PlayfieldMenu();
-        await this.#menu.init(this.#view);
-
-        /* Make menu toggle-able */
-        const menuButton = /** @type {HTMLElement} */ (this.#view.querySelector("#button-menu"));
-        menuButton.onclick = () => this.#menu?.isHidden() ? this.#menu.show() : this.#menu?.hide();
-
-        /* Hide menu if anywhere inside the window is clicked */
-        this.#zoomWindow.view.addEventListener("click", ev => {
-            this.#menu?.hide();
-        });
-
-        const undoButton = /** @type {HTMLElement} */ (this.#view.querySelector("#button-undo"));
-        const redoButton = /** @type {HTMLElement} */ (this.#view.querySelector("#button-redo"));
+        const undoButton = controlPad.getButton(ControlPadButton.UNDO);
+        const redoButton = controlPad.getButton(ControlPadButton.REDO);
         this.#undoButton = undoButton;
         this.#redoButton = redoButton;
 
@@ -175,60 +158,6 @@ export class PlayfieldComponent {
             undoButton.style.visibility = "visible";
             redoButton.style.visibility = (this.#activeStateIdx == this.#stateHistory.length - 1) ? "hidden" : "visible";
         };
-
-        /* Reset button */
-        this.#menu.setButtonFunction(MenuButton.RESET, () => {
-            /* Reset to first state */
-            while (this.#stateHistory.length > 1) {
-                this.#stateHistory.pop();
-            }
-
-            this.#activeStateIdx = 0;
-            this.#nonogramBoard.applyState(this.#stateHistory[0]);
-            undoButton.style.visibility = "hidden";
-            redoButton.style.visibility = "hidden";
-            this.#setStatusText("");
-        });
-
-        /* Solver */
-        this.#menu.setButtonFunction(MenuButton.HINT, () => {
-            const solverState = this.#extractSolverState();
-            const deduction = deduceNext(solverState);
-
-            this.#setStatusText(getTextForStatus(deduction.status));
-
-            if (deduction.status == DeductionStatus.DEDUCTION_MADE) {
-                this.#setStatusText("Hint: A deduction can be made in " + deduction.lineId + ".");
-            }
-        });
-
-        this.#menu.setButtonFunction(MenuButton.SOLVE_LINE, () => {
-            const solverState = this.#extractSolverState();
-            const deduction = deduceNext(solverState);
-
-            this.#setStatusText(getTextForStatus(deduction.status));
-            if (deduction.status != DeductionStatus.DEDUCTION_MADE) {
-                return;
-            }
-
-            const newState = NonogramState.clone(solverState);
-            newState.applyDeduction(deduction);
-
-            const fullState = new BoardComponentFullState(newState.getCellStates());
-            this.#supplyNextState(fullState);
-        });
-
-        this.#menu.setButtonFunction(MenuButton.SOLVE, () => {
-            const solverState = this.#extractSolverState();
-            const deduction = deduceAll(solverState);
-
-            this.#setStatusText(getTextForStatus(deduction.status));
-            const fullState = new BoardComponentFullState(deduction.newState.getCellStates());
-            this.#supplyNextState(fullState);
-        });
-
-        /* Exit */
-        this.#menu.setButtonFunction(MenuButton.EXIT, () => this.#onExit());
     }
 
     /**
@@ -274,8 +203,8 @@ export class PlayfieldComponent {
             this.#nonogramBoard.clearLinePreview();
 
             const controlPad = /** @type {ControlPad} */ (this.#controlPad);
-            controlPad.getButton(ControlPadButton.BLACK).checked = false;
-            controlPad.getButton(ControlPadButton.WHITE).checked = false;
+            controlPad.setBlackChecked(false);
+            controlPad.setWhiteChecked(false);
             return;
         }
 
@@ -363,8 +292,8 @@ export class PlayfieldComponent {
             return; // Nothing to do
         }
 
-        const undoButton = /** @type {HTMLElement} */ (this.#undoButton);
-        const redoButton = /** @type {HTMLElement} */ (this.#redoButton);
+        const undoButton = this.controlPad.getButton(ControlPadButton.UNDO);
+        const redoButton = this.controlPad.getButton(ControlPadButton.REDO);
 
         while (this.#stateHistory.length != this.#activeStateIdx + 1) {
             this.#stateHistory.pop();
@@ -392,6 +321,14 @@ export class PlayfieldComponent {
         }
 
         return this.#view;
+    }
+
+    get controlPad() {
+        if (this.#controlPad == null) {
+            throw new Error("init() was not called");
+        }
+
+        return this.#controlPad;
     }
 
     /** @param {() => void} fn */
