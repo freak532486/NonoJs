@@ -546,11 +546,17 @@ export class NonogramBoardComponent {
 
         for (const p of line) {
             const cellDiv = this.getCellDiv(p.x, p.y);
+
+            /* Compute border width */
+            const style = getComputedStyle(cellDiv);
+            const borderLeft = parseFloat(style.borderLeftWidth) || 0;
+            const borderTop = parseFloat(style.borderTopWidth) || 0;
+
             const div = document.createElement("div");
             div.classList.add("line-preview");
             div.style.position = "absolute";
-            div.style.left = cellDiv.offsetLeft + "px";
-            div.style.top = cellDiv.offsetTop + "px";
+            div.style.left = (cellDiv.offsetLeft + borderLeft) + "px";
+            div.style.top = (cellDiv.offsetTop + borderTop) + "px";
             div.style.width = CELL_SIZE_PX + "px";
             div.style.height = CELL_SIZE_PX + "px";
             div.style.display = "flex";

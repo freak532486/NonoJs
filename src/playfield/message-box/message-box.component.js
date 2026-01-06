@@ -1,6 +1,7 @@
 import { attachCss, loadHtml } from "../../loader.js";
 
 const MESSAGE_VISIBLE_SECS = 15;
+const MAX_MESSAGES = 5;
 
 export class MessageBox {
     /** @type {HTMLElement | null} */
@@ -32,12 +33,18 @@ export class MessageBox {
      * @param {String} msg 
      */
     showMessage(msg) {
+        /* Remove oldest message if too many messages */
+        const allMsgs = this.view.querySelectorAll(".message");
+        if (allMsgs.length >= MAX_MESSAGES) {
+            allMsgs[0].remove();
+        }
+
         /* Create div for message */
         const msgDiv = document.createElement("div");
         msgDiv.classList.add("message");
         msgDiv.setAttribute("data-ts", String(Date.now()));
         msgDiv.appendChild(document.createTextNode(msg));
-        this.view.prepend(msgDiv);
+        this.view.append(msgDiv);
 
         /* Remove on click */
         msgDiv.onclick = () => msgDiv.remove();

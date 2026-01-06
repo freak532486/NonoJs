@@ -64,7 +64,7 @@ export class PlayfieldComponent {
         /* Add Solve Line button */
         const nextButton = document.createElement("button");
         nextButton.classList.add("entry", "playfield", "border-top");
-        nextButton.textContent = "Solve one line";
+        nextButton.textContent = "Deduce next";
         nextButton.onclick = () => {
             menu.toggle();
             

@@ -20,6 +20,8 @@
     border: 1px solid var(--border-color);
     border-radius: 5px;
 
+    pointer-events: all;
+
     font-family: system-ui;
     font-size: 11pt;
 }
