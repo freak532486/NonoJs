@@ -1,0 +1,36 @@
+* {
+    --bg1: #161525;
+    --bg2: rgb(27, 27, 53);
+    --fg1: rgb(245, 245, 245);
+    --fg2: rgb(189, 189, 189);
+    --border-color: #ffffff30;
+    --border-color-dark: #00000080;
+}
+
+body {
+    margin: 0px;
+    width: 100vw;
+    height: 100vh;
+
+    background-color: black;
+}
+
+#content-root {
+    position: fixed;
+    inset: 0px;
+}
+
+#content-column {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+
+    max-width: 900px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+
+    margin-left: auto;
+    margin-right: auto;
+}
