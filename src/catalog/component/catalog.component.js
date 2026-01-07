@@ -1,10 +1,15 @@
 import * as storage from "../../storage.js"
-import { attachCss, loadHtml } from "../../loader.js";
+import { loadHtml } from "../../loader.js";
 import { loadNonograms, SerializedNonogram } from "../catalog-load.js";
 import { CellKnowledge } from "../../common/nonogram-types.js";
 
+import catalog from "./catalog.html"
+import catalogEntry from "./catalog-entry.html"
+import "./catalog.css"
+
 export class Catalog {
     #view = /** @type {HTMLElement | null} */ (null);
+    #entryTemplate = /** @type {HTMLElement | null} */ (null);
 
     /** @type {(nonogram: SerializedNonogram) => void} */
     #onNonogramSelected = () => {};
@@ -15,8 +20,8 @@ export class Catalog {
      * @param {HTMLElement} parent 
      */
     async init(parent) {
-        attachCss(new URL("./catalog.css", import.meta.url));
-        this.#view = await loadHtml(new URL("./catalog.html", import.meta.url));
+        this.#view = await loadHtml(catalog);
+        this.#entryTemplate = await loadHtml(catalogEntry);
         parent.appendChild(this.#view);
 
         this.refresh();
@@ -30,6 +35,16 @@ export class Catalog {
         entriesRoot.replaceChildren();
 
         const loaded = await loadNonograms();
+        loaded.sort((a, b) => {
+            if (a.colHints.length > b.colHints.length) {
+                return 1;
+            } else if (a.colHints.length < b.colHints.length) {
+                return -1;
+            } else {
+                return a.rowHints.length - b.rowHints.length;
+            }
+        });
+        
         const stored = storage.fetchAllStoredStates();
         for (const nonogram of loaded) {
             const numFilled = stored.get(nonogram.id)
@@ -38,15 +53,15 @@ export class Catalog {
                 ?? 0;
                 
             const numTotal = nonogram.rowHints.length * nonogram.colHints.length;
-            const div = await this.#createEntry(
+            const div = this.#createEntry(
                 "#" + nonogram.id,
                 nonogram.colHints.length + "x" + nonogram.rowHints.length,
-                numFilled / numTotal,
-                nonogram.difficulty
+                numFilled / numTotal
             );
 
             div.onclick = () => this.#onNonogramSelected(nonogram);
             entriesRoot.appendChild(div);
+            
         }
     }
 
@@ -56,6 +71,14 @@ export class Catalog {
         }
 
         return this.#view;
+    }
+
+    get entryTemplate() {
+        if (!this.#entryTemplate) {
+            throw new Error("init() was not called.");
+        }
+
+        return this.#entryTemplate;
     }
 
     /**
@@ -70,15 +93,14 @@ export class Catalog {
     /**
      * Creates a catalog entry with the given content.
      * 
-     * @param {String} name 
+     * @param {String} id 
      * @param {String} size 
      * @param {number} progress 
-     * @param {String} difficulty 
      * @returns 
      */
-    async #createEntry(name, size, progress, difficulty) {
-        const div = await loadHtml(new URL("./catalog-entry.html", import.meta.url));
-        /** @type {HTMLElement} */ (div.querySelector(".catalog-entry .name")).textContent = name;
+    #createEntry(id, size, progress) {
+        const div = /** @type {HTMLElement} */ (this.entryTemplate.cloneNode(true));
+        /** @type {HTMLElement} */ (div.querySelector(".catalog-entry .name")).textContent = id.substring(0, 6);
         /** @type {HTMLElement} */ (div.querySelector(".catalog-entry .size")).textContent = size;
         /** @type {HTMLElement} */ (div.querySelector(".catalog-entry .progress")).textContent = "Progress: " + Math.floor(progress * 100) + "%";
         return div;
