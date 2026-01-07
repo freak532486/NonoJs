@@ -9,6 +9,7 @@ import "./catalog.css"
 
 export class Catalog {
     #view = /** @type {HTMLElement | null} */ (null);
+    #entryTemplate = /** @type {HTMLElement | null} */ (null);
 
     /** @type {(nonogram: SerializedNonogram) => void} */
     #onNonogramSelected = () => {};
@@ -20,6 +21,7 @@ export class Catalog {
      */
     async init(parent) {
         this.#view = await loadHtml(catalog);
+        this.#entryTemplate = await loadHtml(catalogEntry);
         parent.appendChild(this.#view);
 
         this.refresh();
@@ -33,6 +35,16 @@ export class Catalog {
         entriesRoot.replaceChildren();
 
         const loaded = await loadNonograms();
+        loaded.sort((a, b) => {
+            if (a.colHints.length > b.colHints.length) {
+                return 1;
+            } else if (a.colHints.length < b.colHints.length) {
+                return -1;
+            } else {
+                return a.rowHints.length - b.rowHints.length;
+            }
+        });
+        
         const stored = storage.fetchAllStoredStates();
         for (const nonogram of loaded) {
             const numFilled = stored.get(nonogram.id)
@@ -41,7 +53,7 @@ export class Catalog {
                 ?? 0;
                 
             const numTotal = nonogram.rowHints.length * nonogram.colHints.length;
-            const div = await this.#createEntry(
+            const div = this.#createEntry(
                 "#" + nonogram.id,
                 nonogram.colHints.length + "x" + nonogram.rowHints.length,
                 numFilled / numTotal
@@ -49,6 +61,7 @@ export class Catalog {
 
             div.onclick = () => this.#onNonogramSelected(nonogram);
             entriesRoot.appendChild(div);
+            
         }
     }
 
@@ -58,6 +71,14 @@ export class Catalog {
         }
 
         return this.#view;
+    }
+
+    get entryTemplate() {
+        if (!this.#entryTemplate) {
+            throw new Error("init() was not called.");
+        }
+
+        return this.#entryTemplate;
     }
 
     /**
@@ -77,8 +98,8 @@ export class Catalog {
      * @param {number} progress 
      * @returns 
      */
-    async #createEntry(id, size, progress) {
-        const div = await loadHtml(catalogEntry);
+    #createEntry(id, size, progress) {
+        const div = /** @type {HTMLElement} */ (this.entryTemplate.cloneNode(true));
         /** @type {HTMLElement} */ (div.querySelector(".catalog-entry .name")).textContent = id.substring(0, 6);
         /** @type {HTMLElement} */ (div.querySelector(".catalog-entry .size")).textContent = size;
         /** @type {HTMLElement} */ (div.querySelector(".catalog-entry .progress")).textContent = "Progress: " + Math.floor(progress * 100) + "%";
