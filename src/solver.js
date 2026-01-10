@@ -1,6 +1,6 @@
 import { CellKnowledge, DeductionStatus, FullDeductionResult, LineId, LineKnowledge, LineType, NonogramState, SingleDeductionResult } from "./common/nonogram-types.js"
 
-const PRINT_XML = true;
+const PRINT_XML = false;
 const TIMEOUT_SECS = 5;
 
 /**
@@ -90,7 +90,14 @@ export function deduceAll(state) {
 function printXml(state) {
     var xml = "";
 
-    xml += "<clues type=\"rows\">";
+    xml += "<puzzleset>\n";
+    xml += "  <puzzle type=\"grid\" defaultcolor=\"black\">\n";
+    xml += "    <id>#1</id>\n";
+    xml += "    <color name=\"white\" char=\".\">fff</color>\n";
+    xml += "    <color name=\"black\" char=\"#\">000</color>\n";
+    xml += "\n";
+
+    xml += "    <clues type=\"rows\">";
     for (const hints of state.rowHints) {
         xml += "<line>";
         for (const hint of hints) {
@@ -100,7 +107,7 @@ function printXml(state) {
     }
     xml += "</clues>\n";
 
-    xml += "<clues type=\"columns\">";
+    xml += "    <clues type=\"columns\">";
     for (const hints of state.colHints) {
         xml += "<line>";
         for (const hint of hints) {
@@ -109,6 +116,9 @@ function printXml(state) {
         xml += "</line>";
     }
     xml += "</clues>\n";
+
+    xml += "  </puzzle>";
+    xml += "</puzzleset>";
 
     console.log(xml);
 }
@@ -187,7 +197,6 @@ function deduceLine(state, lineId) {
 
     const ts = Date.now();
     const ret = overlapLineDeduction(curKnowledge, hints);
-    console.log("Line deduction took " + (Date.now() - ts) + "ms");
     return ret;
 }
 
@@ -224,7 +233,6 @@ function overlapLineDeduction(lineKnowledge, hints) {
     let ts = Date.now();
     const lSol = leftmostSolution(lineKnowledge, hints);
     const rSol = rightmostSolution(lineKnowledge, hints);
-    console.log("Finding solutions took " + (Date.now() - ts) + "ms");
 
     /* No solution found => Impossible */
     if (!lSol || !rSol) {
