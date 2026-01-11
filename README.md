@@ -1,5 +1,4 @@
 # NonoJs - A free nonogram platform
-![Logo](/images/logo-full.png)
 ![Example Screenshot](/images/readme-preview.png)
 
 NonoJs is a free, online Nonogram playing platform, with a focus of ease-of-use, even for large nonograms on small
@@ -10,11 +9,11 @@ Play for free on <https://nonojs.randomranz.com>!
 ## Features
 * Solve Nonograms 🖊️
 * Nonogram Solver that can provide hints, perform one deduction or solve the whole puzzle ✨
-* Automatic crossing-out of hints ✨
+* Automatic crossing-out of hints 🧹
 * Savestates stored locally in browser 💾
 
 ## Planned Features
-* Continuous UI and UX improvements ⭐
+* Continuous UI and UX improvements 🎨
 * Deskop-optimized client 🖥️
 * Play with other people 😇
 * Play _against_ other people 😈
