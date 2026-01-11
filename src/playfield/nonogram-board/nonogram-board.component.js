@@ -1,9 +1,11 @@
-import { CellKnowledge } from "../../common/nonogram-types.js";
+import { CellKnowledge, LineId, LineKnowledge, LineType } from "../../common/nonogram-types.js";
 import { Point } from "../../common/point.js";
 import { arraysEqual } from "../../util.js";
 
 const CELL_SIZE_PX = 16;
 const FONT_SIZE = "10pt";
+const COLOR_BADLINE = "#c27676ff"
+const COLOR_SELECTION = "#aedbff"
 
 export class BoardComponentFullState {
      /** @type {Array<CellKnowledge>} */
@@ -93,6 +95,8 @@ export class NonogramBoardComponent {
     /** @type {Array<CellKnowledge>} */
     #state;
 
+    #errorLines = /** @type {Array<LineId>} */ ([]);
+
     #clickListener = /** @type {(p: Point) => void} */ () => {};
 
     /**
@@ -149,7 +153,6 @@ export class NonogramBoardComponent {
                 hintDiv.style.fontFamily = "Verdana";
                 hintDiv.style.fontWeight = "bold";
                 hintDiv.style.fontSize = FONT_SIZE;
-                hintDiv.setAttribute("data-mode", "0");
 
                 hintDiv.style.minWidth = CELL_SIZE_PX + "px";
                 hintDiv.style.height = CELL_SIZE_PX + "px";
@@ -158,18 +161,6 @@ export class NonogramBoardComponent {
                 hintDiv.style.justifyContent = "end";
                 hintDiv.style.userSelect = "none";
                 hintDiv.textContent = String(hint);
-
-                hintDiv.onclick = () => {
-                    if (hintDiv.getAttribute("data-mode") == "0") {
-                        hintDiv.setAttribute("data-mode", "1");
-                        hintDiv.style.color = "#CCCCCC";
-                        hintDiv.style.textDecoration = "line-through";
-                    } else {
-                        hintDiv.setAttribute("data-mode", "0");
-                        hintDiv.style.color = "#000000";
-                        hintDiv.style.textDecoration = "none";
-                    }
-                }
 
                 div.appendChild(hintDiv);
             }
@@ -195,13 +186,12 @@ export class NonogramBoardComponent {
 
             /* Add hints to container. Empty hints should be displayed as a single zero. */
             const hintsWithZero = colHints[col].length == 0 ? [0] : colHints[col];
-            for (const hint of colHints[col]) {
+            for (const hint of hintsWithZero) {
                 const hintDiv = document.createElement("div");
 
                 hintDiv.style.fontFamily = "Verdana";
                 hintDiv.style.fontWeight = "bold";
                 hintDiv.style.fontSize = FONT_SIZE;
-                hintDiv.setAttribute("data-mode", "0");
 
                 hintDiv.style.width = CELL_SIZE_PX + "px";
                 hintDiv.style.minHeight = CELL_SIZE_PX + "px";
@@ -210,18 +200,6 @@ export class NonogramBoardComponent {
                 hintDiv.style.justifyContent = "center";
                 hintDiv.style.userSelect = "none";
                 hintDiv.textContent = String(hint);
-
-                hintDiv.onclick = () => {
-                    if (hintDiv.getAttribute("data-mode") == "0") {
-                        hintDiv.setAttribute("data-mode", "1");
-                        hintDiv.style.color = "#808080";
-                        hintDiv.style.textDecoration = "line-through";
-                    } else {
-                        hintDiv.setAttribute("data-mode", "0");
-                        hintDiv.style.color = "#000000";
-                        hintDiv.style.textDecoration = "none";
-                    }
-                }
 
                 div.appendChild(hintDiv);
             }
@@ -366,9 +344,6 @@ export class NonogramBoardComponent {
      * @param {Point} p
      */
     set selection(p) {
-        const oldX = this.#selection.x;
-        const oldY = this.#selection.y;
-
         p.x = Math.max(0, Math.min(this.#width - 1, p.x));
         p.y = Math.max(0, Math.min(this.#height - 1, p.y));
         this.#selection = p;
@@ -388,13 +363,8 @@ export class NonogramBoardComponent {
         this.#selectionDiv.style.left = (cellDiv.offsetLeft + borderLeft) + "px";
         this.#selectionDiv.style.top = (cellDiv.offsetTop + borderTop) + "px";
         
-
         /* Highlight hints */
-        this.#rowHintDivs[oldY].style.backgroundColor = "white";
-        this.#colHintDivs[oldX].style.backgroundColor = "white";
-
-        this.#rowHintDivs[p.y].style.backgroundColor = "#aedbff";
-        this.#colHintDivs[p.x].style.backgroundColor = "#aedbff";
+        this.#updateHintDivColors();
     }
 
     /**
@@ -573,4 +543,135 @@ export class NonogramBoardComponent {
         }
     }
 
+    /**
+     * Updates the set of finished hints for a line.
+     * 
+     * @param {LineId} lineId 
+     * @param {Array<number>} finishedHints 
+     */
+    updateFinishedHints(lineId, finishedHints) {
+        const hintDiv = lineId.lineType == LineType.ROW ?
+            this.#rowHintDivs[lineId.index] :
+            this.#colHintDivs[lineId.index];
+
+        for (let i = 0; i < hintDiv.children.length; i++) {
+            const childDiv = /** @type {HTMLElement} */ (hintDiv.children[i]);
+            const finished = finishedHints.some(idx => idx == i);
+            childDiv.style.textDecoration = finished ? "line-through" : "none";
+        }
+    }
+
+    /**
+     * Returns the current state of a given line.
+     * 
+     * @param {LineId} lineId 
+     * @returns {LineKnowledge}
+     */
+    getLineState(lineId) {
+        const lineLength = lineId.lineType == LineType.ROW ? this.width : this.height;
+        const lineKnowledge = new LineKnowledge(Array(lineLength).fill(CellKnowledge.UNKNOWN));
+        
+        for (let i = 0; i < lineLength; i++) {
+            const x = lineId.lineType == LineType.ROW ? i : lineId.index;
+            const y = lineId.lineType == LineType.ROW ? lineId.index : i;
+
+            lineKnowledge.cells[i] = this.getCellState(x, y);
+        }
+
+        return lineKnowledge;
+    }
+
+    /**
+     * Marks a line either erroneous or not.
+     * 
+     * @param {LineId} lineId 
+     * @param {boolean} isError
+     */
+    markError(lineId, isError) {
+        removeIf(this.#errorLines, x => x.equals(lineId));
+        if (isError) {
+            this.#errorLines.push(lineId);
+        }
+
+        this.#updateHintDivColors();
+    }
+
+    /**
+     * Marks error lines red, the selected line blue, and all other lines white.
+     */
+    #updateHintDivColors() {
+        /* Rows */
+        const errRows = /** @type {Set<number>} */ (new Set());
+        this.#errorLines.filter(x => x.lineType == LineType.ROW).forEach(x => errRows.add(x.index));
+
+        for (let y = 0; y < this.#height; y++) {
+            const div = this.#rowHintDivs[y];
+
+            if (errRows.has(y)) {
+                div.style.backgroundColor = COLOR_BADLINE;
+            } else if (y == this.#selection.y) {
+                div.style.backgroundColor = COLOR_SELECTION;
+            } else {
+                div.style.backgroundColor = "transparent";
+            }
+        }
+
+        /* Columns */
+        const errCols = /** @type {Set<number>} */ (new Set());
+        this.#errorLines.filter(x => x.lineType == LineType.COLUMN).forEach(x => errCols.add(x.index));
+
+        for (let x = 0; x < this.#width; x++) {
+            const div = this.#colHintDivs[x];
+
+            if (errCols.has(x)) {
+                div.style.backgroundColor = COLOR_BADLINE;
+            } else if (x == this.#selection.x) {
+                div.style.backgroundColor = COLOR_SELECTION;
+            }  else {
+                div.style.backgroundColor = "transparent";
+            }
+        }
+    }
+
+    /**
+     * Applies the given line knowledge to the given line in the state.
+     * 
+     * @param {LineId} lineId 
+     * @param {LineKnowledge} lineKnowledge 
+     */
+    applyLineKnowledge(lineId, lineKnowledge) {
+        const lineLength = lineId.lineType == LineType.ROW ? this.width : this.height;
+        for (let i = 0; i < lineLength; i++) {
+            const x = lineId.lineType == LineType.ROW ? i : lineId.index;
+            const y = lineId.lineType == LineType.ROW ? lineId.index : i;
+
+            this.setCellState(x, y, lineKnowledge.cells[i]);
+        }
+    }
+
 };
+
+/**
+ * Removes all elements from the given array that satisfy the given predicate. Returns true if something was removed.
+ * 
+ * @template T
+ * @param {Array<T>} arr 
+ * @param {(val: T) => boolean} pred
+ * @returns {boolean}
+ */
+function removeIf(arr, pred) {
+    /* Create filtered array */
+    const newArr = arr.filter(x => !pred(x));
+
+    if (arr.length == newArr.length) {
+        return false;
+    }
+
+    /* Overwrite */
+    arr.length = newArr.length;
+    for (let i = 0; i < arr.length; i++) {
+        arr[i] = newArr[i];
+    }
+
+    return true;
+}

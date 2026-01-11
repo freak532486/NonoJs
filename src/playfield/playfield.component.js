@@ -1,9 +1,9 @@
 import * as storage from "../storage.js"
-import { CellKnowledge, DeductionStatus, LineId, NonogramState, SingleDeductionResult } from "../common/nonogram-types.js";
+import { CellKnowledge, DeductionStatus, LineId, LineKnowledge, LineType, NonogramState, SingleDeductionResult } from "../common/nonogram-types.js";
 import { Point } from "../common/point.js";
 import { loadHtml } from "../loader.js";
 import { Menu } from "../menu/menu.component.js";
-import { deduceAll, deduceNext } from "../solver.js";
+import { checkHints, deduceAll, deduceNext } from "../solver.js";
 import { ControlPad, ControlPadButton } from "./control-pad/control-pad.component.js";
 import { MessageBox } from "./message-box/message-box.component.js";
 import { BoardComponentFullState, NonogramBoardComponent } from "./nonogram-board/nonogram-board.component.js";
@@ -150,6 +150,18 @@ export class PlayfieldComponent {
             this.#nonogramBoard.applyState(storedState);
         }
 
+        /* Recheck hints */
+        const allLines = [];
+        for (let x = 0; x < this.#nonogramBoard.width; x++) {
+            allLines.push(new LineId(LineType.COLUMN, x));
+        }
+
+        for (let y = 0; y < this.#nonogramBoard.height; y++) {
+            allLines.push(new LineId(LineType.ROW, y));
+        }
+
+        this.#recheckLineHints(allLines);
+
         /* Prepare history */
         this.#stateHistory.push(this.#nonogramBoard.getFullState());
     }
@@ -179,11 +191,15 @@ export class PlayfieldComponent {
         controlPad.setButtonFunction(ControlPadButton.RIGHT, () => this.#moveSelectionAndSet(1, 0));
         controlPad.setButtonFunction(ControlPadButton.DOWN, () => this.#moveSelectionAndSet(0, 1));
         controlPad.setButtonFunction(ControlPadButton.ERASE, () => {
-            this.#nonogramBoard.setCellState(
-                this.#nonogramBoard.selection.x,
-                this.#nonogramBoard.selection.y,
-                CellKnowledge.UNKNOWN
-            );
+            const x = this.#nonogramBoard.selection.x;
+            const y = this.#nonogramBoard.selection.y;
+
+            if (this.#nonogramBoard.getCellState(x, y) == CellKnowledge.UNKNOWN) {
+                return;
+            }
+
+            this.#nonogramBoard.setCellState(x, y, CellKnowledge.UNKNOWN);
+            this.#recheckLineHints([LineId.row(y), LineId.column(x)]);
             this.#updateHistory();
         })
 
@@ -198,16 +214,7 @@ export class PlayfieldComponent {
                     this.#lineType = CellKnowledge.DEFINITELY_BLACK;
                     this.#supplyNextLineSegment(p);
                 } else if (this.#lineType != null) {
-                    /* Apply line */
-                    for (const p of this.#line) {
-                        this.#nonogramBoard.setCellState(p.x, p.y, this.#lineType);
-                    }
-                    this.#updateHistory();
-
-                    /* Clear line */
-                    this.#lineType = null;
-                    this.#line.length = 0;
-                    this.#nonogramBoard.clearLinePreview();
+                    this.#applyLine();
                 }
         });
         controlPad.setButtonFunction(ControlPadButton.WHITE, () => { 
@@ -221,16 +228,7 @@ export class PlayfieldComponent {
                     this.#lineType = CellKnowledge.DEFINITELY_WHITE;
                     this.#supplyNextLineSegment(p);
                 } else if (this.#lineType != null) {
-                    /* Apply line */
-                    for (const p of this.#line) {
-                        this.#nonogramBoard.setCellState(p.x, p.y, this.#lineType);
-                    }
-                    this.#updateHistory();
-
-                    /* Clear line */
-                    this.#lineType = null;
-                    this.#line.length = 0;
-                    this.#nonogramBoard.clearLinePreview();
+                    this.#applyLine();
                 }
         });
 
@@ -273,6 +271,85 @@ export class PlayfieldComponent {
             undoButton.style.visibility = "visible";
             redoButton.style.visibility = (this.#activeStateIdx == this.#stateHistory.length - 1) ? "hidden" : "visible";
         };
+    }
+
+    #applyLine() {
+        /* Nothing to do if there is no line */
+        if (!this.#lineType) {
+            return;
+        }
+
+        /* Remember already checked lines */
+        const linesToCheck = /** @type {Array<LineId>} */ ([]);
+
+        for (const p of this.#line) {
+            /* Nothing to do if no change */
+            if (this.#nonogramBoard.getCellState(p.x, p.y) == this.#lineType) {
+                continue;
+            }
+            
+            /* Put color on board */
+            this.#nonogramBoard.setCellState(p.x, p.y, this.#lineType);
+
+            /* Check row and column for solved hints later, if necessary. */
+            const row = new LineId(LineType.ROW, p.y);
+            const col = new LineId(LineType.COLUMN, p.x);
+
+            if (!linesToCheck.find(line => line == row)) {
+                linesToCheck.push(row);
+            }
+
+            if (!linesToCheck.find(line => line == col)) {
+                linesToCheck.push(col);
+            }
+        }
+
+        /* Perform checks */
+        this.#recheckLineHints(linesToCheck);
+
+        /* Update history and clear line */
+        this.#updateHistory();
+
+        this.#line = [];
+        this.#lineType = null;
+        this.#nonogramBoard.clearLinePreview();
+    }
+
+    /**
+     * For each given line, checks whether...
+     * 
+     * 1. ...the hints can still be placed
+     * 2. ...any hint is definitely placed
+     * 3. ...any fully-solved hint should be surrounded by white squares
+     * 
+     * and modifies the board state accordingly.
+     * 
+     * @param {Array<LineId>} lineIds 
+     */
+    #recheckLineHints(lineIds) {
+        /* Perform checks */
+        for (const lineId of lineIds) {
+            /* Extract data */
+            const hints = lineId.lineType == LineType.ROW ?
+                this.#nonogramBoard.rowHints[lineId.index] :
+                this.#nonogramBoard.colHints[lineId.index];
+
+            const lineKnowledge = this.#nonogramBoard.getLineState(lineId);
+
+            /* Perform deduction */
+            const deduction = checkHints(lineKnowledge, hints);
+
+            /* If no deduction possible, mark an error for this line */
+            if (!deduction) {
+                this.#nonogramBoard.markError(lineId, true);
+                continue;
+            }
+
+            /* Update finished hints and apply new knowledge */
+            this.#nonogramBoard.markError(lineId, false);
+            this.#nonogramBoard.updateFinishedHints(lineId, deduction.finishedHints);
+            this.#nonogramBoard.applyLineKnowledge(lineId, deduction.newKnowledge);
+        }
     }
 
     /**
