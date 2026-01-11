@@ -227,6 +227,24 @@ export function checkHints(lineKnowledge, hints) {
         }
     }
 
+    /* Extra check: If the first hint is finished, all previous cells are white */
+    if (deduction.finishedHints.indexOf(0) !== -1) {
+        let x = 0;
+        while (lineKnowledge.cells[x] !== CellKnowledge.DEFINITELY_BLACK) {
+            deduction.lineDeductionResult.newKnowledge.cells[x] = CellKnowledge.DEFINITELY_WHITE;
+            x += 1;
+        }
+    }
+
+    /* Extra check: If the last hint is finished, all next cells are white */
+    if (deduction.finishedHints.indexOf(hints.length - 1) !== -1) {
+        let x = lineKnowledge.cells.length - 1;
+        while (lineKnowledge.cells[x] !== CellKnowledge.DEFINITELY_BLACK) {
+            deduction.lineDeductionResult.newKnowledge.cells[x] = CellKnowledge.DEFINITELY_WHITE;
+            x -= 1;
+        }
+    }
+
     /* Special case: Empty hints and empty line */
     if (hints.length == 0) {
         if (!lineKnowledge.cells.some(x => x != CellKnowledge.DEFINITELY_WHITE)) {
