@@ -4,7 +4,6 @@ import { deepArraysEqual } from "../../util.js";
 
 import "./nonogram-board.css"
 
-const CELL_SIZE_PX = 16;
 const COLOR_BADLINE = "#c27676ff"
 const COLOR_SELECTION = "#aedbff"
 
@@ -249,7 +248,7 @@ export class NonogramBoardComponent {
 
         for (let row = 0; row < height; row++) {
             for (let col = 0; col < width; col++) {
-                const div = this.getCellDiv(col, row);
+                const div = this.#getCellDiv(col, row);
 
                 div.style.gridRow = String(row + 2);
                 div.style.gridColumn = String(col + 2);
@@ -318,7 +317,7 @@ export class NonogramBoardComponent {
             return;
         }
 
-        const cellDiv = this.getCellDiv(p.x, p.y);
+        const cellDiv = this.#getCellDiv(p.x, p.y);
 
         const style = getComputedStyle(cellDiv);
         const borderLeft = parseFloat(style.borderLeftWidth) || 0;
@@ -352,7 +351,7 @@ export class NonogramBoardComponent {
      * @param {number} y 
      * @returns {HTMLElement}
      */
-    getCellDiv(x, y) {
+    #getCellDiv(x, y) {
         return this.#cellDivs[x + y * this.#width];
     }
 
@@ -377,7 +376,7 @@ export class NonogramBoardComponent {
     setCellState(x, y, state) {
         this.#state[x + y * this.#width] = state;
         
-        const div = this.getCellDiv(x, y);
+        const div = this.#getCellDiv(x, y);
 
         switch (state) {
             case CellKnowledge.UNKNOWN:
@@ -502,7 +501,7 @@ export class NonogramBoardComponent {
         this.clearLinePreview();
 
         for (const p of line) {
-            const cellDiv = this.getCellDiv(p.x, p.y);
+            const cellDiv = this.#getCellDiv(p.x, p.y);
 
             /* Compute border width */
             const style = getComputedStyle(cellDiv);
