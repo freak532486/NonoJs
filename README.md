@@ -4,7 +4,7 @@
 NonoJs is a free, online Nonogram playing platform, with a focus of ease-of-use, even for large nonograms on small
 mobile phones.
 
-Play for free on <https://nonojs.randomranz.com>!
+Play for free on <https://nonojs.com>!
 
 ## Features
 * Solve Nonograms 🖊️
@@ -27,5 +27,6 @@ NPM must be installed.
 3. `npm install`
 4. `npm run build`
 5. `npx serve`
+
 
 NonoJs should now be reachable on `localhost:3000`. 
