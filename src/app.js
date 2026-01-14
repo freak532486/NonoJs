@@ -70,7 +70,7 @@ async function _openCatalog() {
     }
 
     /* Attach catalog again */
-    catalog.init(contentRoot);
+    catalog.init(mainDiv);
     document.title = TITLE_CATALOG;
     openNonogramId = undefined;
 }
