@@ -109,7 +109,11 @@ export class Timer {
     }
 
     #updateDisplayedTime() {
-        const timeSpan = /** @type {HTMLElement} */ (this.view.querySelector(".time"));
+        if (!this.#view) {
+            return;
+        }
+
+        const timeSpan = /** @type {HTMLElement} */ (this.#view.querySelector(".time"));
         timeSpan.textContent = getTimeString(this.#curElapsed);
     }
 
