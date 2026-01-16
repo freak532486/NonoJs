@@ -3,7 +3,7 @@ import { CellKnowledge, DeductionStatus, LineId, LineKnowledge, LineType, Nonogr
 import { Point } from "../common/point.js";
 import { loadHtml } from "../loader.js";
 import { Menu } from "../menu/menu.component.js";
-import { checkHints, deduceAll, deduceNext, HintCheckResult } from "../solver.js";
+import { checkHints, deduceAll, deduceNext, HintCheckResult, isSolved } from "../solver.js";
 import { ControlPad, ControlPadButton } from "./control-pad/control-pad.component.js";
 import { MessageBox } from "./message-box/message-box.component.js";
 import { BoardComponentFullState, NonogramBoardComponent } from "./nonogram-board/nonogram-board.component.js";
@@ -12,6 +12,7 @@ import { ZoomWindow } from "./zoom-window/zoom-window.component.js";
 import playfield from "./playfield.html"
 import "./playfield.css"
 import { LineIdSet } from "../common/line-id-set.js";
+import { Timer } from "./timer/timer.js";
 
 export class PlayfieldComponent {
 
@@ -23,6 +24,8 @@ export class PlayfieldComponent {
 
     /** @type {NonogramBoardComponent} */
     #nonogramBoard;
+
+    #timer = new Timer();
 
     #messageBox = new MessageBox();
 
@@ -36,6 +39,8 @@ export class PlayfieldComponent {
     #activeStateIdx = 0;
 
     #menu;
+
+    #hasWon = false;
 
     #onExit = () => {};
 
@@ -96,7 +101,7 @@ export class PlayfieldComponent {
                 this.#nonogramBoard.getFullState().finishedColHints,
                 this.#nonogramBoard.getFullState().errorLines
             ));
-            this.#recheckLineHints(oldState);
+            this.#recheckLineHints(oldState, false); // No win message if solver solves the puzzle
             this.#updateHistory();
         };
         menu.appendElement(nextButton);
@@ -120,7 +125,7 @@ export class PlayfieldComponent {
                 this.#nonogramBoard.getFullState().finishedColHints,
                 this.#nonogramBoard.getFullState().errorLines
             ));
-            this.#recheckLineHints(oldState);
+            this.#recheckLineHints(oldState, false); // No win message if solver solves the puzzle
             
             this.#updateHistory();
             if (deduction.status !== DeductionStatus.WAS_SOLVED) {
@@ -142,11 +147,14 @@ export class PlayfieldComponent {
             ));
 
             this.#nonogramBoard.applyState(emptyState);
-            storage.storeState(nonogramId, new storage.SaveState(emptyState.cells));
+            storage.storeState(nonogramId, new storage.SaveState(emptyState.cells, 0));
             this.#stateHistory = [emptyState];
             this.#activeStateIdx = 0;
             this.controlPad.getButton(ControlPadButton.UNDO).style.visibility = "hidden";
             this.controlPad.getButton(ControlPadButton.REDO).style.visibility = "hidden";
+            this.#hasWon = false;
+            this.#timer.paused = false;
+            this.#timer.restart();
         }
         menu.appendElement(resetButton);
 
@@ -171,18 +179,27 @@ export class PlayfieldComponent {
                 Array(this.#nonogramBoard.width).fill(null).map(() => []),
                 []
             ));
+            this.#timer.elapsed = storedState.elapsed;
         }
-
-        /* Recheck hints */
-        const emptyState = Array(this.#nonogramBoard.width * this.#nonogramBoard.height).fill(CellKnowledge.UNKNOWN);
-        this.#recheckLineHints(emptyState);
 
         /* Prepare history */
         this.#stateHistory.push(this.#nonogramBoard.getFullState());
+
+        /* Recheck hints */
+        const emptyState = Array(this.#nonogramBoard.width * this.#nonogramBoard.height).fill(CellKnowledge.UNKNOWN);
+        this.#recheckLineHints(emptyState, false); // No win message if board was already solved
     }
 
     /** Should be called after removing the playfield from the screen */
     destroy() {
+        /* Store latest timer */
+        const state = storage.retrieveStoredState(this.#nonogramId);
+        if (state) {
+            state.elapsed = this.#timer.elapsed;
+            storage.storeState(this.#nonogramId, state);
+        }
+
+        /* Remove all menu entries related to playfield from menu */
         this.#menu.removeElement("playfield");
     }
 
@@ -195,6 +212,9 @@ export class PlayfieldComponent {
         /* Create view */
         this.#view = await loadHtml(playfield);
         parent.appendChild(this.#view);
+
+        /* Create timer */
+        await this.#timer.init(this.view);
 
         /* Create control pad */
         const footer = /** @type {HTMLElement} */ (this.view.querySelector("#footer"));
@@ -215,7 +235,7 @@ export class PlayfieldComponent {
             }
             
             this.#nonogramBoard.setCellState(x, y, CellKnowledge.UNKNOWN);
-            this.#recheckLineHints(curState);
+            this.#recheckLineHints(curState, true);
             this.#updateHistory();
         })
 
@@ -317,7 +337,7 @@ export class PlayfieldComponent {
             this.#nonogramBoard.getFullState().finishedColHints,
             this.#nonogramBoard.getFullState().errorLines
         ));
-        this.#recheckLineHints(curState);
+        this.#recheckLineHints(curState, true);
 
         /* Update history and clear line */
         this.#updateHistory();
@@ -423,11 +443,9 @@ export class PlayfieldComponent {
     }
 
     #extractSolverState() {
-        const activeState = [...this.#stateHistory[this.#activeStateIdx].cells];
+        const activeState = [...this.#nonogramBoard.getFullState().cells];
 
         return new NonogramState(
-            this.#nonogramBoard.width,
-            this.#nonogramBoard.height,
             this.#nonogramBoard.rowHints,
             this.#nonogramBoard.colHints,
             activeState
@@ -445,7 +463,7 @@ export class PlayfieldComponent {
             return; // Nothing to do
         }
 
-        storage.storeState(this.#nonogramId, new storage.SaveState(curState.cells));
+        storage.storeState(this.#nonogramId, new storage.SaveState(curState.cells, this.#timer.elapsed));
 
         const undoButton = this.controlPad.getButton(ControlPadButton.UNDO);
         const redoButton = this.controlPad.getButton(ControlPadButton.REDO);
@@ -464,8 +482,9 @@ export class PlayfieldComponent {
      * Rechecks the line hints for all changed lines between the current state and the given previous state.
      * 
      * @param {Array<CellKnowledge>} prevState 
+     * @param {boolean} displayWinMessage
      */
-    #recheckLineHints(prevState) {
+    #recheckLineHints(prevState, displayWinMessage) {
         /* Placing crosses for hints can cause other deductions, so this happens in a loop */
         const LOOP_LIMIT = 50;
 
@@ -475,7 +494,8 @@ export class PlayfieldComponent {
             const curState = this.#nonogramBoard.getFullState().cells;
             const changed = calcChangedLines(this.#nonogramBoard.width, this.#nonogramBoard.height, actualPrevState, curState);
             if (changed.size == 0) {
-                break;
+                this.#checkWin(displayWinMessage); // Crosses from line hints can cause a win.
+                return;
             }
 
             for (const line of changed.asArray()) {
@@ -489,6 +509,28 @@ export class PlayfieldComponent {
         }
 
         console.error("Canceled hint checking after " + LOOP_LIMIT + " iterations");
+    }
+
+    /**
+     * @param {boolean} displayWinMessage 
+     */
+    #checkWin(displayWinMessage) {
+        /* Do not display win message twice */
+        if (this.#hasWon) {
+            return;
+        }
+
+        /* Check if the nonogram is solved */
+        const curState = this.#extractSolverState();
+        if (!isSolved(curState)) {
+            return;
+        }
+
+        if (displayWinMessage) {
+            alert("Congratulations! You solved the puzzle in " + this.#timer.getElapsedTimeAsString());
+        }
+        this.#hasWon = true;
+        this.#timer.paused = true;
     }
 
     /**
