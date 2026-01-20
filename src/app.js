@@ -123,7 +123,7 @@ export async function openNonogram(nonogramId) {
     /* Create new playfield */
     playfield = new PlayfieldComponent(nonogramId, nonogram.rowHints, nonogram.colHints, menu);
     playfield.init(mainDiv);
-    playfield.onExit = openStartPage;
+    playfield.onExit = () => navigateTo("/");
     openNonogramId = nonogramId;
     document.title = "Playing " + nonogram.colHints.length + "x" + nonogram.rowHints.length + " Nonogram"
     return true;
