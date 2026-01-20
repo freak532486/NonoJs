@@ -23,10 +23,10 @@ Play for free on <https://nonojs.com>!
 NPM must be installed.
 
 1. Open a terminal inside an empty folder.
-2. `git clone https://github.com/freak532486/nonogram-js.git .`
+2. `git clone https://github.com/freak532486/NonoJs.git .`
 3. `npm install`
 4. `npm run build`
-5. `npx serve`
+5. `npx serve -s dist`
 
 
 NonoJs should now be reachable on `localhost:3000`. 
