@@ -1,3 +1,4 @@
+import { FastifyBaseLogger } from "fastify";
 import { ConfigAccess } from "./config/config-access";
 import { DatabaseAccess } from "./database/database-access";
 
@@ -25,7 +26,7 @@ export class Services {
 /**
  * Initialized all services. Is called exactly once on server startup.
  */
-export async function init() {
+export async function init(logger: FastifyBaseLogger) {
     if (gServices) {
         throw new Error("Service initialization was called twice");
     }
@@ -33,7 +34,7 @@ export async function init() {
     const configAccess = new ConfigAccess();
     await configAccess.init();
 
-    const databaseAccess = new DatabaseAccess(configAccess);
+    const databaseAccess = new DatabaseAccess(logger, configAccess);
     await databaseAccess.init();
 
     gServices = new Services(configAccess, databaseAccess);

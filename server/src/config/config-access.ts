@@ -5,7 +5,7 @@ export class ConfigAccess {
 
     #config: Record<string, unknown> | undefined;
 
-    init() {
+    async init() {
         const settingsPath = path.join(process.cwd(), "nonojs-server-settings.json");
 
         try {    

@@ -3,6 +3,7 @@ import * as global from "../global.js"
 import { join } from 'node:path'
 import AutoLoad, { AutoloadPluginOptions } from '@fastify/autoload'
 import { FastifyPluginAsync, FastifyServerOptions } from 'fastify'
+import { DatabaseMigrator } from "../database/database-migrator.js";
 
 export interface AppOptions extends FastifyServerOptions, Partial<AutoloadPluginOptions> {
 
@@ -16,7 +17,11 @@ const app: FastifyPluginAsync<AppOptions> = async (
   opts
 ): Promise<void> => {
   /* Initialize services */
-  await global.init();
+  await global.init(fastify.log);
+
+  /* Perform database migrations */
+  const migrator = new DatabaseMigrator(fastify.log, global.getServices().databaseAccess);
+  await migrator.performMigrations();
 
   // Do not touch the following lines
 

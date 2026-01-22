@@ -2,14 +2,17 @@ import * as fs from "fs"
 import * as sqlite3 from "sqlite3";
 import * as sqlite from "sqlite"
 import { ConfigAccess } from "../config/config-access";
+import { FastifyBaseLogger } from "fastify";
 
 export class DatabaseAccess {
 
+    readonly #logger;
     readonly #configAccess; 
 
     #db: sqlite.Database | undefined;
 
-    constructor(configAccess: ConfigAccess) {
+    constructor(logger: FastifyBaseLogger, configAccess: ConfigAccess) {
+        this.#logger = logger;
         this.#configAccess = configAccess;
     }
 
@@ -40,6 +43,7 @@ export class DatabaseAccess {
 
         /* Remove database again so that it is re-initialized on next startup */
         try {
+            this.#logger.info("Performing database initialization");
             await this.performInTransaction(() => this.#runDatabaseInitialization());
         } catch (error) {
             database.close();
@@ -49,22 +53,25 @@ export class DatabaseAccess {
     }
 
     async #runDatabaseInitialization() {
+        /* Enable foreign key constraints */
+        await this.run("PRAGMA foreign_keys = ON");
+
         /* Create migration script table */
-        const sql = "CREATE TABLE migration_history (id varchar(255), PRIMARY KEY (id));";
-        await this.run(sql);
+        const migrationTableSql = "CREATE TABLE migration_history (id varchar(255), PRIMARY KEY (id));";
+        await this.run(migrationTableSql);
     }
 
     /**
      * Performs an SQL statement and returns the result.
      */
-    async run(sql: string, ...params: unknown[]): Promise<sqlite.ISqlite.RunResult> {
+    async run(sql: string, ...params: unknown[]): Promise<any[]> {
         if (!this.#db) {
             throw new Error("Database connection has not been initalized");
         }
 
         const statement = await this.#db.prepare(sql, params);
         try {
-            return await statement.run();
+            return await statement.all();
         } finally {
             await statement.finalize();
         }
