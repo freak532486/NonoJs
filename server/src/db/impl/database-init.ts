@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import * as sqlite from "sqlite"
 import * as sqlite3 from "sqlite3"
-import * as dbAccess from "./database-access"
+import database from "../database"
 import { FastifyInstance } from "fastify";
 
 /**
@@ -25,7 +25,7 @@ export default async function openDatabase(fastify: FastifyInstance, dbPath: str
     /* Remove database again so that it is re-initialized on next startup */
     try {
         fastify.log.info("Performing database initialization");
-        await dbAccess.performInTransaction(db, () => runDatabaseInitialization(db));
+        await database.performInTransaction(db, () => runDatabaseInitialization(db));
         return db;
     } catch (error) {
         db.close();
@@ -36,9 +36,9 @@ export default async function openDatabase(fastify: FastifyInstance, dbPath: str
 
 async function runDatabaseInitialization(db: sqlite.Database) {
     /* Enable foreign key constraints */
-    await dbAccess.runSql(db, "PRAGMA foreign_keys = ON");
+    await database.runSql(db, "PRAGMA foreign_keys = ON");
 
     /* Create migration script table */
     const migrationTableSql = "CREATE TABLE migration_history (id varchar(255), PRIMARY KEY (id));";
-    await dbAccess.runSql(db, migrationTableSql);
+    await database.runSql(db, migrationTableSql);
 }

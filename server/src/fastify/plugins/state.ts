@@ -1,9 +1,9 @@
 import fp from "fastify-plugin";
 import { Database } from "sqlite";
-import openDatabase from "../../db/access/database-init";
+import openDatabase from "../../db/impl/database-init";
 import TokenStore from "../../auth/types/token-store";
 import Config from "../../config/types/config";
-import * as configAccess from "../../config/access/config-access"
+import config from "../../config/config"
 
 const CONFIG_PATH = "nonojs-server-settings.json";
 const CONFIG_KEY_DATABASE_PATH = "databasePath";
@@ -16,13 +16,13 @@ export interface AppState {
 
 export default fp(async (fastify) => {
     /* Load config */
-    const config = configAccess.readConfig("nonojs-server-settings.json");
-    if (!config) {
+    const serverConfig = config.readConfig("nonojs-server-settings.json");
+    if (!serverConfig) {
         throw new Error("Could not read configuration file '" + CONFIG_PATH + "'.");
     }
 
     /* Read database path from config */
-    const dbPath = configAccess.getStringSetting(config, "databasePath");
+    const dbPath = config.getStringSetting(serverConfig, "databasePath");
     if (!dbPath) {
         throw new Error("Config setting '" + CONFIG_KEY_DATABASE_PATH + "' was undefined or invalid.");
     }

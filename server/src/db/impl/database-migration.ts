@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import * as dbAccess from "./database-access"
+import * as dbAccess from "./sql-functions"
 import authTableCreation from "../internal/migrations/auth-table-creation";
 
 /**

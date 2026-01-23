@@ -1,7 +1,7 @@
 import "fastify";
-import { Config } from "../config/access/config-access";
+import { Config } from "../config/impl/config-access";
 import { Database } from "sqlite";
-import { TokenStore } from "../auth/access/login";
+import { TokenStore } from "../auth/impl/login";
 
 declare module "fastify" {
     interface FastifyInstance {

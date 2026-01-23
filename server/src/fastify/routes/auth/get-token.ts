@@ -1,14 +1,14 @@
 import { FastifyPluginAsync } from 'fastify'
-import performLogin from "../../../auth/access/login"
+import auth from "../../../auth/auth"
 
 const getToken: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     fastify.get('/token', async function (request, reply) {
-        const auth = request.headers.authorization;
-        if (!auth) {
+        const authHeader = request.headers.authorization;
+        if (!authHeader) {
             throw fastify.httpErrors.unauthorized("Missing authorization header.");
         }
 
-        const tokens = await performLogin(fastify, auth);
+        const tokens = await auth.performLogin(fastify, authHeader);
         if (!tokens) {
             throw fastify.httpErrors.unauthorized("Bad credentials");
         }

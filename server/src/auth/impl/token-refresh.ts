@@ -1,5 +1,5 @@
 import * as authUtils from "../internal/utils"
-import * as dbAccess from "../../db/access/database-access"
+import database from "../../db/database"
 import { Database } from "sqlite";
 import TokenStore from "../types/token-store"
 import { FastifyInstance } from "fastify"
@@ -32,7 +32,7 @@ export default async function refreshTokenForUser(fastify: FastifyInstance, user
         "creationTimestamp": creationTimestamp
     };
 
-    await dbAccess.runSql(db, sql, params);
+    await database.runSql(db, sql, params);
 
     /* Write session token into memory */
     tokenStore.putSessionToken(userId, sessionToken);

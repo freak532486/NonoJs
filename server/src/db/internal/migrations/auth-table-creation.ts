@@ -1,4 +1,4 @@
-import * as dbAccess from "../../access/database-access"
+import database from "../../database"
 import { FastifyInstance } from "fastify";
 
 /**
@@ -16,7 +16,7 @@ export default async function authTableCreation(fastify: FastifyInstance) {
         )
     `;
 
-    await dbAccess.runSql(db, userTableSql);
+    await database.runSql(db, userTableSql);
 
     /* Create session table */
     const userSessionSql = `
@@ -28,5 +28,5 @@ export default async function authTableCreation(fastify: FastifyInstance) {
     )
     `
 
-    await dbAccess.runSql(db, userSessionSql);
+    await database.runSql(db, userSessionSql);
 }
