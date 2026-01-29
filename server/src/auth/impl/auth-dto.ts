@@ -53,7 +53,7 @@ export default class AuthDto {
         }
 
         return {
-            userId: result[0].user_id,
+            userId: result[0].id,
             username: result[0].username,
             passwordHash: result[0].password_hash
         };
@@ -64,7 +64,7 @@ export default class AuthDto {
             INSERT INTO users (username, password_hash)
             VALUES ($username, $passwordHash)
             ON CONFLICT DO NOTHING
-            RETURNING user_id
+            RETURNING id
         `;
 
         const result = await this.databaseAccess.runSql(sql, {
@@ -76,7 +76,7 @@ export default class AuthDto {
             return undefined;
         }
 
-        return result[0].user_id;
+        return result[0].id;
     }
 
 }

@@ -25,7 +25,7 @@ export default class TokenStore {
      * Returns the matching user id for the given session token, or undefined if no such user exists.
      */
     getUserId(sessionToken: string): number | undefined {
-        if (this.#isTokenValid(sessionToken)) {
+        if (!this.#isTokenValid(sessionToken)) {
             return undefined;
         }
 
