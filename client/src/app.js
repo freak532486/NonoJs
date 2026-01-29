@@ -7,6 +7,7 @@ import { PlayfieldComponent } from "./playfield/playfield.component";
 import { Router } from "./router";
 import { StartPage } from "./start-page/component/start-page.component";
 import { StartPageNonogramSelector } from "./start-page/internal/start-page-nonogram-selector";
+import LoginComponent from "./auth/login-component/login.component"
 import * as storageMigration from "./storage-migration"
 
 
@@ -14,6 +15,7 @@ import * as storageMigration from "./storage-migration"
 
 const TITLE_STARTPAGE = "NonoJs · Free Nonogram Platform";
 const TITLE_CATALOG = "Looking at catalog";
+const TITLE_LOGIN = "Log in to NonoJs";
 
 const contentRoot = /** @type {HTMLElement} */ (document.getElementById("content-column"));
 const headerDiv = /** @type {HTMLElement} */ (document.getElementById("header-div"));
@@ -22,12 +24,19 @@ const mainDiv = /** @type {HTMLElement} */ (document.getElementById("main-div"))
 const catalogAccess = new CatalogAccess();
 const startPageNonogramSelector = new StartPageNonogramSelector(catalogAccess);
 
+/** @type {any} */
+let activeComponent = undefined;
+
 let notFoundPage = new NotFoundPage();
 let router = new Router();
 let menu = new Menu();
 let header = new Header(menu);
 let catalog = new Catalog(catalogAccess);
 let startPage = new StartPage(startPageNonogramSelector, catalogAccess);
+let loginPage = new LoginComponent(
+    async (username, password) => {},
+    async (username, password) => {}
+);
 let playfield = /** @type {PlayfieldComponent | undefined} */ (undefined);
 
 /* If undefined, that means the catalog is open */
@@ -43,9 +52,10 @@ export async function init() {
     await header.init(headerDiv);
 
     header.onLogoClicked = () => navigateTo("/");
+    menu.onLogin = async () => navigateTo("/login");
 
     startPage.onNonogramSelected = nonogramId => navigateTo("/n/" + nonogramId);
-    startPage.onLogin = () => window.alert("Login dialog opened");
+    startPage.onLogin = () => navigateTo("/login");
     startPage.onOpenCatalog = () => navigateTo("/catalog");
 
     catalog.onNonogramSelected = nonogramId => navigateTo("/n/" + nonogramId);
@@ -62,35 +72,28 @@ export function navigateTo(path) {
 }
 
 export async function openStartPage() {
-    /* Remove playfield if necessary */
-    if (playfield) {
-        playfield.destroy();
-        playfield = undefined;
-        openNonogramId = undefined;
-    }
-
-    /* Remove catalog if necessary */
-    catalog.destroy();
-
-    /* Open start page */
+    activeComponent?.destroy();
     startPage.init(mainDiv);
+    activeComponent = startPage;
+
     document.title = TITLE_STARTPAGE;
 }
 
 export async function openCatalog() {
-    /* Remove playfield if necessary */
-    if (playfield) {
-        playfield.destroy();
-        playfield = undefined;
-        openNonogramId = undefined;
-    }
-
-    /* Remove startPage if necessary */
-    startPage.destroy();
-
-    /* Attach catalog again */
+    activeComponent?.destroy();
     catalog.init(mainDiv);
+    activeComponent = catalog;
+
     document.title = TITLE_CATALOG;
+    openNonogramId = undefined;
+}
+
+export async function openLoginPage() {
+    activeComponent?.destroy();
+    loginPage.init(mainDiv);
+    activeComponent = loginPage;
+
+    document.title = TITLE_LOGIN;
     openNonogramId = undefined;
 }
 
@@ -110,19 +113,12 @@ export async function openNonogram(nonogramId) {
         return false;
     }
 
-    /* Clean up other pages if necessary */
-    startPage.destroy();
-    catalog.destroy();
-
-    /* Clean up current playfield if necessary */
-    if (playfield) {
-        playfield.view.remove();
-        playfield.destroy();
-    }
-
     /* Create new playfield */
+    activeComponent?.destroy();
     playfield = new PlayfieldComponent(nonogramId, nonogram.rowHints, nonogram.colHints, menu);
     playfield.init(mainDiv);
+    activeComponent = playfield;
+
     playfield.onExit = () => navigateTo("/");
     openNonogramId = nonogramId;
     document.title = "Playing " + nonogram.colHints.length + "x" + nonogram.rowHints.length + " Nonogram"

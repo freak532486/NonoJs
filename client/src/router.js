@@ -19,6 +19,11 @@ export class Router
             await app.openCatalog();
             return;
         }
+
+        if (path == "/login") {
+            await app.openLoginPage();
+            return;
+        }
         
         if (path.startsWith("/n/")) {
             const nonogramId = path.split("/")[2];

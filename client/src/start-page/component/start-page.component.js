@@ -2,6 +2,7 @@ import startPage from "./start-page.html"
 import notdLinkTemplate from "./notd-link-template.html"
 import continuePlayingTemplate from "./continue-playing-template.html"
 import "./start-page.css"
+import "../../common/styles/boxes.css"
 import { htmlToElement } from "../../loader";
 import { StartPageNonogramSelector } from "../internal/start-page-nonogram-selector";
 import { CatalogAccess } from "../../catalog/catalog-access";
