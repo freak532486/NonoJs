@@ -89,7 +89,7 @@ export default class ApiServiceImpl implements ApiService {
     async refreshTokens(refreshToken: string): Promise<RequestResult>
     {
         try {
-            const response = await this.performRequest(new Request("/auth/refresh-tokens", {
+            const response = await this.performRequest(new Request("/api/auth/refresh-session", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",

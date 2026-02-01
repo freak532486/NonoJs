@@ -5,7 +5,8 @@
             "request": "launch",
             "type": "chrome",
             "url": "http://127.0.0.1:3000",
-            "webRoot": "${workspaceFolder}"
+            "webRoot": "${workspaceFolder}/client/dist",
+            "outFiles": ["${workspaceFolder}/client/dist/*.js"]
         },
         {
             "name": "Debug Server",

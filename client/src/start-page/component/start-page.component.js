@@ -16,7 +16,7 @@ export class StartPage {
     #nonogramSelector;
     #catalogAccess;
 
-    /** @type {HTMLElement | undefined} */
+    /** @type {HTMLElement} */
     #view;
 
     /* Listeners */
@@ -43,6 +43,8 @@ export class StartPage {
     constructor (nonogramSelector, catalogAccess) {
         this.#nonogramSelector = nonogramSelector;
         this.#catalogAccess = catalogAccess;
+        this.#view = htmlToElement(startPage);
+        this.setLoggedInUsername(undefined);
     }
 
 
@@ -53,8 +55,6 @@ export class StartPage {
      */
     async init(parent) {
         /* Append to parent */
-        this.#view = await htmlToElement(startPage);
-
         parent.appendChild(this.#view);
 
         /* Register listeners */
@@ -205,6 +205,28 @@ export class StartPage {
         previewTextSpan.textContent = nonogramState.width + "x" + nonogramState.height + ", " + progressText + " finished.";
 
         return ret;
+    }
+
+    /**
+     * Sets the message for the currently logged-in user.
+     * 
+     * @param {string | undefined} username 
+     */
+    setLoggedInUsername(username) {
+        const msgNotLoggedIn = /** @type {HTMLElement} */ (this.#view.querySelector("#msg-not-logged-in"));
+        const msgLoggedIn = /** @type {HTMLElement} */ (this.#view.querySelector("#msg-logged-in"));
+
+        if (!username) {
+            msgNotLoggedIn.style.display = "inline";
+            msgLoggedIn.style.display = "none";
+            return;
+        }
+
+        msgNotLoggedIn.style.display = "none";
+        msgLoggedIn.style.display = "inline";
+
+        const usernameSpan = /** @type {HTMLElement} */ (msgLoggedIn.querySelector(".username"));
+        usernameSpan.textContent = username;
     }
 
 }

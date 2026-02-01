@@ -59,6 +59,21 @@ export default class AuthDto {
         };
     }
 
+    async getUserById(userId: number): Promise<UserEntry | undefined> {
+        const sql = "SELECT * FROM users WHERE id = $userId";
+        const result = await this.databaseAccess.runSql(sql, { $userId: userId });
+
+        if (result.length == 0) {
+            return undefined;
+        }
+
+        return {
+            userId: result[0].id,
+            username: result[0].username,
+            passwordHash: result[0].password_hash
+        };
+    }
+
     async createUser(username: string, passwordHash: string): Promise<number | undefined> {
         const sql = `
             INSERT INTO users (username, password_hash)

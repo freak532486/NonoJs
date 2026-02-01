@@ -128,6 +128,10 @@ export async function openStartPage() {
     startPage.init(mainDiv);
     activeComponent = startPage;
 
+    /* Check for logged in user */
+    const activeUser = await authService.getCurrentUsername();
+    startPage.setLoggedInUsername(activeUser);
+
     document.title = TITLE_STARTPAGE;
 }
 

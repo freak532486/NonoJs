@@ -9,6 +9,7 @@ import BasicAuthContent from "./types/basic-auth-content";
 import TokenPair from "./types/token-pair";
 import SessionRefreshService from "./impl/session-refresh-service";
 import RegisterService from "./impl/register-service";
+import UserEntry from "./types/user-entry";
 
 export class AuthService {
 
@@ -73,6 +74,11 @@ export class AuthService {
      */
     async getUserIdForSession(sessionToken: string): Promise<number | undefined> {
         return this.#tokenStore.getUserId(sessionToken);
+    }
+
+
+    async getUserForUserId(userId: number): Promise<UserEntry | undefined> {
+        return this.#authDto.getUserById(userId);
     }
 
 }

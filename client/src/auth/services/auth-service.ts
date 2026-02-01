@@ -1,4 +1,4 @@
-import { GetTokenResponse, RegisterUserRequest } from "nonojs-common";
+import { CheckLoginStatusResponse, GetTokenResponse, RegisterUserRequest } from "nonojs-common";
 import { ApiService } from "../../api/api-service";
 import TokenRepository from "../types/token-repository";
 
@@ -99,6 +99,24 @@ export default class AuthService {
         this.tokenRepository.setSessionToken(responseBody.sessionToken);
         this.tokenRepository.setRefreshToken(responseBody.refreshToken);
         return { status: "ok", data: undefined }
+    }
+
+    /**
+     * Returns the name of the currently logged-in user. Returns undefined if the current user is not logged in.
+     */
+    async getCurrentUsername(): Promise<string | undefined> {
+        const request = new Request("/api/auth/check-login-status", {
+            "method": "GET"
+        });
+
+        const response = await this.apiService.performRequestWithSessionToken(request);
+
+        if (response.status == "unauthorized" || response.status == "error" || response.status == "bad_response") {
+            return undefined;
+        }
+
+        const parsed = (await response.data.json()) as CheckLoginStatusResponse;
+        return parsed.username;
     }
 
 }

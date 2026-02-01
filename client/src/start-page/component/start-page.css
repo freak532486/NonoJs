@@ -106,3 +106,8 @@
     height: fit-content;
     width: fit-content;
 }
+
+#msg-logged-in .username {
+    font-weight: bold;
+    color: #33a733;
+}
