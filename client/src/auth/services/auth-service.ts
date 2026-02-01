@@ -1,17 +1,29 @@
-import { RegisterUserRequest } from "nonojs-common";
-import { performRequest } from "../../api/api";
+import { GetTokenResponse, RegisterUserRequest } from "nonojs-common";
+import { ApiService } from "../../api/api-service";
+import TokenRepository from "../types/token-repository";
 
 export default class AuthService {
+
+    constructor(
+        private readonly apiService: ApiService,
+        private readonly tokenRepository: TokenRepository
+    ) {}
 
     /**
      * Registers a new user with the given username and password.
      */
     async register(username: string, password: string): Promise<
-        { status: "ok", data: undefined } | 
-        { status: "user_exists", data: undefined } | 
-        { status: "error", data: any }
+        { status: "ok", data: undefined } | /** User was created successfully */
+        { status: "invalid_auth", data: undefined } | /** Username or password contains non-ASCII characters */
+        { status: "user_exists", data: undefined } | /** User already exists. */
+        { status: "error", data: any } /** An error occured. */
     >
     {
+        /* Check if username/password contain non-ASCII characters */
+        if (!isASCII(username) || !isASCII(password)) {
+            return { status: "invalid_auth", data: undefined };
+        }
+
         const body: RegisterUserRequest = {
             username: username,
             password: password
@@ -22,7 +34,7 @@ export default class AuthService {
             body: JSON.stringify(body)
         });
 
-        const response = await performRequest(request);
+        const response = await this.apiService.performRequest(request);
 
         if (response.status == "unauthorized") {
             throw new Error("Registration does not need authorization.");
@@ -44,4 +56,53 @@ export default class AuthService {
         return { status: "error", data: response };
     }
 
+    /**
+     * Performs a login. If the login is successful, the new tokens are written into the token store.
+     */
+    async login(username: string, password: string): Promise<
+        { "status": "ok", data: undefined } |
+        { "status": "bad_credentials", data: undefined } |
+        { "status": "error", data: any }
+    >
+    {
+        /* Check if username/password contain non-ASCII characters */
+        if (!isASCII(username) || !isASCII(password)) {
+            return { status: "bad_credentials", data: undefined };
+        }
+
+        /* Attempt login using basic auth */
+        const basicAuth = btoa(username + ":" + password);
+        const request = new Request("/api/auth/login", {
+            method: "GET",
+            headers: {
+                "Authorization": "Basic " + basicAuth
+            }
+        });
+
+        const response = await this.apiService.performRequest(request);
+
+        /* Handle bad cases */
+        if (response.status == "unauthorized") {
+            return { status: "bad_credentials", data: undefined };
+        }
+
+        if (response.status == "bad_response") {
+            return { status: "error", data: response.data };
+        }
+
+        if (response.status == "error") {
+            return { status: "error", data: response.data };
+        }
+
+        /* Handle the good case */
+        const responseBody = (await response.data.json()) as GetTokenResponse;
+        this.tokenRepository.setSessionToken(responseBody.sessionToken);
+        this.tokenRepository.setRefreshToken(responseBody.refreshToken);
+        return { status: "ok", data: undefined }
+    }
+
+}
+
+function isASCII(str: string): boolean {
+    return /^[\x00-\x7F]*$/.test(str);
 }

@@ -9,6 +9,8 @@ import { StartPage } from "./start-page/component/start-page.component";
 import { StartPageNonogramSelector } from "./start-page/internal/start-page-nonogram-selector";
 import LoginComponent from "./auth/components/login-component/login.component"
 import AuthService from "./auth/services/auth-service"
+import tokenRepositoryInstance from "./auth/services/token-repository-instance"
+import ApiServiceImpl from "./api/api-service-impl"
 import * as storageMigration from "./storage-migration"
 
 
@@ -34,16 +36,43 @@ let menu = new Menu();
 let header = new Header(menu);
 let catalog = new Catalog(catalogAccess);
 let startPage = new StartPage(startPageNonogramSelector, catalogAccess);
-let authService = new AuthService();
+let apiService = new ApiServiceImpl(tokenRepositoryInstance);
+let authService = new AuthService(apiService, tokenRepositoryInstance);
 
 let loginPage = new LoginComponent(
-    async (username, password) => {},
+    async (username, password) => {
+        const result = await authService.login(username, password);
+
+        switch (result.status) {
+            case "ok":
+                loginPage.loginMessage = "Success. You are now logged in as '" + username + "'";
+                loginPage.loginMessageColor = "#3dc41c";
+                break;
+
+            case "bad_credentials":
+                loginPage.loginMessage = "Wrong credentials.";
+                loginPage.loginMessageColor = "#FF0000";
+                break;
+
+            case "error":
+                loginPage.loginMessage = "An error occured. Details can be found in the browser console."
+                loginPage.loginMessageColor = "#FF0000";
+                console.log("An error occured during login.", result.data);
+                break;
+        }
+    },
+
     async (username, password) => {
         const result = await authService.register(username, password);
         switch (result.status) {
             case "ok":
                 loginPage.registerMessage = "User created successfully.";
-                loginPage.registerMessageColor = "#00FF33";
+                loginPage.registerMessageColor = "#3dc41c";
+                break;
+
+            case "invalid_auth":
+                loginPage.registerMessage = "Username and password must only contain ASCII characters (no emojis, no foreign characters).";
+                loginPage.registerMessageColor = "#FF0000";
                 break;
 
             case "user_exists":
@@ -52,7 +81,7 @@ let loginPage = new LoginComponent(
                 break;
 
             case "error":
-                loginPage.registerMessage = "An error occured. Details can be found in the logs.";
+                loginPage.registerMessage = "An error occured. Details can be found in the browser console.";
                 loginPage.registerMessageColor = "#FF0000";
                 console.error("An error occured during registration.", result.data);
                 break;
