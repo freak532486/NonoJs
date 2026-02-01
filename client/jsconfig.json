@@ -1,0 +1,12 @@
+{
+    "include": ["src/**/*.js", "src/**/*.d.ts"],
+    "compilerOptions": {
+        "module": "esnext",
+        "moduleResolution": "Bundler",
+        "target": "es2022",
+        "lib": ["DOM", "ES2022"],
+        "checkJs": true,
+        "strict": true,
+        "sourceMap": true
+    }
+}
