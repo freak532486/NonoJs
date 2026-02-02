@@ -22,7 +22,7 @@ const register: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
                 throw fastify.httpErrors.conflict("User already exists");
             }
 
-            reply.code(201);
+            reply.code(200);
         }
     });
 }

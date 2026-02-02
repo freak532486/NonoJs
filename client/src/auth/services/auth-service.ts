@@ -12,7 +12,7 @@ export default class AuthService {
     /**
      * Registers a new user with the given username and password.
      */
-    async register(username: string, password: string): Promise<
+    async register(username: string, password: string, emailAddress: string): Promise<
         { status: "ok", data: undefined } | /** User was created successfully */
         { status: "invalid_auth", data: undefined } | /** Username or password contains non-ASCII characters */
         { status: "user_exists", data: undefined } | /** User already exists. */
@@ -26,7 +26,8 @@ export default class AuthService {
 
         const body: RegisterUserRequest = {
             username: username,
-            password: password
+            password: password,
+            emailAddress: emailAddress
         };
 
         const request = new Request("/api/auth/register", {

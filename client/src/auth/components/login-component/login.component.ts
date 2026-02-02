@@ -9,7 +9,7 @@ export default class LoginComponent {
 
     constructor(
         private readonly onLogin: (username: string, password: string) => Promise<void>,
-        private readonly onRegister: (username: string, password: string) => Promise<void>
+        private readonly onRegister: (username: string, password: string, emailAddress: string) => Promise<void>
     ) {
         this.#view = htmlToElement(loginTemplate);
     }
@@ -26,6 +26,7 @@ export default class LoginComponent {
         const labelLogin = this.#view.querySelector("#label-login-message") as HTMLElement;
 
         const inputRegisterUsername = this.#view.querySelector("#input-register-username") as HTMLInputElement;
+        const inputRegisterEmail = this.#view.querySelector("#input-register-email") as HTMLInputElement;
         const inputRegisterPassword = this.#view.querySelector("#input-register-password") as HTMLInputElement;
         const inputRegisterPasswordConfirm = this.#view.querySelector("#input-register-password-confirm") as HTMLInputElement;
         const buttonRegister = this.#view.querySelector("#button-register") as HTMLButtonElement;
@@ -48,21 +49,24 @@ export default class LoginComponent {
         /* Handle register button pressed */
         buttonRegister.onclick = () => {
             const username = inputRegisterUsername.value;
+            const emailAddress = inputRegisterEmail.value;
             const password = inputRegisterPassword.value;
             const passwordConfirmation = inputRegisterPasswordConfirm.value;
 
-            if (username.length == 0 || password.length == 0 || passwordConfirmation.length == 0) {
-                labelRegister.textContent = "Enter all required fields."
+            if (username.length == 0 || emailAddress.length == 0 || password.length == 0) {
+                this.registerMessage = "Enter all required fields.";
+                this.registerMessageColor = "#FF0000";
                 return;
             }
             
             if (password !== passwordConfirmation) {
-                labelRegister.textContent = "Passwords do not match."
+                this.registerMessage = "Passwords do not match.";
+                this.registerMessageColor = "#FF0000";
                 return;
             }
 
             labelRegister.textContent = "";
-            this.onRegister(username, password);
+            this.onRegister(username, password, emailAddress);
         }
     }
 

@@ -3,8 +3,8 @@ import { Database } from "sqlite";
 import openDatabase from "../../db/impl/database-init";
 import Config from "../../config/types/config";
 import config from "../../config/config"
-import * as auth from "../../auth/auth"
 import Mailjet from "node-mailjet";
+import TokenStore from "../../auth/types/token-store";
 
 const CONFIG_PATH = "nonojs-server-settings.json";
 const CONFIG_KEY_DATABASE_PATH = "database_path";
@@ -12,16 +12,21 @@ const CONFIG_KEY_DATABASE_PATH = "database_path";
 export interface AppState {
     config: Config;
     db: Database;
-    authService: auth.AuthService;
+    tokenStore: TokenStore;
     mailjet: Mailjet;
 }
 
 export default fp(async (fastify) => {
+    /* Create state object, initially empty */
+    fastify.decorate("state", {} as AppState);
+
     /* Load config */
     const serverConfig = config.readConfig("nonojs-server-settings.json");
     if (!serverConfig) {
         throw new Error("Could not read configuration file '" + CONFIG_PATH + "'.");
     }
+
+    fastify.state.config = serverConfig;
 
     /* Initialize mailjet client */
     const mailjetPrivateKey = config.getStringSetting(fastify, "mailjet_apikey_private");
@@ -30,10 +35,7 @@ export default fp(async (fastify) => {
         throw new Error("Mailjet keys have not been configured.");
     }
 
-    const mailjet = new Mailjet({
-        apiKey: mailjetPublicKey,
-        apiSecret: mailjetPrivateKey
-    });
+    fastify.state.mailjet = Mailjet.apiConnect(mailjetPublicKey, mailjetPrivateKey);
 
     /* Read database path from config */
     const dbPath = config.getStringSetting(fastify, CONFIG_KEY_DATABASE_PATH);
@@ -42,15 +44,8 @@ export default fp(async (fastify) => {
     }
 
     /* Open database connection */
-    const db = await openDatabase(fastify, dbPath);
+    fastify.state.db = await openDatabase(fastify, dbPath);
 
-    const authService = new auth.AuthService(fastify);
-
-    /* Decore and add to state */
-    fastify.decorate("state", {
-        config,
-        db,
-        authService,
-        mailjet
-    } satisfies AppState);
+    /* Create token store for storing session tokens */
+    fastify.state.tokenStore = new TokenStore();
 });

@@ -62,8 +62,8 @@ let loginPage = new LoginComponent(
         }
     },
 
-    async (username, password) => {
-        const result = await authService.register(username, password);
+    async (username, password, emailAddress) => {
+        const result = await authService.register(username, password, emailAddress);
         switch (result.status) {
             case "ok":
                 loginPage.registerMessage = "User created successfully.";

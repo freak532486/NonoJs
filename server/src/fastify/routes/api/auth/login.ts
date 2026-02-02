@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify'
-import * as auth from "../../../../auth/auth"
+import auth from "../../../../auth/auth"
 import { GetTokenResponse, GetTokenResponseSchema } from 'nonojs-common';
 
 const login: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
@@ -26,7 +26,7 @@ const login: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
                 throw fastify.httpErrors.unauthorized("Bad credentials.");
             }
 
-            const tokens = await fastify.state.authService.login(basicAuth);
+            const tokens = await auth.login(fastify, basicAuth);
             if (!tokens) {
                 throw fastify.httpErrors.unauthorized("Bad credentials");
             }

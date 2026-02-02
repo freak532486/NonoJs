@@ -115,19 +115,21 @@ export async function createPendingRegistration(
     token: string,
     username: string,
     hashedPassword: string,
-    emailAddress: string
+    emailAddress: string,
+    creationTimestamp: number
 )
 {
     const sql = `
-        INSERT INTO pending_confirmations (token, username, password_hash, email_address)
-        VALUES ($token, $username, $hashedPassword, $emailAddress)
+        INSERT INTO pending_confirmations (token, username, password_hash, email_address, creation_timestamp)
+        VALUES ($token, $username, $hashedPassword, $emailAddress, $creationTimestamp)
     `;
 
     await database.runSql(fastify.state.db, sql, {
         "$token": token,
         "$username": username,
         "$hashedPassword": hashedPassword,
-        "$emailAddress": emailAddress
+        "$emailAddress": emailAddress,
+        "$creationTimestamp": creationTimestamp
     });
 }
 
@@ -139,15 +141,20 @@ export interface PendingRegistrationEntry {
 
 export async function getPendingRegistration(
     fastify: FastifyInstance,
-    token: string
+    token: string,
+    lastValidCreationTimestamp: number
 ): Promise<PendingRegistrationEntry | undefined>
 {
     const sql = `
         SELECT username, password_hash, email_address
         FROM pending_confirmations
         WHERE token = $token
+        AND creation_timestamp >= $lastValidCreationTimestamp
     `;
-    const result = await database.runSql(fastify.state.db, sql, { $token: token });
+    const result = await database.runSql(fastify.state.db, sql, {
+        $token: token,
+        $lastValidCreationTimestamp: lastValidCreationTimestamp
+    });
     if (result.length == 0) {
         return undefined;
     }
@@ -168,6 +175,6 @@ export async function removePendingRegistration(
         DELETE FROM pending_confirmations
         WHERE token = $token
     `;
-    
+
     await database.runSql(fastify.state.db, removalSql, { $token: token });
 }

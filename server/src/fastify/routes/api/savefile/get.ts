@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify'
-import * as auth from '../../../../auth/auth';
+import auth from '../../../../auth/auth';
 import { SaveFile, SaveFileSchema } from 'nonojs-common';
 import savefile from '../../../../savefile/savefile';
 
@@ -26,7 +26,7 @@ const get: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
                 throw fastify.httpErrors.unauthorized("Bad auth header");
             }
 
-            const userId = await fastify.state.authService.getUserIdForSession(sessionToken);
+            const userId = await auth.getUserIdForSession(fastify, sessionToken);
             if (!userId) {
                 throw fastify.httpErrors.unauthorized("Invalid session token");
             }

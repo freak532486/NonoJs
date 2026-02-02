@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify'
 import * as apiUtils from "../api-utils"
 import { CheckLoginStatusResponse, CheckLoginStatusResponseSchema } from "nonojs-common"
+import auth from '../../../../auth/auth';
 
 const checkStatus: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     fastify.route<{
@@ -20,7 +21,7 @@ const checkStatus: FastifyPluginAsync = async (fastify, opts): Promise<void> => 
                 throw fastify.httpErrors.unauthorized();
             }
 
-            const userInfo = await fastify.state.authService.getUserForUserId(userId);
+            const userInfo = await auth.getUserById(fastify, userId);
             return { username: userInfo?.username };
         }
     });

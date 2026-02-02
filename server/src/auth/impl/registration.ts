@@ -5,6 +5,8 @@ import { getStringSettingOrThrow } from "../../config/impl/config-access";
 import { sendMail } from "./mailing";
 import { createPendingRegistration, createUser, getPendingRegistration, getUserByUsername, removePendingRegistration } from "./auth-sql";
 
+const CREATION_TOKEN_EXPIRY_TIME_MS = 24 * 60 * 60 * 1000; // One day
+
 const REGISTRATION_MAIL_SUBJECT = "Confirm your NonoJs registration";
 const REGISTRATION_MAIL_TEMPLATE = `
     Hello <b>$username</b>. To complete your registration at NonoJs, please click on <a href="$link">this link</a>.<br>
@@ -47,7 +49,8 @@ export async function performUnconfirmedRegistration(
     }
 
     /* Place the registration token into the database */
-    await createPendingRegistration(fastify, token, username, hashedPassword, emailAddress);
+    const creationTimestamp = Date.now();
+    await createPendingRegistration(fastify, token, username, hashedPassword, emailAddress, creationTimestamp);
 
     /* Done */
     return "ok";
@@ -57,7 +60,7 @@ export async function performUnconfirmedRegistration(
  * Performs a registration confirmation. This actually creates the new user. Returns 'false' if the token does not
  * match a pending confirmation.
  */
-export async function performRegistrationConfirmation(
+export async function confirmRegistration(
     fastify: FastifyInstance,
     token: string
 ) : Promise<
@@ -67,7 +70,8 @@ export async function performRegistrationConfirmation(
 >
 {
     /* Get pending confirmation entry */
-    const entry = await getPendingRegistration(fastify, token);
+    const lastValidCreationTimestamp = Date.now() - CREATION_TOKEN_EXPIRY_TIME_MS;
+    const entry = await getPendingRegistration(fastify, token, lastValidCreationTimestamp);
 
     if (!entry) {
         return { status: "unknown_token", userId: undefined };

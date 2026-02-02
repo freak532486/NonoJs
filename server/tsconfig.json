@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "sourceMap": true,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": false
   },
   "include": ["src/**/*.ts"]

@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
-import * as auth from "../../../auth/auth"
+import auth from "../../../auth/auth"
 
 /**
  * If the request is authenticated with a session token, then returns the matching user id, or undefined if session
@@ -16,5 +16,5 @@ export async function getActiveUserId(fastify: FastifyInstance, request: Fastify
         return undefined;
     }
 
-    return fastify.state.authService.getUserIdForSession(sessionToken);
+    return auth.getUserIdForSession(fastify, sessionToken);
 }
