@@ -36,7 +36,7 @@ let menu = new Menu();
 let header = new Header(menu);
 let catalog = new Catalog(catalogAccess);
 let startPage = new StartPage(startPageNonogramSelector, catalogAccess);
-let apiService = new ApiServiceImpl(tokenRepositoryInstance);
+export let apiService = new ApiServiceImpl(tokenRepositoryInstance);
 let authService = new AuthService(apiService, tokenRepositoryInstance);
 
 let loginPage = new LoginComponent(

@@ -12,7 +12,7 @@ export async function sendMail(
     content: string
 ): Promise<boolean>
 {
-    const hostname = getStringSettingOrThrow(fastify, "hostname");
+    const sourceMailAddress = getStringSettingOrThrow(fastify, "mailjet_mail_address");
     const mailjet = fastify.state.mailjet;
 
     const response = await mailjet
@@ -21,7 +21,7 @@ export async function sendMail(
             "Messages": [
                 {
                     "From": {
-                        "Email": "noreply@" + hostname,
+                        "Email": sourceMailAddress,
                         "Name": "NonoJs"
                     },
                     "To": [{

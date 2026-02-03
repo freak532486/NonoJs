@@ -2,5 +2,6 @@
     "database_path": "/home/user/database.sqlite",
     "mailjet_apikey_private": "...",
     "mailjet_apikey_public": "...",
+    "mailjet_mail_address": "noreply@nonojs.com",
     "hostname": "nonojs.com"
 }

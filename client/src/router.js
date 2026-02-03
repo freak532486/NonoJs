@@ -1,4 +1,5 @@
 import * as app from "./app"
+import { confirmRegistration } from "./auth/services/confirm-registration";
 
 export class Router
 {
@@ -12,6 +13,17 @@ export class Router
         
         if (path == "/") {
             await app.openStartPage();
+            return;
+        }
+
+        if (path == "/register/confirm") {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get("token");
+            if (!token) {
+                app.navigateTo("/");
+            }
+
+            await confirmRegistration(token);
             return;
         }
         
