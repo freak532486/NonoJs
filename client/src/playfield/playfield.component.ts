@@ -11,6 +11,7 @@ import "./playfield.css"
 import { LineIdSet } from "../common/line-id-set.js";
 import { Timer } from "./timer/timer.js";
 import PlayfieldSolverService from "./playfield-solver-service.js";
+import { PlayfieldLineHandler } from "./playfield-line-handler.js";
 
 export class PlayfieldComponent {
 
@@ -22,8 +23,7 @@ export class PlayfieldComponent {
     #messageBox: MessageBox = new MessageBox();
     #controlPad: ControlPad | undefined;
 
-    #line: Array<Point> = [];
-    #lineType: CellKnowledge | undefined;
+    #lineHandler = new PlayfieldLineHandler();
 
     #stateHistory: Array<BoardComponentFullState> = [];
     #activeStateIdx: number = 0;
@@ -108,28 +108,18 @@ export class PlayfieldComponent {
         controlPad.setButtonFunction(ControlPadButton.BLACK, () => {
                 const p = this.#nonogramBoard.selection;
                 if (!controlPad.isBlackChecked()) {
-                    /* Clear previous white line */
-                    if (this.#lineType == CellKnowledge.DEFINITELY_WHITE) {
-                        this.#line.length = 0;
-                    }
-
-                    this.#lineType = CellKnowledge.DEFINITELY_BLACK;
-                    this.#supplyNextLineSegment(p);
-                } else if (this.#lineType != null) {
+                    this.#lineHandler.startLine(p, CellKnowledge.DEFINITELY_BLACK);
+                    this.#setLineEndPosition(p);
+                } else if (this.#lineHandler.lineStarted()) {
                     this.#applyLine();
                 }
         });
         controlPad.setButtonFunction(ControlPadButton.WHITE, () => { 
                 const p = this.#nonogramBoard.selection;
                 if (!controlPad.isWhiteChecked()) {
-                    /* Clear previous white line */
-                    if (this.#lineType == CellKnowledge.DEFINITELY_BLACK) {
-                        this.#line.length = 0;
-                    }
-
-                    this.#lineType = CellKnowledge.DEFINITELY_WHITE;
-                    this.#supplyNextLineSegment(p);
-                } else if (this.#lineType != null) {
+                    this.#lineHandler.startLine(p, CellKnowledge.DEFINITELY_WHITE);
+                    this.#setLineEndPosition(p);
+                } else if (this.#lineHandler.lineStarted()) {
                     this.#applyLine();
                 }
         });
@@ -177,7 +167,7 @@ export class PlayfieldComponent {
 
     #applyLine() {
         /* Nothing to do if there is no line */
-        if (!this.#lineType) {
+        if (!this.#lineHandler.lineStarted()) {
             return;
         }
 
@@ -186,14 +176,9 @@ export class PlayfieldComponent {
         const curState = this.#nonogramBoard.getFullState().cells;
         const newState = [...curState];
 
-        for (const p of this.#line) {
-            /* Nothing to do if no change */
-            if (curState[p.x + p.y * width] == this.#lineType) {
-                continue;
-            }
-            
-            /* Change state */
-            newState[p.x + p.y * width] = this.#lineType;
+        const line = this.#lineHandler.getCurrentLine();
+        for (const p of line.points) {
+            newState[p.x + p.y * width] =  line.type;
         }
 
         /* Perform checks */
@@ -208,90 +193,26 @@ export class PlayfieldComponent {
         /* Update history and clear line */
         this.#updateHistory();
 
-        this.#line = [];
-        this.#lineType = undefined;
+        this.#lineHandler.clearLine();
         this.#nonogramBoard.clearLinePreview();
     }
 
-    /**
-     * Supplies the next line segment. This could:
-     * 
-     * - Extend the current line by one or multiple segments.
-     * - Remove a part of the line (user went backwards)
-     * - Clear the line completely (user broke the line).
-     */
-    #supplyNextLineSegment(p: Point) {
-        if (this.#lineType == null) {
-            return; // Nothing to do if no line is active.
-        }
-        
-        const line = this.#line;
+    #setLineEndPosition(p: Point) {
+        /* Update line handler */
+        const lineBroken = this.#lineHandler.setEndPosition(p);
 
-        /* Easy case: This is a new line */
-        if (line.length == 0) {
-            line.push(p);
-            this.#nonogramBoard.updateLinePreview(line, this.#lineType);
-            return;
-        }
-
-        /* Check difference between latest point and new point */
-        const q0 = line[0];
-        const q1 = line[line.length - 1];
-        const dx = p.x - q1.x;
-        const dy = p.y - q1.y;
-        const expectedHorizontal = line.length > 1 && (q1.y - q0.y == 0);
-        const expectedVertical = line.length > 1 && (q1.x - q0.x == 0);
-
-        /* Nothing to do if no change was made. */
-        if (dx == 0 && dy == 0) {
-            return;
-        }
-
-        /* Line is "broken" if both axis are off */
-        if (dx != 0 && dy != 0 || expectedHorizontal && dy != 0 || expectedVertical && dx != 0) {
-            this.#line.length = 0;
-            this.#lineType = undefined;
+        /* Stop drawing on line break */
+        if (lineBroken) {
+            this.#controlPad?.setWhiteChecked(false);
+            this.#controlPad?.setBlackChecked(false);
             this.#nonogramBoard.clearLinePreview();
-
-            this.#controlPad!.setBlackChecked(false);
-            this.#controlPad!.setWhiteChecked(false);
+            this.#lineHandler.clearLine();
             return;
         }
 
-        /* Separate handling for horizontal and vertical line */
-        if (dx != 0) {
-            /* Check if this move adds to or removes from the line */
-            const isAddition = Math.sign(dx) == Math.sign(q1.x - q0.x) || this.#line.length == 1;
-
-            /* Perform addition or subtraction */
-            if (isAddition) {
-                while (line[line.length - 1].x != p.x) {
-                    line.push(new Point(line[line.length - 1].x + Math.sign(dx), p.y));
-                }
-                
-            } else {
-                while (line[line.length - 1].x != p.x) {
-                    line.pop();
-                }
-            }
-        } else {
-            /* Check if this move adds to or removes from the line */
-            const isAddition = Math.sign(dy) == Math.sign(q1.y - q0.y) || this.#line.length == 1;
-
-            /* Perform addition or subtraction */
-            if (isAddition) {
-                while (line[line.length - 1].y != p.y) {
-                    line.push(new Point(p.x, line[line.length - 1].y + Math.sign(dy)));
-                }
-            } else {
-                while (line[line.length - 1].y != p.y) {
-                    line.pop();
-                }
-            }
-        }
-
-        /* Finalize line */
-        this.#nonogramBoard.updateLinePreview(line, this.#lineType);
+        /* Draw preview */
+        const curLine = this.#lineHandler.getCurrentLine();
+        this.#nonogramBoard.updateLinePreview(curLine.points, curLine.type);
     }
 
     /**
@@ -299,7 +220,7 @@ export class PlayfieldComponent {
      */
     #moveSelectionAndSet(dx: number, dy: number) {
         this.#nonogramBoard.moveSelection(dx, dy);
-        this.#supplyNextLineSegment(this.#nonogramBoard.selection);
+        this.#setLineEndPosition(this.#nonogramBoard.selection);
     }
 
     #extractSolverState(): NonogramState {
