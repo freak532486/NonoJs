@@ -363,25 +363,25 @@ export class SingleDeductionResult {
 
     /**
      * Line for which a deduction was made
-     * @type {LineId | null}
+     * @type {LineId | undefined}
      */
     #lineId;
 
     /**
      * New knowledge for the line.
-     * @type {LineKnowledge | null}
+     * @type {LineKnowledge | undefined}
      */
     #newKnowledge;
 
     /**
      * 
      * @param {DeductionStatus} statusFlags 
-     * @param {LineId | null} lineId 
-     * @param {LineKnowledge | null} newKnowledge 
+     * @param {LineId | undefined} lineId 
+     * @param {LineKnowledge | undefined} newKnowledge 
      */
     constructor (statusFlags, lineId, newKnowledge) {
-        const hasLineId = lineId != null;
-        const hasKnowledge = newKnowledge != null;
+        const hasLineId = lineId !== undefined;
+        const hasKnowledge = newKnowledge !== undefined;
 
         if (hasLineId !== hasKnowledge) {
             throw new Error("Either both are supplied or none");

@@ -225,7 +225,7 @@ export function deduceNext(state) {
 
     return new SingleDeductionResult(
         allSolved ? DeductionStatus.WAS_SOLVED : 
-                    DeductionStatus.COULD_NOT_DEDUCE, null, null
+                    DeductionStatus.COULD_NOT_DEDUCE, undefined, undefined
     );
 }
 
@@ -357,12 +357,12 @@ class LineDeductionResult {
     /** @type {DeductionStatus} */
     status;
 
-    /** @type {LineKnowledge | null} */
+    /** @type {LineKnowledge | undefined} */
     newKnowledge;
 
     /**
      * @param {DeductionStatus} status 
-     * @param {LineKnowledge | null} newKnowledge 
+     * @param {LineKnowledge | undefined} newKnowledge 
      */
     constructor(status, newKnowledge) {
         this.status = status;
@@ -387,7 +387,7 @@ class OverlapDeductionResult {
      * @returns {OverlapDeductionResult}
      */
     static noDeduction(status) {
-        return new OverlapDeductionResult(new LineDeductionResult(status, null), []);
+        return new OverlapDeductionResult(new LineDeductionResult(status, undefined), []);
     }
 }
 

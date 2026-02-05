@@ -1,8 +1,7 @@
-import { CellKnowledge, DeductionStatus, LineId, LineKnowledge, LineType, NonogramState } from "../common/nonogram-types.js";
+import { CellKnowledge, LineId, LineKnowledge, LineType, NonogramState } from "../common/nonogram-types.js";
 import { Point } from "../common/point.js";
 import { htmlToElement } from "../loader.js";
-import { Menu } from "../menu/menu.component.js";
-import { checkHints, deduceAll, deduceNext, HintCheckResult, isSolved } from "../solver.js";
+import { checkHints, HintCheckResult, isSolved } from "../solver.js";
 import { ControlPad, ControlPadButton } from "./control-pad/control-pad.component.js";
 import { MessageBox } from "./message-box/message-box.component.js";
 import { BoardComponentFullState, NonogramBoardComponent } from "./nonogram-board/nonogram-board.component.js";
@@ -11,6 +10,7 @@ import playfield from "./playfield.html"
 import "./playfield.css"
 import { LineIdSet } from "../common/line-id-set.js";
 import { Timer } from "./timer/timer.js";
+import PlayfieldSolverService from "./playfield-solver-service.js";
 
 export class PlayfieldComponent {
 
@@ -28,10 +28,10 @@ export class PlayfieldComponent {
     #stateHistory: Array<BoardComponentFullState> = [];
     #activeStateIdx: number = 0;
 
-    #menu: Menu;
     #hasWon: boolean = false;
 
-    #onExit: () => void = () => {};
+    #solverService: PlayfieldSolverService;
+
     #onStateChanged: () => void = () => {};
 
     /**
@@ -41,127 +41,13 @@ export class PlayfieldComponent {
         nonogramId: string,
         rowHints: Array<Array<number>>,
         colHints: Array<Array<number>>,
-        menu: Menu,
         initialState: Array<number> | undefined,
         initialElapsedTime: number | undefined
     )
     {
         this.#nonogramId = nonogramId;
         this.#nonogramBoard = new NonogramBoardComponent(rowHints, colHints);
-        this.#menu = menu;
-
-        /* Add hint button */
-        const hintButton = document.createElement("button");
-        hintButton.classList.add("entry", "playfield", "border-right", "border-top");
-        hintButton.textContent = "Hint";
-        hintButton.onclick = () => {
-            menu.toggle();
-
-            const state = this.#extractSolverState();
-            const deduction = deduceNext(state);
-
-            if (deduction.status == DeductionStatus.DEDUCTION_MADE) {
-                this.#messageBox.showMessage("You can make a deduction in " + deduction.lineId + ".");
-            } else {
-                this.#messageBox.showMessage(getTextForStatus(deduction.status));
-            }
-        };
-        menu.appendElement(hintButton);
-
-        /* Add Solve Line button */
-        const nextButton = document.createElement("button");
-        nextButton.classList.add("entry", "playfield", "border-top");
-        nextButton.textContent = "Deduce next";
-        nextButton.onclick = () => {
-            menu.toggle();
-            
-            const state = this.#extractSolverState();
-            const deduction = deduceNext(state);
-
-            if (deduction.status == DeductionStatus.DEDUCTION_MADE) {
-                this.#messageBox.showMessage("Deduction made in " + deduction.lineId + ".");
-            } else {
-                this.#messageBox.showMessage(getTextForStatus(deduction.status));
-                return;
-            }
-
-            state.applyDeduction(deduction);
-
-            const oldState = this.#nonogramBoard.getFullState().cells;
-            this.#nonogramBoard.applyState(new BoardComponentFullState(
-                state.getCellStates(),
-                this.#nonogramBoard.getFullState().finishedRowHints,
-                this.#nonogramBoard.getFullState().finishedColHints,
-                this.#nonogramBoard.getFullState().errorLines
-            ));
-            this.#recheckLineHints(oldState, false); // No win message if solver solves the puzzle
-            this.#updateHistory();
-        };
-        menu.appendElement(nextButton);
-
-        /* Add full solve button */
-        const solveButton = document.createElement("button");
-        solveButton.classList.add("entry", "playfield", "border-top", "border-right" );
-        solveButton.textContent = "Solve";
-        solveButton.onclick = () => {
-            menu.toggle();
-            
-            const state = this.#extractSolverState();
-            const deduction = deduceAll(state);
-
-            this.#messageBox.showMessage(getTextForStatus(deduction.status));
-
-            const oldState = this.#nonogramBoard.getFullState().cells;
-            this.#nonogramBoard.applyState(new BoardComponentFullState(
-                deduction.newState.getCellStates(),
-                this.#nonogramBoard.getFullState().finishedRowHints,
-                this.#nonogramBoard.getFullState().finishedColHints,
-                this.#nonogramBoard.getFullState().errorLines
-            ));
-            this.#recheckLineHints(oldState, false); // No win message if solver solves the puzzle
-            
-            this.#updateHistory();
-            if (deduction.status !== DeductionStatus.WAS_SOLVED) {
-                return;
-            }
-        };
-        menu.appendElement(solveButton);
-
-        /* Add reset button */
-        const resetButton = document.createElement("button");
-        resetButton.classList.add("entry", "playfield", "border-top");
-        resetButton.textContent = "Reset";
-        resetButton.onclick = () => {
-            menu.toggle();
-
-            const emptyState = (BoardComponentFullState.empty(
-                this.#nonogramBoard.width,
-                this.#nonogramBoard.height
-            ));
-
-            this.#nonogramBoard.applyState(emptyState);
-            this.#stateHistory = [emptyState];
-            this.#activeStateIdx = 0;
-            this.controlPad.getButton(ControlPadButton.UNDO).style.visibility = "hidden";
-            this.controlPad.getButton(ControlPadButton.REDO).style.visibility = "hidden";
-            this.#hasWon = false;
-            this.#timer.paused = false;
-            this.#timer.restart();
-            this.#onStateChanged();
-        }
-        menu.appendElement(resetButton);
-
-        /* Add exit button */
-        const exitButton = document.createElement("button");
-        exitButton.classList.add("entry", "playfield", "border-top", "border-right");
-        exitButton.textContent = "Exit";
-        exitButton.style.gridColumn = "1 / 3";
-        exitButton.style.color = "#ff3b3bff";
-        exitButton.onclick = () => {
-            menu.toggle();
-            this.#onExit();
-        }
-        menu.appendElement(exitButton);
+        this.#solverService = new PlayfieldSolverService(this);
 
         /* Apply stored state if exists */
         if (initialState) {
@@ -427,6 +313,47 @@ export class PlayfieldComponent {
     }
 
     /**
+     * Changes the state of the board to the given cell state.
+     */
+    updateState(cells: Array<CellKnowledge>, displayWinMessage: boolean) {
+        if (cells.length !== this.width * this.height) {
+            throw new Error("Cells do not match playfield size");
+        }
+
+        const oldState = this.currentState;
+        this.#nonogramBoard.applyState(new BoardComponentFullState(
+            cells,
+            oldState.finishedRowHints,
+            oldState.finishedColHints,
+            oldState.errorLines
+        ));
+
+        this.#recheckLineHints(oldState.cells, displayWinMessage);
+        this.#updateHistory();
+    }
+
+    /**
+     * Resets the playfield, this clears all progress.
+     */
+    reset()
+    {
+        const emptyState = (BoardComponentFullState.empty(
+            this.#nonogramBoard.width,
+            this.#nonogramBoard.height
+        ));
+
+        this.#nonogramBoard.applyState(emptyState);
+        this.#stateHistory = [emptyState];
+        this.#activeStateIdx = 0;
+        this.controlPad.getButton(ControlPadButton.UNDO).style.visibility = "hidden";
+        this.controlPad.getButton(ControlPadButton.REDO).style.visibility = "hidden";
+        this.#hasWon = false;
+        this.#timer.paused = false;
+        this.#timer.restart();
+        this.#onStateChanged();
+    }
+
+    /**
      * Adds the current state of the board into the history.
      */
     #updateHistory() {
@@ -552,8 +479,28 @@ export class PlayfieldComponent {
         return this.#controlPad;
     }
 
+    get width() {
+        return this.#nonogramBoard.width;
+    }
+
+    get height() {
+        return this.#nonogramBoard.height;
+    }
+
     get currentState(): BoardComponentFullState {
         return this.#nonogramBoard.getFullState();
+    }
+
+    get elapsed(): number {
+        return this.#timer.elapsed;
+    }
+
+    get rowHints(): Array<Array<number>> {
+        return this.#nonogramBoard.rowHints;
+    }
+
+    get colHints(): Array<Array<number>> {
+        return this.#nonogramBoard.colHints;
     }
 
     get hasWon(): boolean {
@@ -561,10 +508,18 @@ export class PlayfieldComponent {
     }
 
     /**
-     * Sets the callback that is called when the exit button is pressed.
+     * Returns a service for performing solving operations on this playfield.
      */
-    set onExit(fn: () => void) {
-        this.#onExit = fn;
+    get solverService(): PlayfieldSolverService
+    {
+        return this.#solverService;
+    }
+
+    /**
+     * Displays a message.
+     */
+    showMessage(msg: string) {
+        this.#messageBox.showMessage(msg);
     }
 
     /**
@@ -575,21 +530,6 @@ export class PlayfieldComponent {
     }
 
 };
-
-/**
- * Returns an appropriate status text for the given deduction status.
- */
-function getTextForStatus(status: DeductionStatus): string {
-    switch (status) {
-        case DeductionStatus.COULD_NOT_DEDUCE: return "Solver could not make a deduction.";
-        case DeductionStatus.DEDUCTION_MADE: return "A deduction was made.";
-        case DeductionStatus.WAS_IMPOSSIBLE: return "Puzzle is impossible.";
-        case DeductionStatus.WAS_SOLVED: return "Puzzle is solved.";
-        case DeductionStatus.TIMEOUT: return "Solver timeout.";
-    }
-
-    throw new Error("Unknown status: " + status);
-}
 
 /**
  * Calculates which lines have changed between the two states.

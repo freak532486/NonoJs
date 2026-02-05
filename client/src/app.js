@@ -13,9 +13,8 @@ import tokenRepositoryInstance from "./auth/services/token-repository-instance"
 import ApiServiceImpl from "./api/api-service-impl"
 import * as storage from "./storage"
 import * as storageMigration from "./storage-migration"
+import PlayfieldMenuButtonManager from "./playfield-menu-button-manager";
 
-
-/* ------------------------------ IMPLEMENTATION ------------------------------ */
 
 const TITLE_STARTPAGE = "NonoJs · Free Nonogram Platform";
 const TITLE_CATALOG = "Looking at catalog";
@@ -178,7 +177,6 @@ export async function openNonogram(nonogramId) {
     playfield = new PlayfieldComponent(
         nonogramId,
         nonogram.rowHints, nonogram.colHints,
-        menu,
         stored?.cells,
         stored?.elapsed
     );
@@ -186,10 +184,19 @@ export async function openNonogram(nonogramId) {
     playfield.init(mainDiv);
     activeComponent = playfield;
 
-    playfield.onExit = () => {
-        storePlayfieldStateToStorage(playfield);
-        navigateTo("/");
-    }
+    new PlayfieldMenuButtonManager(
+        menu,
+        () => playfield.solverService.hint(),
+        () => playfield.solverService.solveNext(),
+        () => playfield.solverService.solveFull(),
+        () => playfield.reset(),
+        () => {
+            storePlayfieldStateToStorage(playfield);
+            navigateTo("/");
+        }
+    ).createButtons();
+
+    window.addEventListener("beforeunload", () => storePlayfieldStateToStorage(playfield));
 
     playfield.onStateChanged = () => {
         storePlayfieldStateToStorage(playfield);
