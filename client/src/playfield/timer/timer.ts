@@ -4,35 +4,29 @@ import { htmlToElement } from "../../loader.js";
 
 export class Timer {
 
-    #view = /** @type {HTMLElement | null} */ (null);
-
-    #curElapsed = 0;
-    #lastTs = 0;
-
-    #paused = false;
+    #view: HTMLElement | undefined;
+    #curElapsed: number = 0;
+    #lastTs: number = 0;
+    #paused: boolean = false;
 
     /**
      * Creates a new timer component. Can be started with some already-elapsed time if desired.
-     * 
-     * @param {number} elapsedSeconds 
      */
-    constructor(elapsedSeconds = 0) {
+    constructor(elapsedSeconds: number = 0) {
         this.restart(elapsedSeconds);
     }
 
     /**
      * Initialized and attaches this component
-     * 
-     * @param {HTMLElement} parent 
      */
-    async init(parent) {
+    async init(parent: HTMLElement) {
         this.#view = await htmlToElement(timer);
         parent.appendChild(this.view);
 
         this.#updateDisplayedTime();
 
         /* Start animation for timer */
-        const anim = (/** @type {number} */ ts) => {
+        const anim = (ts: number) => {
             if (this.#paused || this.#lastTs == 0) {
                 this.#lastTs = ts;
                 requestAnimationFrame(anim);
@@ -50,8 +44,7 @@ export class Timer {
         requestAnimationFrame(anim);
     }
 
-    /** @returns {HTMLElement} */
-    get view() {
+    get view(): HTMLElement {
         if (!this.#view) {
             throw new Error("init() has not been called");
         }
@@ -59,53 +52,37 @@ export class Timer {
         return this.#view;
     }
 
-    /**
-     * Returns the currently elapsed time on the timer in seconds.
-     * 
-     * @returns {number}
-     */
-    get elapsed() {
+    get elapsed(): number {
         return this.#curElapsed;
     }
 
-    set elapsed(val) {
+    set elapsed(val: number) {
         this.#curElapsed = val;
         this.#updateDisplayedTime();
     }
 
-    /**
-     * Returns the currently elapsed time on the time as a string "HH:MM:SS".
-     * 
-     * @returns {string}
-     */
-    getElapsedTimeAsString() {
+    getElapsedTimeAsString(): string {
         return getTimeString(this.#curElapsed);
     }
 
     /**
      * Returns true if the timer is currently paused.
-     * 
-     * @returns {boolean}
      */
-    get paused() {
+    get paused(): boolean {
         return this.#paused;
     }
 
     /**
      * Pauses or unpauses the timer.
-     * 
-     * @param {boolean} value 
      */
-    set paused(value) {
+    set paused(value: boolean) {
         this.#paused = value;
     }
 
     /**
      * Restarts the timer. This does not unpause the timer!
-     * 
-     * @param {number} startElapsed
      */
-    restart(startElapsed = 0) {
+    restart(startElapsed: number = 0) {
         this.#curElapsed = startElapsed;
         this.#updateDisplayedTime();
     }
@@ -115,17 +92,16 @@ export class Timer {
             return;
         }
 
-        const timeSpan = /** @type {HTMLElement} */ (this.#view.querySelector(".time"));
+        const timeSpan = this.#view.querySelector(".time") as HTMLElement;
         timeSpan.textContent = getTimeString(this.#curElapsed);
     }
 
 }
 
 /**
- * @param {number} elapsedSeconds 
- * @returns {string}
+ * Returns the given number of seconds into a HH:MM:SS-timestring. Example: 3663 becomes "01:01:03".
  */
-function getTimeString(elapsedSeconds) {
+function getTimeString(elapsedSeconds: number): string {
     const seconds = Math.floor(elapsedSeconds % 60);
     const minutes = Math.floor(((elapsedSeconds - seconds) / 60)) % 60;
     const hours = Math.floor((elapsedSeconds - seconds - 60 * minutes) / (60 * 60));
@@ -138,9 +114,8 @@ function getTimeString(elapsedSeconds) {
 }
 
 /**
- * @param {number} n 
- * @returns {string}
+ * Returns the string representation of the given number. If the number is single-digit, prepends a zero.
  */
-function withLeadingZero(n) {
+function withLeadingZero(n: number): string {
     return n < 10 ? "0" + n : String(n);
 }

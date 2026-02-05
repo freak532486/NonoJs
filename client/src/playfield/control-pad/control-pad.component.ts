@@ -3,29 +3,18 @@ import { htmlToElement } from "../../loader.js";
 import controlPad from "./control-pad.html"
 import "./control-pad.css"
 
-/** @enum {number} */
-export const ControlPadButton = Object.freeze({
-    LEFT: 0,
-    UP: 1,
-    RIGHT: 2,
-    DOWN: 3,
-    WHITE: 4,
-    BLACK: 5,
-    ERASE: 6,
-    UNDO: 7,
-    REDO: 8
-});
+export enum ControlPadButton {
+    LEFT, UP, RIGHT, DOWN, WHITE, BLACK, ERASE, UNDO, REDO
+};
 
 export class ControlPad {
-    #view = /** @type {HTMLElement | null} */ (null);
+    #view: HTMLElement | undefined;
 
     /**
      * Creates and attaches this control pad.
-     * 
-     * @param {HTMLElement} parent 
      */
-    async init(parent) {
-        this.#view = await htmlToElement(controlPad);
+    async init(parent: HTMLElement) {
+        this.#view = htmlToElement(controlPad);
         parent.appendChild(this.#view);
 
         /* Checking behaviour for black and white button */
@@ -50,7 +39,7 @@ export class ControlPad {
         })
     }
 
-    get view() {
+    get view(): HTMLElement {
         if (!this.#view) {
             throw new Error("init() was not called");
         }
@@ -60,11 +49,8 @@ export class ControlPad {
 
     /**
      * Sets the callback function for a button.
-     * 
-     * @param {ControlPadButton} button
-     * @param {() => void} fn 
      */
-    setButtonFunction(button, fn) {
+    setButtonFunction(button: ControlPadButton, fn: () => void) {
         this.getButton(button).onmouseup = ev => {
             if (ev.button == 0) {
                 fn();
@@ -74,11 +60,8 @@ export class ControlPad {
 
      /**
      * Returns the element for the given button.
-     * 
-     * @param {ControlPadButton} button
-     * @returns {HTMLInputElement}
      */
-    getButton(button) {
+    getButton(button: ControlPadButton): HTMLInputElement {
         let buttonId = null;
 
         switch (button) {
@@ -97,17 +80,16 @@ export class ControlPad {
             throw new Error("Unknown button: " + button);
         }
 
-        return /** @type {HTMLInputElement} */ (this.view.querySelector("#" + buttonId));
+        return this.view.querySelector("#" + buttonId) as HTMLInputElement;
     }
 
-    isWhiteChecked() {
-        const btnWhite = /** @type {HTMLInputElement} */ (this.view.querySelector("#control-white"));
+    isWhiteChecked(): boolean {
+        const btnWhite = this.getButton(ControlPadButton.WHITE);
         return btnWhite.getAttribute("data-checked") == "true";
     }
 
-    /** @param {boolean} checked  */
-    setWhiteChecked(checked) {
-        const btnWhite = /** @type {HTMLInputElement} */ (this.view.querySelector("#control-white"));
+    setWhiteChecked(checked: boolean) {
+        const btnWhite = this.getButton(ControlPadButton.WHITE);
         btnWhite.setAttribute("data-checked", checked ? "true" : "false");
 
         if (checked && this.isBlackChecked()) {
@@ -115,14 +97,13 @@ export class ControlPad {
         }
     }
 
-    isBlackChecked() {
-        const btnBlack = /** @type {HTMLInputElement} */ (this.view.querySelector("#control-black"));
+    isBlackChecked(): boolean {
+        const btnBlack = this.getButton(ControlPadButton.BLACK);
         return btnBlack.getAttribute("data-checked") == "true";
     }
 
-    /** @param {boolean} checked  */
-    setBlackChecked(checked) {
-        const btnBlack = /** @type {HTMLInputElement} */ (this.view.querySelector("#control-black"));
+    setBlackChecked(checked: boolean) {
+        const btnBlack = this.getButton(ControlPadButton.BLACK);
         btnBlack.setAttribute("data-checked", checked ? "true" : "false");
 
         if (checked && this.isWhiteChecked()) {

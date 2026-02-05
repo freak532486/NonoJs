@@ -9,28 +9,17 @@ const COLOR_SELECTION = "#aedbff"
 
 export class BoardComponentFullState {
 
-    /**
-     * 
-     * @param {Array<CellKnowledge>} cells
-     * @param {Array<Array<number>>} finishedRowHints
-     * @param {Array<Array<number>>} finishedColHints
-     * @param {Array<LineId>} errorLines
-     */
-    constructor (cells, finishedRowHints, finishedColHints, errorLines) {
-        this.cells = cells;
-        this.finishedRowHints = finishedRowHints;
-        this.finishedColHints = finishedColHints;
-        this.errorLines = errorLines;
-    }
+    constructor (
+        public cells: Array<CellKnowledge>,
+        public finishedRowHints: Array<Array<number>>,
+        public finishedColHints: Array<Array<number>>,
+        public errorLines: Array<LineId>
+    ) {}
 
     /**
      * Creates an empty state
-     * 
-     * @param {number} width 
-     * @param {number} height 
-     * @returns {BoardComponentFullState}
      */
-    static empty(width, height) {
+    static empty(width: number, height: number) {
         return new BoardComponentFullState(
             Array(width * height).fill(CellKnowledge.UNKNOWN),
             Array(height).fill(null).map(() => []),
@@ -41,11 +30,8 @@ export class BoardComponentFullState {
 
     /**
      * Returns 'true' if this state is equal to some other state
-     * 
-     * @param {BoardComponentFullState} other
-     * @returns {boolean}
      */
-    equals(other) {
+    equals(other: BoardComponentFullState): boolean {
         return deepArraysEqual(this.cells, other.cells) &&
             deepArraysEqual(this.finishedRowHints, other.finishedRowHints) &&
             deepArraysEqual(this.finishedColHints, other.finishedColHints) &&
@@ -55,77 +41,42 @@ export class BoardComponentFullState {
 
 export class NonogramBoardComponent {
 
-    /**
-     * @type {number}
-     */
-    #width;
+    #width: number;
+    #height: number;
 
-    /**
-     * @type {number}
-     */
-    #height;
+    #rowHints: Array<Array<number>>;
+    #finishedRowHints: Array<Array<number>>;
 
-    /**
-     * @type {Array<Array<number>>}
-     */
-    #rowHints;
+    #colHints: Array<Array<number>>;
+    #finishedColHints: Array<Array<number>>;
 
-    /**
-     * @type {Array<Array<number>>}
-     */
-    #finishedRowHints;
 
-    /**
-     * @type {Array<Array<number>>}
-     */
-    #colHints;
+    #rowHintDivs: Array<HTMLElement>;
+    #colHintDivs: Array<HTMLElement>;
+    #cellDivs: Array<HTMLElement>;
 
-    /**
-     * @type {Array<Array<number>>}
-     */
-    #finishedColHints;
+    #cellBlackTemplate: HTMLElement;
+    #cellWhiteTemplate: HTMLElement; 
 
-    /**
-     * @type {Array<HTMLElement>}
-     */
-    #rowHintDivs;
+    #selection: Point = new Point();
+    #selectionDiv: HTMLElement = document.createElement("div");
 
-    /**
-     * @type {Array<HTMLElement>}
-     */
-    #colHintDivs;
+    #view: HTMLElement
 
-    /**
-     * @type {Array<HTMLElement>}
-     */
-    #cellDivs;
+    #state: Array<CellKnowledge>;
+    #errorLines: Array<LineId> = [];
 
-    /** @type {HTMLElement} */
-    #cellBlackTemplate;
-
-    /** @type {HTMLElement} */
-    #cellWhiteTemplate; 
-
-    #selection = new Point();
-    #selectionDiv = document.createElement("div");
-
-    /**
-     * @type {HTMLElement}
-     */
-    #view
-
-    /** @type {Array<CellKnowledge>} */
-    #state;
-
-    #errorLines = /** @type {Array<LineId>} */ ([]);
-
-    #clickListener = /** @type {(p: Point) => void} */ () => {};
+    #clickListener: (p: Point) => void = () => {};
 
     /**
      * @param {Array<Array<number>>} rowHints 
      * @param {Array<Array<number>>} colHints 
      */
-    constructor (rowHints, colHints) {
+    constructor (
+        rowHints: Array<Array<number>>, 
+        colHints: Array<Array<number>>
+    )
+    {
         /* Copy data */
         const width = colHints.length;
         const height = rowHints.length;
@@ -263,10 +214,8 @@ export class NonogramBoardComponent {
 
     /**
      * Initializes and attaches this component
-     * 
-     * @param {HTMLElement} parent 
      */
-    init(parent) {
+    init(parent: HTMLElement) {
         parent.append(this.view);
 
         /* Move selection to top-left corner */
@@ -276,37 +225,31 @@ export class NonogramBoardComponent {
     /**
      * Returns this components root element.
      */
-    get view() {
+    get view(): HTMLElement {
         return this.#view;
     }
 
-    get width() {
+    get width(): number {
         return this.#width;
     }
 
-    get height() {
+    get height(): number {
         return this.#height;
     }
 
-    get rowHints() {
+    get rowHints(): Array<Array<number>> {
         return this.#rowHints;
     }
 
-    get colHints() {
+    get colHints(): Array<Array<number>> {
         return this.#colHints;
     }
 
-    /**
-     * @returns {Point}
-     */
-    get selection() {
+    get selection(): Point {
         return this.#selection;
     }
 
-    /**
-     * @param {Point} p
-     */
-    set selection(p) {
+    set selection(p: Point) {
         p.x = Math.max(0, Math.min(this.#width - 1, p.x));
         p.y = Math.max(0, Math.min(this.#height - 1, p.y));
         this.#selection = p;
@@ -332,11 +275,8 @@ export class NonogramBoardComponent {
 
     /**
      * Moves the selection by the given offset. Does nothing if the selection is hidden.
-     * 
-     * @param {number} dx 
-     * @param {number} dy 
      */
-    moveSelection(dx, dy) {
+    moveSelection(dx: number, dy: number) {
         if (!this.selection) {
             return;
         }
@@ -346,34 +286,22 @@ export class NonogramBoardComponent {
 
     /**
      * Returns the cell div for the cell at the given location.
-     * 
-     * @param {number} x 
-     * @param {number} y 
-     * @returns {HTMLElement}
      */
-    #getCellDiv(x, y) {
+    #getCellDiv(x: number, y: number): HTMLElement {
         return this.#cellDivs[x + y * this.#width];
     }
 
     /**
      * Returns the current state of a cell.
-     * 
-     * @param {number} x 
-     * @param {number} y 
-     * @returns {CellKnowledge}
      */
-    getCellState(x, y) {
+    getCellState(x: number, y: number): CellKnowledge {
         return this.#state[x + y * this.#width];
     }
 
     /**
      * Sets the state of a cell.
-     * 
-     * @param {number} x 
-     * @param {number} y 
-     * @param {CellKnowledge} state 
      */
-    setCellState(x, y, state) {
+    setCellState(x: number, y: number, state: CellKnowledge) {
         this.#state[x + y * this.#width] = state;
         
         const div = this.#getCellDiv(x, y);
@@ -395,11 +323,8 @@ export class NonogramBoardComponent {
 
     /**
      * Switches the given cell to the "next" cell state.
-     * 
-     * @param {number} x 
-     * @param {number} y 
      */
-    toggleCellState(x, y) {
+    toggleCellState(x: number, y: number) {
         const cur = this.getCellState(x, y);
         
         switch (cur) {
@@ -419,10 +344,8 @@ export class NonogramBoardComponent {
 
     /**
      * Returns the full state of this board. Can be applied again later.
-     * 
-     * @returns {BoardComponentFullState}
      */
-    getFullState() {
+    getFullState(): BoardComponentFullState {
         return new BoardComponentFullState(
             [...this.#state],
             this.#finishedRowHints.map(arr => [...arr]),
@@ -433,10 +356,8 @@ export class NonogramBoardComponent {
 
     /**
      * Applies a full state to this board.
-     * 
-     * @param {BoardComponentFullState} state 
      */
-    applyState(state) {
+    applyState(state: BoardComponentFullState) {
         /* Apply cell states */
         const cells = state.cells;
 
@@ -469,10 +390,8 @@ export class NonogramBoardComponent {
 
     /**
      * Sets the change listener that listens to any changes made to the board.
-     * 
-     * @param {() => void} listener 
      */
-    setClickListener(listener) {
+    setClickListener(listener: () => void) {
         this.#clickListener = listener;
     }
 
@@ -485,11 +404,8 @@ export class NonogramBoardComponent {
 
     /**
      * Updates the preview for a line-to-be-drawn.
-     * 
-     * @param {Array<Point>} line
-     * @param {CellKnowledge} lineType
      */
-    updateLinePreview(line, lineType) {
+    updateLinePreview(line: Array<Point>, lineType: CellKnowledge) {
         if (lineType == CellKnowledge.UNKNOWN) {
             throw new Error("Cannot draw preview line for unknown type");
         }
@@ -514,7 +430,7 @@ export class NonogramBoardComponent {
             div.style.left = (cellDiv.offsetLeft + borderLeft) + "px";
             div.style.top = (cellDiv.offsetTop + borderTop) + "px";
 
-            const child = /** @type {HTMLElement} */ (template.cloneNode(true));
+            const child = template.cloneNode(true) as HTMLElement;
             child.style.opacity = "0.5";
             div.replaceChildren(child);
             this.view.appendChild(div);
@@ -523,11 +439,8 @@ export class NonogramBoardComponent {
 
     /**
      * Updates the set of finished hints for a line.
-     * 
-     * @param {LineId} lineId 
-     * @param {Array<number>} finishedHints 
      */
-    updateFinishedHints(lineId, finishedHints) {
+    updateFinishedHints(lineId: LineId, finishedHints: Array<number>) {
         const member = lineId.lineType == LineType.ROW ?
             this.#finishedRowHints :
             this.#finishedColHints;
@@ -538,11 +451,8 @@ export class NonogramBoardComponent {
 
     /**
      * Returns the current state of a given line.
-     * 
-     * @param {LineId} lineId 
-     * @returns {LineKnowledge}
      */
-    getLineState(lineId) {
+    getLineState(lineId: LineId): LineKnowledge {
         const lineLength = lineId.lineType == LineType.ROW ? this.width : this.height;
         const lineKnowledge = new LineKnowledge(Array(lineLength).fill(CellKnowledge.UNKNOWN));
         
@@ -558,11 +468,8 @@ export class NonogramBoardComponent {
 
     /**
      * Marks a line either erroneous or not.
-     * 
-     * @param {LineId} lineId 
-     * @param {boolean} isError
      */
-    markError(lineId, isError) {
+    markError(lineId: LineId, isError: boolean) {
         removeIf(this.#errorLines, x => x.equals(lineId));
         if (isError) {
             this.#errorLines.push(lineId);
@@ -632,11 +539,8 @@ export class NonogramBoardComponent {
 
     /**
      * Applies the given line knowledge to the given line in the state.
-     * 
-     * @param {LineId} lineId 
-     * @param {LineKnowledge} lineKnowledge 
      */
-    applyLineKnowledge(lineId, lineKnowledge) {
+    applyLineKnowledge(lineId: LineId, lineKnowledge: LineKnowledge) {
         const lineLength = lineId.lineType == LineType.ROW ? this.width : this.height;
         for (let i = 0; i < lineLength; i++) {
             const x = lineId.lineType == LineType.ROW ? i : lineId.index;
@@ -650,13 +554,8 @@ export class NonogramBoardComponent {
 
 /**
  * Removes all elements from the given array that satisfy the given predicate. Returns true if something was removed.
- * 
- * @template T
- * @param {Array<T>} arr 
- * @param {(val: T) => boolean} pred
- * @returns {boolean}
  */
-function removeIf(arr, pred) {
+function removeIf<T>(arr: Array<T>, pred: (val: T) => boolean): boolean {
     /* Create filtered array */
     const newArr = arr.filter(x => !pred(x));
 

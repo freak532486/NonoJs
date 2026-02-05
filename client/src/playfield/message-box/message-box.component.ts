@@ -7,21 +7,14 @@ const MESSAGE_VISIBLE_SECS = 15;
 const MAX_MESSAGES = 5;
 
 export class MessageBox {
-    /** @type {HTMLElement | null} */
-    #view = null;
+    #view: HTMLElement | undefined;
 
-    /**
-     * Initializes and attaches this component.
-     * 
-     * @param {HTMLElement} parent 
-     */
-    async init(parent) {
-        /* Create view */
-        this.#view = await htmlToElement(messageBox);
+    async init(parent: HTMLElement) {
+        this.#view = htmlToElement(messageBox);
         parent.appendChild(this.#view);
     }
 
-    get view() {
+    get view(): HTMLElement {
         if (!this.#view) {
             throw new Error("init() was not called");
         }
@@ -31,10 +24,8 @@ export class MessageBox {
 
     /**
      * Displays a message.
-     * 
-     * @param {String} msg 
      */
-    showMessage(msg) {
+    showMessage(msg: string) {
         /* Remove oldest message if too many messages */
         const allMsgs = this.view.querySelectorAll(".message");
         if (allMsgs.length >= MAX_MESSAGES) {

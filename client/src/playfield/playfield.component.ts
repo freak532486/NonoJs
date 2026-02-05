@@ -14,47 +14,31 @@ import "./playfield.css"
 import { LineIdSet } from "../common/line-id-set.js";
 import { Timer } from "./timer/timer.js";
 
-/** @typedef {import("nonojs-common").SaveState} SaveState */
-
 export class PlayfieldComponent {
 
-    /** @type {string} */
-    #nonogramId;
+    #nonogramId: string;
+    #view: HTMLElement | undefined;
+    #nonogramBoard: NonogramBoardComponent;
 
-    /** @type {HTMLElement | null} */
-    #view = null;
+    #timer: Timer = new Timer();
+    #messageBox: MessageBox = new MessageBox();
+    #controlPad: ControlPad | undefined;
 
-    /** @type {NonogramBoardComponent} */
-    #nonogramBoard;
+    #line: Array<Point> = [];
+    #lineType: CellKnowledge | undefined;
 
-    #timer = new Timer();
+    #stateHistory: Array<BoardComponentFullState> = [];
+    #activeStateIdx: number = 0;
 
-    #messageBox = new MessageBox();
+    #menu: Menu;
+    #hasWon: boolean = false;
 
-    /** @type {ControlPad | null} */
-    #controlPad = null;
-    #line = /** @type {Array<Point>} */ ([]);
-    #lineType = /** @type {CellKnowledge | null} */ (null);
-
-    /** @type {Array<BoardComponentFullState>} */
-    #stateHistory = [];
-    #activeStateIdx = 0;
-
-    #menu;
-
-    #hasWon = false;
-
-    #onExit = () => {};
+    #onExit: () => void = () => {};
 
     /**
      * Constructs a playfield for the given nonogram. Call init() before using!
-     * 
-     * @param {string} nonogramId
-     * @param {Array<Array<number>>} rowHints 
-     * @param {Array<Array<number>>} colHints 
-     * @param {Menu} menu;
      */
-    constructor (nonogramId, rowHints, colHints, menu) {
+    constructor (nonogramId: string, rowHints: Array<Array<number>>, colHints: Array<Array<number>>, menu: Menu) {
         this.#nonogramId = nonogramId;
         this.#nonogramBoard = new NonogramBoardComponent(rowHints, colHints);
         this.#menu = menu;
@@ -216,19 +200,17 @@ export class PlayfieldComponent {
 
     /**
      * Initializes this component and attaches it to the parent.
-     * 
-     * @param {HTMLElement} parent 
      */
-    async init(parent) {
+    async init(parent: HTMLElement) {
         /* Create view */
-        this.#view = await htmlToElement(playfield);
+        this.#view = htmlToElement(playfield);
         parent.appendChild(this.#view);
 
         /* Create timer */
         await this.#timer.init(this.view);
 
         /* Create control pad */
-        const footer = /** @type {HTMLElement} */ (this.view.querySelector("#footer"));
+        const footer = this.view.querySelector("#footer") as HTMLElement;
         const controlPad = new ControlPad();
         await controlPad.init(footer);
 
@@ -282,7 +264,7 @@ export class PlayfieldComponent {
         this.#controlPad = controlPad;
 
         /* Create zoomable window */
-        const nonogramRoot = /** @type {HTMLElement} */ (this.#view.querySelector("#nonogram-root"));
+        const nonogramRoot = this.#view.querySelector("#nonogram-root") as HTMLElement;
         const zoomWindow = new ZoomWindow(this.#nonogramBoard.view, nonogramRoot);
         this.#nonogramBoard.init(zoomWindow.view);
 
@@ -354,7 +336,7 @@ export class PlayfieldComponent {
         this.#updateHistory();
 
         this.#line = [];
-        this.#lineType = null;
+        this.#lineType = undefined;
         this.#nonogramBoard.clearLinePreview();
     }
 
@@ -364,10 +346,8 @@ export class PlayfieldComponent {
      * - Extend the current line by one or multiple segments.
      * - Remove a part of the line (user went backwards)
      * - Clear the line completely (user broke the line).
-     * 
-     * @param {Point} p 
      */
-    #supplyNextLineSegment(p) {
+    #supplyNextLineSegment(p: Point) {
         if (this.#lineType == null) {
             return; // Nothing to do if no line is active.
         }
@@ -397,12 +377,11 @@ export class PlayfieldComponent {
         /* Line is "broken" if both axis are off */
         if (dx != 0 && dy != 0 || expectedHorizontal && dy != 0 || expectedVertical && dx != 0) {
             this.#line.length = 0;
-            this.#lineType = null;
+            this.#lineType = undefined;
             this.#nonogramBoard.clearLinePreview();
 
-            const controlPad = /** @type {ControlPad} */ (this.#controlPad);
-            controlPad.setBlackChecked(false);
-            controlPad.setWhiteChecked(false);
+            this.#controlPad!.setBlackChecked(false);
+            this.#controlPad!.setWhiteChecked(false);
             return;
         }
 
@@ -444,16 +423,13 @@ export class PlayfieldComponent {
 
     /**
      * Moves the selection on the nonogram board and extends the current line.
-     * 
-     * @param {number} dx 
-     * @param {number} dy 
      */
-    #moveSelectionAndSet(dx, dy) {
+    #moveSelectionAndSet(dx: number, dy: number) {
         this.#nonogramBoard.moveSelection(dx, dy);
         this.#supplyNextLineSegment(this.#nonogramBoard.selection);
     }
 
-    #extractSolverState() {
+    #extractSolverState(): NonogramState {
         const activeState = [...this.#nonogramBoard.getFullState().cells];
 
         return new NonogramState(
@@ -495,11 +471,8 @@ export class PlayfieldComponent {
 
     /**
      * Rechecks the line hints for all changed lines between the current state and the given previous state.
-     * 
-     * @param {Array<CellKnowledge>} prevState 
-     * @param {boolean} displayWinMessage
      */
-    #recheckLineHints(prevState, displayWinMessage) {
+    #recheckLineHints(prevState: Array<CellKnowledge>, displayWinMessage: boolean) {
         /* Placing crosses for hints can cause other deductions, so this happens in a loop */
         const LOOP_LIMIT = 50;
 
@@ -526,10 +499,7 @@ export class PlayfieldComponent {
         console.error("Canceled hint checking after " + LOOP_LIMIT + " iterations");
     }
 
-    /**
-     * @param {boolean} displayWinMessage 
-     */
-    #checkWin(displayWinMessage) {
+    #checkWin(displayWinMessage: boolean) {
         /* Do not display win message twice */
         if (this.#hasWon) {
             return;
@@ -550,21 +520,15 @@ export class PlayfieldComponent {
 
     /**
      * Returns the current line knowledge of the given line.
-     * 
-     * @param {LineId} lineId
-     * @returns {LineKnowledge}
      */
-    getLineKnowledge(lineId) {
+    getLineKnowledge(lineId: LineId): LineKnowledge {
         return this.#nonogramBoard.getLineState(lineId);
     }
 
     /**
      * Returns the hints for the given line.
-     * 
-     * @param {LineId} lineId 
-     * @returns {Array<number>}
      */
-    getHints(lineId) {
+    getHints(lineId: LineId): Array<number> {
         const relevantHints = lineId.lineType == LineType.ROW ?
             this.#nonogramBoard.rowHints :
             this.#nonogramBoard.colHints;
@@ -572,12 +536,7 @@ export class PlayfieldComponent {
         return relevantHints[lineId.index];
     }
 
-    /**
-     * 
-     * @param {LineId} lineId 
-     * @param {HintCheckResult | undefined} deduction 
-     */
-    #applyHintCheckDeduction(lineId, deduction) {
+    #applyHintCheckDeduction(lineId: LineId, deduction: HintCheckResult | undefined) {
         /* If no deduction possible, mark an error for this line */
         if (!deduction) {
             this.#nonogramBoard.markError(lineId, true);
@@ -590,7 +549,7 @@ export class PlayfieldComponent {
         this.#nonogramBoard.applyLineKnowledge(lineId, deduction.newKnowledge);
     }
 
-    get view() {
+    get view(): HTMLElement {
         if (this.#view == null) {
             throw new Error("init() was not called");
         }
@@ -598,7 +557,7 @@ export class PlayfieldComponent {
         return this.#view;
     }
 
-    get controlPad() {
+    get controlPad(): ControlPad {
         if (this.#controlPad == null) {
             throw new Error("init() was not called");
         }
@@ -606,8 +565,7 @@ export class PlayfieldComponent {
         return this.#controlPad;
     }
 
-    /** @param {() => void} fn */
-    set onExit(fn) {
+    set onExit(fn: () => void) {
         this.#onExit = fn;
     }
 
@@ -630,11 +588,8 @@ export class PlayfieldComponent {
 
 /**
  * Returns an appropriate status text for the given deduction status.
- * 
- * @param {DeductionStatus} status
- * @returns {String}
  */
-function getTextForStatus(status) {
+function getTextForStatus(status: DeductionStatus): string {
     switch (status) {
         case DeductionStatus.COULD_NOT_DEDUCE: return "Solver could not make a deduction.";
         case DeductionStatus.DEDUCTION_MADE: return "A deduction was made.";
@@ -648,14 +603,14 @@ function getTextForStatus(status) {
 
 /**
  * Calculates which lines have changed between the two states.
- * 
- * @param {number} width
- * @param {number} height 
- * @param {Array<CellKnowledge>} oldState
- * @param {Array<CellKnowledge>} newState
- * @returns {LineIdSet} 
  */
-function calcChangedLines(width, height, oldState, newState) {
+function calcChangedLines(
+    width: number, 
+    height: number,
+    oldState: Array<CellKnowledge>,
+    newState: Array<CellKnowledge>
+): LineIdSet
+{
     const ret = new LineIdSet();
 
     for (let y = 0; y < height; y++) {

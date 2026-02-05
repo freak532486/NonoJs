@@ -5,27 +5,19 @@ const MAX_SCALE = 10;
 
 export class ZoomWindow {
 
-    /** Zoomable content to be displayed. */
-    #content;
+    #content: HTMLElement;
+    #view: HTMLElement;
 
-    /** Root element of the window. */
-    #view;
-
-    /** Transformations */
-    #panX = 0;
-    #panY = 0;
-    #scale = 1;
+    #panX: number = 0;
+    #panY: number = 0;
+    #scale: number = 1;
 
     /* Old touch inputs */
-    #t1 = /** @type {Touch | null} */ (null);
-    #t2 = /** @type {Touch | null} */ (null);
+    #t1: Touch | undefined;
+    #t2: Touch | undefined;
 
-    /**
-     * 
-     * @param {HTMLElement} content
-     * @param {HTMLElement} parent
-     */
-    constructor (content, parent) {
+
+    constructor (content: HTMLElement, parent: HTMLElement) {
         this.#content = content;
 
         /* Create view */
@@ -96,21 +88,16 @@ export class ZoomWindow {
         };
 
         this.#view.ontouchend = ev => {
-            this.#t1 = null;
-            this.#t2 = null;
+            this.#t1 = undefined;
+            this.#t2 = undefined;
         }
     }
 
     /**
      * Adjusts pan and scale so that the location in content space at p1 will be located at q1 in view-space and vice
      * versa for p2 and q2.
-     * 
-     * @param {Point} p1 
-     * @param {Point} p2 
-     * @param {Point} q1 
-     * @param {Point} q2 
      */
-    #moveToFit(p1, p2, q1, q2) {
+    #moveToFit(p1: Point, p2: Point, q1: Point, q2: Point) {
         const distOld = Math.hypot(p1.x - p2.x, p1.y - p2.y);
         const distNew = Math.hypot(q1.x - q2.x, q1.y - q2.y);
 
@@ -151,7 +138,7 @@ export class ZoomWindow {
         this.#content.style.transform = `translate(${this.#panX}px, ${this.#panY}px) scale(${this.#scale})`
     }
 
-    get view() {
+    get view(): HTMLElement {
         return this.#view;
     }
 
