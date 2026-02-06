@@ -16,13 +16,21 @@ export default class SavefileAccess
      /**
      * Fetches the savefile from local browser storage.
      */
-    fetchSavefileFromLocal(): SaveFile {
-        const activeUsername = this.getActiveUsername();
-        const key = STORAGE_KEY + (activeUsername ? "_" + activeUsername : "");
+    fetchLocalSavefile(): SaveFile {
+        const username = this.getActiveUsername();
+        return this.fetchLocalSavefileForUser(username) || createEmptySavefile(username);
+    }
 
+    /**
+     * Returns the locally stored save file for the given user. If the username is undefined, this represents the
+     * savefile that was made while not logged in. 
+     */
+    fetchLocalSavefileForUser(username: string | undefined): SaveFile | undefined
+    {
+        const key = STORAGE_KEY + (username ? "_" + username : "");
         const serialized = window.localStorage.getItem(key);
         if (!serialized) {
-            return createEmptySavefile(activeUsername);
+            return undefined;
         }
 
         return JSON.parse(serialized);
@@ -31,7 +39,7 @@ export default class SavefileAccess
     /**
      * Fetches the savefile for the currently logged-in user from the server.
      */
-    async fetchSavefileFromServer(): Promise<SaveFile>
+    async fetchServerSavefile(): Promise<SaveFile>
     {
         const username = this.getActiveUsername();
         const request = new Request("/api/savefile", { "method": "GET" });
@@ -46,7 +54,7 @@ export default class SavefileAccess
     /**
      * Writes the given savefile to local browser storage.
      */
-    writeSavefileToLocal(savefile: SaveFile)
+    writeLocalSavefile(savefile: SaveFile)
     {
         const activeUsername = this.getActiveUsername();
         const key = STORAGE_KEY + (activeUsername ? "_" + activeUsername : "");
@@ -57,7 +65,7 @@ export default class SavefileAccess
     /**
      * Writes the given savefile to the server (based on the currently logged-in user)
      */
-    async writeSavefileToServer(savefile: SaveFile)
+    async writeServerSavefile(savefile: SaveFile)
     {
         const serialized = JSON.stringify(savefile);
         const request = new Request("/api/savefile", {

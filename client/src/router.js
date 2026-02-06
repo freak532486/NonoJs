@@ -14,11 +14,17 @@ export class Router
             return;
         }
 
+        if (path == "/settings") {
+            await app.openSettings();
+            return;
+        }
+
         if (path == "/register/confirm") {
             const params = new URLSearchParams(window.location.search);
             const token = params.get("token");
             if (!token) {
                 app.navigateTo("/");
+                return;
             }
 
             await app.registrationManager.confirmRegistration(token);

@@ -65,7 +65,7 @@ export class Catalog {
             }
         });
         
-        const savefile = this.#savefileAccess.fetchSavefileFromLocal();
+        const savefile = this.#savefileAccess.fetchLocalSavefile();
         const stored = getAllStoredStates(savefile);
         for (const nonogram of loaded) {
             const numFilled = stored.get(nonogram.id)

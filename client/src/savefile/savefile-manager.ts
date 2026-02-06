@@ -16,8 +16,8 @@ export default class SavefileManager
      */
     async initializeLocalSavefile()
     {
-        const serverSavefile = await this.savefileAccess.fetchSavefileFromServer();
-        const localSavefile = this.savefileAccess.fetchSavefileFromLocal();
+        const serverSavefile = await this.savefileAccess.fetchServerSavefile();
+        const localSavefile = this.savefileAccess.fetchLocalSavefile();
         const username = this.getActiveUsername();
 
         /* When loading savefiles, the server savefile wins */
@@ -28,7 +28,7 @@ export default class SavefileManager
             MergeStrategy.SERVER_WINS
         );
 
-        this.savefileAccess.writeSavefileToLocal(merged);
+        this.savefileAccess.writeLocalSavefile(merged);
     }
 
     /**
@@ -36,8 +36,8 @@ export default class SavefileManager
      */
     async writeLocalSavefileToServer()
     {
-        const serverSavefile = await this.savefileAccess.fetchSavefileFromServer();
-        const localSavefile = this.savefileAccess.fetchSavefileFromLocal();
+        const serverSavefile = await this.savefileAccess.fetchServerSavefile();
+        const localSavefile = this.savefileAccess.fetchLocalSavefile();
         const username = this.getActiveUsername();
 
         /* Nothing to do if not logged in */
@@ -53,6 +53,6 @@ export default class SavefileManager
             MergeStrategy.LOCAL_WINS
         );
 
-        await this.savefileAccess.writeSavefileToServer(merged);
+        await this.savefileAccess.writeServerSavefile(merged);
     }
 }

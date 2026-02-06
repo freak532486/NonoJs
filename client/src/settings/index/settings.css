@@ -1,0 +1,17 @@
+#settings {
+    padding: 10px;
+    background-color: var(--bg2);
+    height: 100%;
+}
+
+#settings #entries {
+    overflow: scroll;
+    box-sizing: border-box;
+    border-top: 2px groove white;
+}
+
+#settings .settings-entry {
+    padding: 10px;
+    padding-bottom: 30px;
+    border-bottom: 2px groove white;
+}

@@ -161,7 +161,7 @@ export class StartPage {
 
         /* Fill body with a preview */
         const content = /** @type {HTMLElement} */ (ret.querySelector(".preview-container"));
-        const savefile = this.#savefileAccess.fetchSavefileFromLocal();
+        const savefile = this.#savefileAccess.fetchLocalSavefile();
         const cells = getSavestateForNonogram(savefile, nonogram.id)?.cells;
         const nonogramState = cells ? 
             new NonogramState(nonogram.rowHints, nonogram.colHints, cells) : 
@@ -192,7 +192,7 @@ export class StartPage {
 
         /* Create preview */
         const content = /** @type {HTMLElement} */ (ret.querySelector(".preview-container"));
-        const savefile = this.#savefileAccess.fetchSavefileFromLocal();
+        const savefile = this.#savefileAccess.fetchLocalSavefile();
         const saveState = getSavestateForNonogram(savefile, nonogram.id);
         const cells = saveState?.cells;
         const nonogramState = cells ? 

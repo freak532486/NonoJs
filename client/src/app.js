@@ -18,12 +18,14 @@ import DefaultMenuButtonManager from "./menu/button-managers/default-menu-button
 import SavefileAccess from "./savefile/savefile-access";
 import SavefileManager from "./savefile/savefile-manager";
 import { getSavestateForNonogram, putSavestate } from "./savefile/savefile-utils";
+import Settings from "./settings/index/settings.component";
 
 const AUTOSAVE_INTERVAL_MS = 5000;
 
 const TITLE_STARTPAGE = "NonoJs · Free Nonogram Platform";
 const TITLE_CATALOG = "Looking at catalog";
 const TITLE_LOGIN = "Log in to NonoJs";
+const TITLE_SETTINGS = "NonoJs · Settings";
 
 const contentRoot = /** @type {HTMLElement} */ (document.getElementById("content-column"));
 const headerDiv = /** @type {HTMLElement} */ (document.getElementById("header-div"));
@@ -56,6 +58,7 @@ export let registrationManager = new RegistrationConfirmationManager(
     mainDiv
 );
 let authService = new AuthService(apiService, tokenRepositoryInstance);
+let settings = new Settings(savefileAccess, () => activeUsername, () => { /* TODO */ });
 
 let loginPage = new LoginComponent(
     async (username, password) => {
@@ -130,7 +133,7 @@ export async function init() {
             await authService.logout();
             navigateTo("/");
         },
-        () => {}
+        () => navigateTo("/settings")
     );
 
     defaultMenuButtonManager.createDefaultMenuButtons(activeUsername);
@@ -183,6 +186,14 @@ export async function openLoginPage() {
     openNonogramId = undefined;
 }
 
+export async function openSettings() {
+    settings.init(mainDiv);
+    activeComponent = settings;
+
+    document.title = TITLE_SETTINGS;
+    openNonogramId = undefined;
+}
+
 /**
  * @param {string} nonogramId
  * @returns {Promise<Boolean>} 
@@ -200,7 +211,7 @@ export async function openNonogram(nonogramId) {
     }
 
     /* Load current state */
-    const savefile = savefileAccess.fetchSavefileFromLocal();
+    const savefile = savefileAccess.fetchLocalSavefile();
     var stored = savefile ? getSavestateForNonogram(savefile, nonogramId) : undefined;
 
     /* Create new playfield */
@@ -237,7 +248,7 @@ export async function openNonogram(nonogramId) {
         storePlayfieldStateToStorage(localPlayfield);
 
         /* Update last played nonogram id */
-        const saveFile = savefileAccess.fetchSavefileFromLocal();
+        const saveFile = savefileAccess.fetchLocalSavefile();
 
         if (!localPlayfield.hasWon) {
             saveFile.lastPlayedNonogramId = localPlayfield.nonogramId;
@@ -245,7 +256,7 @@ export async function openNonogram(nonogramId) {
             saveFile.lastPlayedNonogramId = undefined;
         }
 
-        savefileAccess.writeSavefileToLocal(saveFile);
+        savefileAccess.writeLocalSavefile(saveFile);
     }
 
     openNonogramId = nonogramId;
@@ -260,14 +271,14 @@ export async function openNonogram(nonogramId) {
  */
 function storePlayfieldStateToStorage(playfield) {
     const curState = playfield.currentState;
-    const savefile = savefileAccess.fetchSavefileFromLocal();
+    const savefile = savefileAccess.fetchLocalSavefile();
 
     putSavestate(savefile, playfield.nonogramId, {
         cells: curState.cells,
         elapsed: playfield.elapsed
     });
 
-    savefileAccess.writeSavefileToLocal(savefile);
+    savefileAccess.writeLocalSavefile(savefile);
 }
 
 export function showNotFoundPage() {

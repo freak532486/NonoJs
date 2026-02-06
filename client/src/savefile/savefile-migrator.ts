@@ -10,7 +10,7 @@ export default class SavefileMigrator {
     ) {}
 
     async performStorageMigration() {
-        const val = this.savefileAccess.fetchSavefileFromLocal();
+        const val = this.savefileAccess.fetchLocalSavefile();
         if (!val) {
             return;
         }
@@ -19,7 +19,7 @@ export default class SavefileMigrator {
         await MIGR002_addSolvedFlag(val);
         await MIGR003_addUsername(val);
 
-        this.savefileAccess.writeSavefileToLocal(val);
+        this.savefileAccess.writeLocalSavefile(val);
     }
 
 }

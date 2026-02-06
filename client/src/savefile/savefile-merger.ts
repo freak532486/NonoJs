@@ -45,18 +45,19 @@ export default class SavefileMerger
         }
 
         /* Merge savefiles */
-        return this.#mergeSavefiles(localSavefile, serverSavefile, mergeStrategy);
+        const losingSavefile = mergeStrategy == MergeStrategy.LOCAL_WINS ? serverSavefile : localSavefile;
+        const winningSavefile = mergeStrategy == MergeStrategy.SERVER_WINS ? localSavefile : serverSavefile;
+        return this.mergeSavefiles(losingSavefile, winningSavefile);
     }
 
-    #mergeSavefiles(
-        localSavefile: SaveFile,
-        serverSavefile: SaveFile,
-        mergeStrategy: MergeStrategy
+    /**
+     * Merges two savefiles. If there is a conflict on some data, then the winning savefile wins.
+     */
+    mergeSavefiles(
+        losingSavefile: SaveFile,
+        winningSavefile: SaveFile
     ): SaveFile
     {
-        const winningSavefile = mergeStrategy == MergeStrategy.LOCAL_WINS ? localSavefile : serverSavefile;
-        const losingSavefile = mergeStrategy == MergeStrategy.LOCAL_WINS ? serverSavefile : localSavefile;
-
         /* Assumption: Server has more recent state. */
         const lastPlayedNonogramId = winningSavefile.lastPlayedNonogramId;
         
@@ -79,7 +80,7 @@ export default class SavefileMerger
         /* Done */
         return {
             versionKey: ACTIVE_VERSION_KEY,
-            username: serverSavefile.username,
+            username: winningSavefile.username || losingSavefile.username,
             lastPlayedNonogramId: lastPlayedNonogramId,
             entries: mergedEntries
         };
