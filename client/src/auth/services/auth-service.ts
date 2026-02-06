@@ -125,15 +125,23 @@ export default class AuthService {
      */
     async logout()
     {
-        const sessionToken = this.tokenRepository.getSessionToken();
-        if (!sessionToken) {
+        const refreshToken = this.tokenRepository.getRefreshToken();
+        if (!refreshToken) {
             return;
         }
 
         const request = new Request("/api/auth/logout", {
-            "method": "GET"
+            "method": "GET",
+            "headers": {
+                "Authorization": "Bearer " + refreshToken
+            }
         });
-        await this.apiService.performRequestWithSessionToken(request);
+        const response = await this.apiService.performRequest(request);
+        if (response.status !== "ok") {
+            window.alert("An error occured. Logout was not successful.");
+            return;
+        }
+
         this.tokenRepository.clearTokens();
     }
 

@@ -1,17 +1,20 @@
 import { FastifyInstance } from "fastify";
 import { removeSession } from "./auth-sql";
 
-export async function performLogout(fastify: FastifyInstance, sessionToken: string)
+/**
+ * Logs out the session with the given refresh token. Returns 'false' if no such session exists. 
+ */
+export async function performLogout(fastify: FastifyInstance, refreshToken: string): Promise<boolean>
 {
-    /* Fetch refresh token */
-    const refreshToken = fastify.state.tokenStore.getRefreshTokenForSessionToken(sessionToken);
-    if (!refreshToken) {
-        return;
-    }
-
     /* Remove session from database */
-    await removeSession(fastify, refreshToken);
+    const removed = await removeSession(fastify, refreshToken);
 
     /* Remove session from token store */
-    fastify.state.tokenStore.removeSessionToken(sessionToken);
+    const sessionToken = fastify.state.tokenStore.getSessionTokenForRefreshToken(refreshToken);
+    if (sessionToken) {
+        fastify.state.tokenStore.removeSessionToken(sessionToken);
+    }
+
+    /* Done */
+    return removed;
 }

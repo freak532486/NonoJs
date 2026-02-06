@@ -182,12 +182,14 @@ export async function removePendingRegistration(
 export async function removeSession(
     fastify: FastifyInstance,
     refreshToken: string
-)
+): Promise<boolean>
 {
     const removalSql = `
         DELETE FROM user_sessions
         WHERE refresh_token = $refreshToken
+        RETURNING refresh_token
     `;
 
-    await database.runSql(fastify.state.db, removalSql, { $refreshToken: refreshToken });
+    const deleted = await database.runSql(fastify.state.db, removalSql, { $refreshToken: refreshToken });
+    return deleted.length > 0;
 }

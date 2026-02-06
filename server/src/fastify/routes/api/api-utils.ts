@@ -19,7 +19,7 @@ export async function getActiveUserId(fastify: FastifyInstance, request: Fastify
     return auth.getUserIdForSession(fastify, sessionToken);
 }
 
-export function getSessionTokenOrThrow(fastify: FastifyInstance, request: FastifyRequest): string
+export function getBearerTokenOrThrow(fastify: FastifyInstance, request: FastifyRequest): string
 {
     const authHeader = request.headers.authorization;
     if (!authHeader) {

@@ -3,7 +3,7 @@ import TokenPair from "../types/token-pair";
 import BasicAuthContent from "../types/basic-auth-content";
 import { FastifyInstance } from "fastify";
 import { getUserByUsername } from "./auth-sql";
-import { refreshTokenForUser } from "./session-refresh";
+import { createSessionForUser } from "./session-refresh";
 
 /**
  * Performs a basic auth login. On success, returns new session- and refresh-token for that user. On failure, returns
@@ -22,5 +22,5 @@ export async function performLogin(fastify: FastifyInstance, basicAuth: BasicAut
     }
 
     /* Correct credentials. Generate new tokens and return */
-    return await refreshTokenForUser(fastify, userEntry.userId);
+    return await createSessionForUser(fastify, userEntry.userId);
 }

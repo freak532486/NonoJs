@@ -5,22 +5,9 @@ import { SESSION_TOKEN_EXPIRY_MS } from "../internal/constants";
  * A token store. It can store a single session token per user id.
  */
 export default class TokenStore {
-    #store = new TwoWayMap<number, string>();
-    #sessionTokenToRefreshToken = new Map<string, string>();
+    #sessionTokenToUserId = new Map<string, number>();
+    #sessionTokenToRefreshToken = new TwoWayMap<string, string>();
     #creationTimestamps = new Map<string, number>();
-
-    /**
-     * Returns the session token of the given user, or undefined if no such session exists or the session expired.
-     */
-    getSessionToken(userId: number): string | undefined {
-        /* Fetch session token */
-        const sessionToken = this.#store.getByKey(userId);
-        if (!sessionToken || !this.#isTokenValid(sessionToken)) {
-            return undefined;
-        }
-
-        return sessionToken;
-    }
 
     /**
      * Returns the refresh token associated with the given session token.
@@ -31,7 +18,24 @@ export default class TokenStore {
             return undefined;
         }
 
-        return this.#sessionTokenToRefreshToken.get(sessionToken);
+        return this.#sessionTokenToRefreshToken.getByKey(sessionToken);
+    }
+
+    /**
+     * Returns the session token associated with the given refresh token.
+     */
+    getSessionTokenForRefreshToken(refreshToken: string): string | undefined
+    {
+        const sessionToken = this.#sessionTokenToRefreshToken.getByValue(refreshToken);
+        if (!sessionToken) {
+            return undefined;
+        }
+
+        if (!this.#isTokenValid(sessionToken)) {
+            return undefined;
+        }
+
+        return sessionToken;
     }
 
     /**
@@ -42,7 +46,7 @@ export default class TokenStore {
             return undefined;
         }
 
-        return this.#store.getByValue(sessionToken);
+        return this.#sessionTokenToUserId.get(sessionToken);
     }
 
     /**
@@ -63,7 +67,7 @@ export default class TokenStore {
      * Updates the session token of the given user.
      */
     putSessionToken(userId: number, sessionToken: string, refreshToken: string, creationTimestamp: number) {
-        this.#store.set(userId, sessionToken);
+        this.#sessionTokenToUserId.set(sessionToken, userId);
         this.#sessionTokenToRefreshToken.set(sessionToken, refreshToken);
         this.#creationTimestamps.set(sessionToken, creationTimestamp);
     }
@@ -73,8 +77,8 @@ export default class TokenStore {
      */
     removeSessionToken(sessionToken: string)
     {
-        this.#store.deleteByValue(sessionToken);
-        this.#sessionTokenToRefreshToken.delete(sessionToken);
+        this.#sessionTokenToUserId.delete(sessionToken);
+        this.#sessionTokenToRefreshToken.deleteByKey(sessionToken);
         this.#creationTimestamps.delete(sessionToken);
     }
 }
