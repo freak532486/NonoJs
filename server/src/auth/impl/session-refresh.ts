@@ -13,7 +13,7 @@ export async function refreshTokenForUser(fastify: FastifyInstance, userId: numb
     const creationTimestamp = Date.now();
 
     /* Write session token into memory */
-    fastify.state.tokenStore.putSessionToken(userId, sessionToken, creationTimestamp);
+    fastify.state.tokenStore.putSessionToken(userId, sessionToken, refreshToken, creationTimestamp);
 
     /* Write refresh token into database */
     await putRefreshToken(fastify, userId, refreshToken, creationTimestamp);

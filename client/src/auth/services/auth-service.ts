@@ -120,6 +120,23 @@ export default class AuthService {
         return parsed.username;
     }
 
+    /**
+     * Logs out the current active session. Does nothing if no session exists.
+     */
+    async logout()
+    {
+        const sessionToken = this.tokenRepository.getSessionToken();
+        if (!sessionToken) {
+            return;
+        }
+
+        const request = new Request("/api/auth/logout", {
+            "method": "GET"
+        });
+        await this.apiService.performRequestWithSessionToken(request);
+        this.tokenRepository.clearTokens();
+    }
+
 }
 
 function isASCII(str: string): boolean {

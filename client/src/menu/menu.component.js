@@ -6,8 +6,6 @@ import "./menu.css"
 export class Menu {
     
     #view = /** @type {HTMLElement | null} */ (null);
-
-    #onLogin = /** @type {() => Promise<void>} */ async () => {};
     
     /**
      * Initializes and attaches this component.
@@ -31,7 +29,6 @@ export class Menu {
 
         /* Assign button actions */
         const loginButton = /** @type {HTMLElement} */ (entriesElem.querySelector(".login"));
-        loginButton.onclick = () => this.#onLogin();
     }
 
     get view() {
@@ -40,15 +37,6 @@ export class Menu {
         }
 
         return this.#view;
-    }
-
-    /**
-     * Sets the action that is supposed to happen when the login button is clicked.
-     * 
-     * @param {() => Promise<void>} fn
-     */
-    set onLogin(fn) {
-        this.#onLogin = fn;
     }
 
     /** Shows or hides the menu */

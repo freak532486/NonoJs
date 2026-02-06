@@ -4,6 +4,7 @@ import { confirmRegistration, performUnconfirmedRegistration } from "./impl/regi
 import { getUserIdForSession } from "./internal/utils";
 import { performLogin } from "./impl/login";
 import { refreshSession } from "./impl/session-refresh";
+import { performLogout } from "./impl/logout";
 
 const auth = {
     parseBasicAuthHeader: headerParsing.parseBasicAuthHeader,
@@ -15,6 +16,7 @@ const auth = {
     refreshSession: refreshSession,
 
     login: performLogin,
+    logout: performLogout,
     performUnconfirmedRegistration: performUnconfirmedRegistration,
     confirmRegistration: confirmRegistration
 }

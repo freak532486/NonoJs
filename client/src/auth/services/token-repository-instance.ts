@@ -5,7 +5,7 @@ const tokenRepository: TokenRepository = {
         return _getSessionToken();
     },
 
-    setSessionToken(token: string) {
+    setSessionToken(token: string | undefined) {
         _setSessionToken(token);
     },
 
@@ -13,43 +13,40 @@ const tokenRepository: TokenRepository = {
         return _getRefreshToken();
     },
 
-    setRefreshToken(token: string) {
+    setRefreshToken(token: string | undefined) {
         _setRefreshToken(token);
+    },
+
+    clearTokens() {
+        this.setSessionToken(undefined);
+        this.setRefreshToken(undefined);
     }
 }
 
 export default tokenRepository;
 
 function _getSessionToken(): string | undefined {
-    return readCookie("sessionToken");
+    return window.localStorage.getItem("sessionToken") || undefined;
 }
 
-function _setSessionToken(token: string) {
-    writeCookie("sessionToken", token, 60 * 60); // 1 hour expiry.
+function _setSessionToken(token: string | undefined) {
+    if (!token) {
+        window.localStorage.removeItem("sessionToken");
+        return;
+    }
+
+    return window.localStorage.setItem("sessionToken", token);
 }
 
 function _getRefreshToken(): string | undefined {
-    return readCookie("refreshToken");
+    return window.localStorage.getItem("refreshToken") || undefined;
 }
 
-function _setRefreshToken(token: string) {
-    writeCookie("refreshToken", token, 7 * 24 * 60 * 60); // 7 days expiry.
-}
-
-function readCookie(key: string): string | undefined {
-    const encodedKey = encodeURIComponent(key) + "=";
-    const parts = document.cookie.split("; ");
-
-    for (const part of parts) {
-        if (part.startsWith(encodedKey)) {
-            return decodeURIComponent(part.substring(encodedKey.length));
-        }
+function _setRefreshToken(token: string | undefined) {
+    if (!token) {
+        window.localStorage.removeItem("refreshToken");
+        return;
     }
 
-    return undefined;
-}
-
-function writeCookie(key: string, value: string, maxAgeSeconds: number): void {
-    const params = "Path=/; SameSite=Strict; Max-Age=" + maxAgeSeconds;
-    document.cookie = encodeURIComponent(key) + "=" + encodeURIComponent(value) + "; " + params;
+    return window.localStorage.setItem("refreshToken", token);
 }

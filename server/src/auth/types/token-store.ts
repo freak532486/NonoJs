@@ -6,6 +6,7 @@ import { SESSION_TOKEN_EXPIRY_MS } from "../internal/constants";
  */
 export default class TokenStore {
     #store = new TwoWayMap<number, string>();
+    #sessionTokenToRefreshToken = new Map<string, string>();
     #creationTimestamps = new Map<string, number>();
 
     /**
@@ -19,6 +20,18 @@ export default class TokenStore {
         }
 
         return sessionToken;
+    }
+
+    /**
+     * Returns the refresh token associated with the given session token.
+     */
+    getRefreshTokenForSessionToken(sessionToken: string): string | undefined
+    {
+        if (!this.#isTokenValid(sessionToken)) {
+            return undefined;
+        }
+
+        return this.#sessionTokenToRefreshToken.get(sessionToken);
     }
 
     /**
@@ -42,16 +55,26 @@ export default class TokenStore {
         }
 
         /* Token is expired. Remove it. */
-        this.#store.deleteByValue(sessionToken);
-        this.#creationTimestamps.delete(sessionToken);
+        this.removeSessionToken(sessionToken);
         return false;
     }
 
     /**
      * Updates the session token of the given user.
      */
-    putSessionToken(userId: number, token: string, creationTimestamp: number) {
-        this.#store.set(userId, token);
-        this.#creationTimestamps.set(token, creationTimestamp);
+    putSessionToken(userId: number, sessionToken: string, refreshToken: string, creationTimestamp: number) {
+        this.#store.set(userId, sessionToken);
+        this.#sessionTokenToRefreshToken.set(sessionToken, refreshToken);
+        this.#creationTimestamps.set(sessionToken, creationTimestamp);
+    }
+
+    /**
+     * Removes the given session token from the store.
+     */
+    removeSessionToken(sessionToken: string)
+    {
+        this.#store.deleteByValue(sessionToken);
+        this.#sessionTokenToRefreshToken.delete(sessionToken);
+        this.#creationTimestamps.delete(sessionToken);
     }
 }

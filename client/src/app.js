@@ -13,8 +13,9 @@ import tokenRepositoryInstance from "./auth/services/token-repository-instance"
 import ApiServiceImpl from "./api/api-service-impl"
 import * as storage from "./storage"
 import * as storageMigration from "./storage-migration"
-import PlayfieldMenuButtonManager from "./playfield-menu-button-manager";
+import PlayfieldMenuButtonManager from "./menu/button-managers/playfield-menu-button-manager";
 import RegistrationConfirmationManager from "./auth/services/confirm-registration";
+import DefaultMenuButtonManager from "./menu/button-managers/default-menu-button-manager";
 
 
 const TITLE_STARTPAGE = "NonoJs · Free Nonogram Platform";
@@ -98,17 +99,33 @@ let playfield = /** @type {PlayfieldComponent | undefined} */ (undefined);
 /* If undefined, that means the catalog is open */
 let openNonogramId = /** @type {string | undefined} */ (undefined);
 
+/** If undefined, then the user is not logged in */
+let activeUsername = /** @type {string | undefined} */ (undefined);
+
 export async function init() {
     window.addEventListener("load", () => {
         catalogAccess.invalidateCache();
         storageMigration.performStorageMigration();
     });
 
+    activeUsername = await authService.getCurrentUsername();
+
     await menu.init(contentRoot);
     await header.init(headerDiv);
 
+    const defaultMenuButtonManager = new DefaultMenuButtonManager(
+        menu,
+        () => navigateTo("/login"),
+        async () => {
+            await authService.logout();
+            navigateTo("/");
+        },
+        () => {}
+    );
+
+    defaultMenuButtonManager.createDefaultMenuButtons(activeUsername);
+
     header.onLogoClicked = () => navigateTo("/");
-    menu.onLogin = async () => navigateTo("/login");
 
     startPage.onNonogramSelected = nonogramId => navigateTo("/n/" + nonogramId);
     startPage.onLogin = () => navigateTo("/login");
@@ -133,8 +150,7 @@ export async function openStartPage() {
     activeComponent = startPage;
 
     /* Check for logged in user */
-    const activeUser = await authService.getCurrentUsername();
-    startPage.setLoggedInUsername(activeUser);
+    startPage.setLoggedInUsername(activeUsername);
 
     document.title = TITLE_STARTPAGE;
 }
