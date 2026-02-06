@@ -9,12 +9,14 @@ import { CatalogAccess } from "../../catalog/catalog-access";
 import { SerializedNonogram } from "../../common/storage-types";
 import { NonogramPreview } from "../../nonogram-preview/nonogram-preview.component";
 import { CellKnowledge, NonogramState } from "../../common/nonogram-types";
-import * as storage from "../../storage"
+import SavefileAccess from "../../savefile/savefile-access"
+import { getSavestateForNonogram } from "../../savefile/savefile-utils"
 
 export class StartPage {
 
     #nonogramSelector;
     #catalogAccess;
+    #savefileAccess;
 
     /** @type {HTMLElement} */
     #view;
@@ -39,10 +41,12 @@ export class StartPage {
      * 
      * @param {StartPageNonogramSelector} nonogramSelector 
      * @param {CatalogAccess} catalogAccess;
+     * @param {SavefileAccess} savefileAccess
      */
-    constructor (nonogramSelector, catalogAccess) {
+    constructor (nonogramSelector, catalogAccess, savefileAccess) {
         this.#nonogramSelector = nonogramSelector;
         this.#catalogAccess = catalogAccess;
+        this.#savefileAccess = savefileAccess;
         this.#view = htmlToElement(startPage);
         this.setLoggedInUsername(undefined);
     }
@@ -157,7 +161,8 @@ export class StartPage {
 
         /* Fill body with a preview */
         const content = /** @type {HTMLElement} */ (ret.querySelector(".preview-container"));
-        const cells = storage.retrieveStoredState(nonogram.id)?.cells;
+        const savefile = this.#savefileAccess.fetchSavefileFromLocal();
+        const cells = getSavestateForNonogram(savefile, nonogram.id)?.cells;
         const nonogramState = cells ? 
             new NonogramState(nonogram.rowHints, nonogram.colHints, cells) : 
             NonogramState.empty(nonogram.rowHints, nonogram.colHints);
@@ -187,7 +192,8 @@ export class StartPage {
 
         /* Create preview */
         const content = /** @type {HTMLElement} */ (ret.querySelector(".preview-container"));
-        const saveState = storage.retrieveStoredState(nonogram.id);
+        const savefile = this.#savefileAccess.fetchSavefileFromLocal();
+        const saveState = getSavestateForNonogram(savefile, nonogram.id);
         const cells = saveState?.cells;
         const nonogramState = cells ? 
             new NonogramState(nonogram.rowHints, nonogram.colHints, cells) : 

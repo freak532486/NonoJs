@@ -1,7 +1,8 @@
-import { getSavefileForUser } from "./impl/fetch-savefile";
+import { getSavefileForUser, putSavefileForUser } from "./impl/savefile-access";
 
 const savefile = {
-    getSavefileForUser
+    getSavefileForUser,
+    putSavefileForUser
 };
 
 export default savefile;

@@ -1,4 +1,3 @@
-import * as storage from "../../storage.js"
 import { htmlToElement } from "../../loader.js";
 import { CellKnowledge } from "../../common/nonogram-types.js";
 
@@ -6,9 +5,12 @@ import catalog from "./catalog.html"
 import catalogEntry from "./catalog-entry.html"
 import "./catalog.css"
 import { CatalogAccess } from "../catalog-access.js";
+import SavefileAccess from "../../savefile/savefile-access.js";
+import { getAllStoredStates } from "../../savefile/savefile-utils.js";
 
 export class Catalog {
     #catalogAccess;
+    #savefileAccess;
 
     #view = /** @type {HTMLElement | null} */ (null);
     #entryTemplate = /** @type {HTMLElement | null} */ (null);
@@ -17,10 +19,12 @@ export class Catalog {
     #onNonogramSelected = () => {};
 
     /**
-     * @param {CatalogAccess} catalogAccess 
+     * @param {CatalogAccess} catalogAccess
+     * @param {SavefileAccess} savefileAccess
      */
-    constructor (catalogAccess) {
+    constructor (catalogAccess, savefileAccess) {
         this.#catalogAccess = catalogAccess;
+        this.#savefileAccess = savefileAccess;
     }
 
     /**
@@ -30,7 +34,7 @@ export class Catalog {
      */
     async init(parent) {
         if (!this.#view) {
-            this.#view = await htmlToElement(catalog);
+            this.#view = htmlToElement(catalog);
         }
         
         parent.appendChild(this.#view);
@@ -61,7 +65,8 @@ export class Catalog {
             }
         });
         
-        const stored = storage.fetchAllStoredStates();
+        const savefile = this.#savefileAccess.fetchSavefileFromLocal();
+        const stored = getAllStoredStates(savefile);
         for (const nonogram of loaded) {
             const numFilled = stored.get(nonogram.id)
                 ?.cells

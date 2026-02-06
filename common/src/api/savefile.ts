@@ -12,6 +12,7 @@ export const SaveFileEntrySchema = Type.Object({
 
 export const SaveFileSchema = Type.Object({
     versionKey: Type.Number(),
+    username: Type.Optional(Type.String()),
     lastPlayedNonogramId: Type.Optional(Type.String()),
     entries: Type.Array(SaveFileEntrySchema)
 });

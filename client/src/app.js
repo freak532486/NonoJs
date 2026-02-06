@@ -11,12 +11,15 @@ import LoginComponent from "./auth/components/login/login.component"
 import AuthService from "./auth/services/auth-service"
 import tokenRepositoryInstance from "./auth/services/token-repository-instance"
 import ApiServiceImpl from "./api/api-service-impl"
-import * as storage from "./storage"
-import * as storageMigration from "./storage-migration"
+import SavefileMigrator, * as storageMigration from "./savefile/savefile-migrator"
 import PlayfieldMenuButtonManager from "./menu/button-managers/playfield-menu-button-manager";
 import RegistrationConfirmationManager from "./auth/services/confirm-registration";
 import DefaultMenuButtonManager from "./menu/button-managers/default-menu-button-manager";
+import SavefileAccess from "./savefile/savefile-access";
+import SavefileManager from "./savefile/savefile-manager";
+import { getSavestateForNonogram, putSavestate } from "./savefile/savefile-utils";
 
+const AUTOSAVE_INTERVAL_MS = 5000;
 
 const TITLE_STARTPAGE = "NonoJs · Free Nonogram Platform";
 const TITLE_CATALOG = "Looking at catalog";
@@ -27,7 +30,16 @@ const headerDiv = /** @type {HTMLElement} */ (document.getElementById("header-di
 const mainDiv = /** @type {HTMLElement} */ (document.getElementById("main-div"));
 
 const catalogAccess = new CatalogAccess();
-const startPageNonogramSelector = new StartPageNonogramSelector(catalogAccess);
+
+
+export let apiService = new ApiServiceImpl(tokenRepositoryInstance);
+
+/** If undefined, then the user is not logged in */
+let activeUsername = /** @type {string | undefined} */ (undefined);
+
+const savefileAccess = new SavefileAccess(apiService, msg => alert(msg), () => activeUsername);
+const savefileManager = new SavefileManager(savefileAccess, () => activeUsername);
+const savefileMigrator = new SavefileMigrator(savefileAccess);
 
 /** @type {any} */
 let activeComponent = undefined;
@@ -36,9 +48,9 @@ let notFoundPage = new NotFoundPage();
 let router = new Router();
 let menu = new Menu();
 let header = new Header(menu);
-let catalog = new Catalog(catalogAccess);
-let startPage = new StartPage(startPageNonogramSelector, catalogAccess);
-export let apiService = new ApiServiceImpl(tokenRepositoryInstance);
+let catalog = new Catalog(catalogAccess, savefileAccess);
+const startPageNonogramSelector = new StartPageNonogramSelector(catalogAccess, savefileAccess);
+let startPage = new StartPage(startPageNonogramSelector, catalogAccess, savefileAccess);
 export let registrationManager = new RegistrationConfirmationManager(
     () => mainDiv.replaceChildren(),
     mainDiv
@@ -99,16 +111,14 @@ let playfield = /** @type {PlayfieldComponent | undefined} */ (undefined);
 /* If undefined, that means the catalog is open */
 let openNonogramId = /** @type {string | undefined} */ (undefined);
 
-/** If undefined, then the user is not logged in */
-let activeUsername = /** @type {string | undefined} */ (undefined);
-
 export async function init() {
     window.addEventListener("load", () => {
         catalogAccess.invalidateCache();
-        storageMigration.performStorageMigration();
+        savefileMigrator.performStorageMigration();
     });
 
     activeUsername = await authService.getCurrentUsername();
+    await savefileManager.initializeLocalSavefile();
 
     await menu.init(contentRoot);
     await header.init(headerDiv);
@@ -190,47 +200,52 @@ export async function openNonogram(nonogramId) {
     }
 
     /* Load current state */
-    var stored = storage.retrieveStoredState(nonogramId);
+    const savefile = savefileAccess.fetchSavefileFromLocal();
+    var stored = savefile ? getSavestateForNonogram(savefile, nonogramId) : undefined;
 
     /* Create new playfield */
     activeComponent?.destroy();
-    playfield = new PlayfieldComponent(
+    const localPlayfield = new PlayfieldComponent(
         nonogramId,
         nonogram.rowHints, nonogram.colHints,
         stored?.cells,
         stored?.elapsed
     );
 
-    playfield.init(mainDiv);
+    localPlayfield.init(mainDiv);
+    playfield = localPlayfield;
     activeComponent = playfield;
 
     new PlayfieldMenuButtonManager(
         menu,
-        () => playfield.solverService.hint(),
-        () => playfield.solverService.solveNext(),
-        () => playfield.solverService.solveFull(),
-        () => playfield.reset(),
+        () => localPlayfield.solverService.hint(),
+        () => localPlayfield.solverService.solveNext(),
+        () => localPlayfield.solverService.solveFull(),
+        () => localPlayfield.reset(),
         () => {
-            storePlayfieldStateToStorage(playfield);
+            storePlayfieldStateToStorage(localPlayfield);
             navigateTo("/");
         }
     ).createButtons();
 
-    window.addEventListener("beforeunload", () => storePlayfieldStateToStorage(playfield));
+    /* Auto-Save */
+    window.setInterval(() => savefileManager.writeLocalSavefileToServer(), AUTOSAVE_INTERVAL_MS)
+
+    window.addEventListener("beforeunload", () => storePlayfieldStateToStorage(localPlayfield));
 
     playfield.onStateChanged = () => {
-        storePlayfieldStateToStorage(playfield);
+        storePlayfieldStateToStorage(localPlayfield);
 
         /* Update last played nonogram id */
-        const saveFile = storage.fetchStorage();
+        const saveFile = savefileAccess.fetchSavefileFromLocal();
 
-        if (!playfield.hasWon) {
-            saveFile.lastPlayedNonogramId = playfield.nonogramId;
+        if (!localPlayfield.hasWon) {
+            saveFile.lastPlayedNonogramId = localPlayfield.nonogramId;
         } else {
             saveFile.lastPlayedNonogramId = undefined;
         }
 
-        storage.putStorage(saveFile);
+        savefileAccess.writeSavefileToLocal(saveFile);
     }
 
     openNonogramId = nonogramId;
@@ -239,17 +254,20 @@ export async function openNonogram(nonogramId) {
 }
 
 /**
- * Stores the current state of the playfield to storage.
+ * Stores the current state of the playfield to the local savefile.
  * 
  * @param {PlayfieldComponent} playfield 
  */
 function storePlayfieldStateToStorage(playfield) {
     const curState = playfield.currentState;
+    const savefile = savefileAccess.fetchSavefileFromLocal();
 
-    storage.storeState(playfield.nonogramId, {
+    putSavestate(savefile, playfield.nonogramId, {
         cells: curState.cells,
         elapsed: playfield.elapsed
     });
+
+    savefileAccess.writeSavefileToLocal(savefile);
 }
 
 export function showNotFoundPage() {

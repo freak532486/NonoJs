@@ -5,18 +5,23 @@ import auth from "../../../auth/auth"
  * If the request is authenticated with a session token, then returns the matching user id, or undefined if session
  * token is invalid for some reason.
  */
-export async function getActiveUserId(fastify: FastifyInstance, request: FastifyRequest) {
+export async function getActiveUserIdOrThrow(fastify: FastifyInstance, request: FastifyRequest): Promise<number> {
     const authHeader = request.headers.authorization;
     if (!authHeader) {
-        return undefined;
+        throw fastify.httpErrors.unauthorized();
     }
 
     const sessionToken = auth.parseBearerAuthHeader(authHeader);
     if (!sessionToken) {
-        return undefined;
+        throw fastify.httpErrors.unauthorized();
     }
 
-    return auth.getUserIdForSession(fastify, sessionToken);
+    const ret = auth.getUserIdForSession(fastify, sessionToken);
+    if (!ret) {
+        throw fastify.httpErrors.unauthorized();
+    }
+
+    return ret;
 }
 
 export function getBearerTokenOrThrow(fastify: FastifyInstance, request: FastifyRequest): string

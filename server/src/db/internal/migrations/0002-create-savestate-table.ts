@@ -9,8 +9,7 @@ export default async function createSavestateTable(fastify: FastifyInstance): Pr
     /* Create table */
     const sql = `
         CREATE TABLE savefiles (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
+            user_id INTEGER PRIMARY KEY,
             save_file BLOB NOT NULL,
             timestamp INTEGER NOT NULL,
             FOREIGN KEY(user_id) REFERENCES users(id)

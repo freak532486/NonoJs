@@ -16,7 +16,7 @@ const checkStatus: FastifyPluginAsync = async (fastify, opts): Promise<void> => 
             }
         },
         handler: async (request, reply) => {
-            const userId = await apiUtils.getActiveUserId(fastify, request);
+            const userId = await apiUtils.getActiveUserIdOrThrow(fastify, request);
             if (!userId) {
                 throw fastify.httpErrors.unauthorized();
             }

@@ -3,28 +3,21 @@ import { SaveFile, SaveFileSchema } from 'nonojs-common';
 import savefile from '../../../../savefile/savefile';
 import { getActiveUserIdOrThrow } from '../api-utils';
 
-const get: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
+const put: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     fastify.route<{
-        Reply: SaveFile
+        Body: SaveFile
     }>
     ({
-        method: "GET",
+        method: "PUT",
         url: "/",
         schema: {
-            response: {
-                200: SaveFileSchema
-            }
+            body: SaveFileSchema
         },
         handler: async (request, response) => {
             const userId = await getActiveUserIdOrThrow(fastify, request);
-            const ret = await savefile.getSavefileForUser(fastify, userId);
-            if (!ret) {
-                throw fastify.httpErrors.notFound();
-            }
-
-            return ret; 
+            savefile.putSavefileForUser(fastify, request.body, userId);
         }
     });
 }
 
-export default get
+export default put

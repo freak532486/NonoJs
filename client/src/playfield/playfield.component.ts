@@ -220,7 +220,9 @@ export class PlayfieldComponent {
      */
     #moveSelectionAndSet(dx: number, dy: number) {
         this.#nonogramBoard.moveSelection(dx, dy);
-        this.#setLineEndPosition(this.#nonogramBoard.selection);
+        if (this.#lineHandler.lineStarted()) {
+            this.#setLineEndPosition(this.#nonogramBoard.selection);
+        }
     }
 
     #extractSolverState(): NonogramState {

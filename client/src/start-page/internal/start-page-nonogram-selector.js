@@ -1,16 +1,19 @@
 import { CatalogAccess } from "../../catalog/catalog-access";
 import { SerializedNonogram } from "../../common/storage-types";
-import * as storage from "../../storage"
+import SavefileAccess from "../../savefile/savefile-access";
 
 export class StartPageNonogramSelector {
 
     #catalogAccess;
+    #savefileAccess;
 
     /**
-     * @param {CatalogAccess} catalogAccess 
+     * @param {CatalogAccess} catalogAccess
+     * @param {SavefileAccess} savefileAccess
      */
-    constructor(catalogAccess) {
+    constructor(catalogAccess, savefileAccess) {
         this.#catalogAccess = catalogAccess;
+        this.#savefileAccess = savefileAccess;
     }
 
     /**
@@ -19,7 +22,7 @@ export class StartPageNonogramSelector {
      * @returns {Promise<string | undefined>}
      */
     async getLastPlayedNonogramId() {
-        return storage.fetchStorage().lastPlayedNonogramId;
+        return this.#savefileAccess.fetchSavefileFromLocal().lastPlayedNonogramId;
     }
 
     /**
