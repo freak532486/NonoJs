@@ -1,6 +1,7 @@
 import SavefileAccess from "../../savefile/savefile-access";
 import Settings from "../index/settings.component";
 import DeleteAccountEntry from "./delete-account-entry/delete-account-entry.component";
+import ExportImportEntry from "./export-import-entry/export-import-entry.component";
 import SavefileMergeEntry from "./savefile-merge-entry/savefile-merge-entry.component";
 
 export default class SettingEntriesManager
@@ -16,6 +17,10 @@ export default class SettingEntriesManager
 
     createSettingsEntries()
     {
+        /* Entry for importing/exporting savefiles */
+        const importExportEntry = new ExportImportEntry(this.savefileAccess);
+        this.settings.addEntry(importExportEntry.view);
+
         /* Entry for merging local savefile to user savefile */
         const username = this.getActiveUsername();
         const localSavefile = this.savefileAccess.fetchLocalSavefileForUser(undefined);

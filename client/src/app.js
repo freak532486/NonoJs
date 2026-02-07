@@ -274,7 +274,9 @@ export async function openNonogram(nonogramId) {
         savefileAccess.writeLocalSavefile(saveFile);
 
         /* Queue sync */
-        savefileSyncService.queueSync();
+        if (activeUsername) {
+            savefileSyncService.queueSync();
+        }
     }
 
     openNonogramId = nonogramId;
