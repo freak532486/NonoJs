@@ -38,8 +38,7 @@ export default class DefaultMenuButtonManager
             logoutButton.classList.add("entry");
             logoutButton.classList.add("logout");
             logoutButton.classList.add("border-right");
-            logoutButton.textContent = "Log Out";
-            logoutButton.style.color = "#FF0000";
+            logoutButton.textContent = "Log Out (" + username + ")";
             logoutButton.onclick = this.onLogout;
             this.menu.appendElement(logoutButton);
         }

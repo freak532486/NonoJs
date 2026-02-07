@@ -1,4 +1,4 @@
-import { getSavefileForUser, putSavefileForUser } from "./impl/savefile-access";
+import { getSavefileForUser, putSavefileForUser } from "./impl/savefile-sql";
 
 const savefile = {
     getSavefileForUser,

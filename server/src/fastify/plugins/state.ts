@@ -5,6 +5,7 @@ import Config from "../../config/types/config";
 import config from "../../config/config"
 import Mailjet from "node-mailjet";
 import TokenStore from "../../auth/types/token-store";
+import SavefileCache from "../../savefile/impl/savefile-cache";
 
 const CONFIG_PATH = "nonojs-server-settings.json";
 const CONFIG_KEY_DATABASE_PATH = "database_path";
@@ -13,6 +14,7 @@ export interface AppState {
     config: Config;
     db: Database;
     tokenStore: TokenStore;
+    savefileCache: SavefileCache;
     mailjet: Mailjet;
 }
 
@@ -48,4 +50,7 @@ export default fp(async (fastify) => {
 
     /* Create token store for storing session tokens */
     fastify.state.tokenStore = new TokenStore();
+
+    /* Savefile cache: Savefiles are only periodically persisted into the database. */
+    fastify.state.savefileCache = new SavefileCache(fastify);
 });

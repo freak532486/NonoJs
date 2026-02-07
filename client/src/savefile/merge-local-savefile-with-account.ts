@@ -13,7 +13,7 @@ export default class MergeLocalSavefileWithAccount
      * Merges the local user-less savefile to the local savefile of the active user. The result is written to local
      * storage and to the server. The userless savefile is deleted.
      */
-    perform()
+    async perform()
     {
         const username = this.getActiveUsername();
         const freeSavefile = this.access.fetchLocalSavefileForUser(undefined);
@@ -29,7 +29,7 @@ export default class MergeLocalSavefileWithAccount
 
         /* Write savefile */
         this.access.writeLocalSavefile(merged);
-        this.access.writeServerSavefile(merged);
+        await this.access.writeServerSavefile(merged);
 
         /* Delete userless savefile */
         this.access.deleteLocalSavefileForUser(undefined);

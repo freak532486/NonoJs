@@ -21,8 +21,7 @@ import { getSavestateForNonogram, putSavestate } from "./savefile/savefile-utils
 import Settings from "./settings/index/settings.component";
 import MergeLocalSavefileWithAccount from "./savefile/merge-local-savefile-with-account";
 import SavefileMerger from "./savefile/savefile-merger";
-
-const AUTOSAVE_INTERVAL_MS = 5000;
+import SavefileSyncService from "./savefile/savefile-sync-service";
 
 const TITLE_STARTPAGE = "NonoJs · Free Nonogram Platform";
 const TITLE_CATALOG = "Looking at catalog";
@@ -44,13 +43,15 @@ let activeUsername = /** @type {string | undefined} */ (undefined);
 const savefileAccess = new SavefileAccess(apiService, msg => alert(msg), () => activeUsername);
 const savefileManager = new SavefileManager(savefileAccess, () => activeUsername);
 const savefileMigrator = new SavefileMigrator(savefileAccess);
+const savefileMerger = new SavefileMerger();
+const savefileSyncService = new SavefileSyncService(savefileAccess, savefileMerger);
 
 /** @type {any} */
 let activeComponent = undefined;
 
 let mergeLocalSavefileWithAccount = new MergeLocalSavefileWithAccount(
     savefileAccess,
-    new SavefileMerger(),
+    savefileMerger,
     () => activeUsername
 );
 
@@ -69,8 +70,8 @@ let authService = new AuthService(apiService, tokenRepositoryInstance);
 let settings = new Settings(
     savefileAccess,
     () => activeUsername,
-    () => {
-        mergeLocalSavefileWithAccount.perform();
+    async () => {
+        await mergeLocalSavefileWithAccount.perform();
         navigateTo("/");
     },
     async () => {
@@ -257,12 +258,8 @@ export async function openNonogram(nonogramId) {
         }
     ).createButtons();
 
-    /* Auto-Save */
-    window.setInterval(() => savefileManager.writeLocalSavefileToServer(), AUTOSAVE_INTERVAL_MS)
-
-    window.addEventListener("beforeunload", () => storePlayfieldStateToStorage(localPlayfield));
-
     playfield.onStateChanged = () => {
+        /* Save state to local storage */
         storePlayfieldStateToStorage(localPlayfield);
 
         /* Update last played nonogram id */
@@ -275,6 +272,9 @@ export async function openNonogram(nonogramId) {
         }
 
         savefileAccess.writeLocalSavefile(saveFile);
+
+        /* Queue sync */
+        savefileSyncService.queueSync();
     }
 
     openNonogramId = nonogramId;

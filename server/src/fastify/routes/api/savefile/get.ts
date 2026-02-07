@@ -1,6 +1,5 @@
 import { FastifyPluginAsync } from 'fastify'
 import { SaveFile, SaveFileSchema } from 'nonojs-common';
-import savefile from '../../../../savefile/savefile';
 import { getActiveUserIdOrThrow } from '../api-utils';
 
 const get: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
@@ -17,7 +16,7 @@ const get: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
         },
         handler: async (request, response) => {
             const userId = await getActiveUserIdOrThrow(fastify, request);
-            const ret = await savefile.getSavefileForUser(fastify, userId);
+            const ret = await fastify.state.savefileCache.read(userId);
             if (!ret) {
                 throw fastify.httpErrors.notFound();
             }
