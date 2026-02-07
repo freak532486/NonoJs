@@ -22,32 +22,35 @@ export default class LoginComponent {
         /* Fetch all relevant elements */
         const inputLoginUsername = this.#view.querySelector("#input-login-username") as HTMLInputElement;
         const inputLoginPassword = this.#view.querySelector("#input-login-password") as HTMLInputElement;
-        const buttonLogin = this.#view.querySelector("#button-login") as HTMLButtonElement;
+        const loginForm = this.#view.querySelector(".login-container") as HTMLFormElement;
         const labelLogin = this.#view.querySelector("#label-login-message") as HTMLElement;
 
         const inputRegisterUsername = this.#view.querySelector("#input-register-username") as HTMLInputElement;
         const inputRegisterEmail = this.#view.querySelector("#input-register-email") as HTMLInputElement;
         const inputRegisterPassword = this.#view.querySelector("#input-register-password") as HTMLInputElement;
         const inputRegisterPasswordConfirm = this.#view.querySelector("#input-register-password-confirm") as HTMLInputElement;
-        const buttonRegister = this.#view.querySelector("#button-register") as HTMLButtonElement;
+        const registerForm = this.#view.querySelector(".register-container") as HTMLFormElement;
         const labelRegister = this.#view.querySelector("#label-register-message") as HTMLElement;
         
         /* Handle login button pressed */
-        buttonLogin.onclick = () => {
+        loginForm.onsubmit = ev => {
+            ev.preventDefault();
             const username = inputLoginUsername.value;
             const password = inputLoginPassword.value;
 
             if (username.length == 0 || password.length == 0) {
                 labelLogin.textContent = "Enter all required fields."
-                return;
+                return false;
             }
             
             labelLogin.textContent = "";
             this.onLogin(username, password);
+            return false;
         }
 
         /* Handle register button pressed */
-        buttonRegister.onclick = () => {
+        registerForm.onsubmit = ev => {
+            ev.preventDefault();
             const username = inputRegisterUsername.value;
             const emailAddress = inputRegisterEmail.value;
             const password = inputRegisterPassword.value;
@@ -56,17 +59,18 @@ export default class LoginComponent {
             if (username.length == 0 || emailAddress.length == 0 || password.length == 0) {
                 this.registerMessage = "Enter all required fields.";
                 this.registerMessageColor = "#FF0000";
-                return;
+                return false;
             }
             
             if (password !== passwordConfirmation) {
                 this.registerMessage = "Passwords do not match.";
                 this.registerMessageColor = "#FF0000";
-                return;
+                return false;
             }
 
             labelRegister.textContent = "";
             this.onRegister(username, password, emailAddress);
+            return false;
         }
     }
 

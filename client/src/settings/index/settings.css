@@ -1,11 +1,8 @@
 #settings {
+    overflow: hidden visible;
     padding: 10px;
     background-color: var(--bg2);
-    height: 100%;
-}
-
-#settings #entries {
-    overflow: scroll;
+    min-height: 100%;
     box-sizing: border-box;
 }
 

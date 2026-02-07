@@ -66,8 +66,6 @@ export default class SavefileAccess
      */
     writeLocalSavefile(savefile: SaveFile)
     {
-        removeEmptySavestates(savefile);
-
         const activeUsername = this.getActiveUsername();
         const key = STORAGE_KEY + (activeUsername ? "_" + activeUsername : "");
         const serialized = JSON.stringify(savefile);
@@ -79,8 +77,6 @@ export default class SavefileAccess
      */
     async writeServerSavefile(savefile: SaveFile)
     {
-        removeEmptySavestates(savefile);
-        
         const serialized = JSON.stringify(savefile);
         const request = new Request("/api/savefile", {
             "method": "PUT",
@@ -108,9 +104,4 @@ function createEmptySavefile(username: string | undefined): SaveFile
         lastPlayedNonogramId: undefined,
         entries: []
     };
-}
-
-function removeEmptySavestates(savefile: SaveFile)
-{
-    savefile.entries = savefile.entries.filter(entry => entry.state.cells.some(cell => cell !== CellKnowledge.UNKNOWN))
 }

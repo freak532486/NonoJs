@@ -6,7 +6,7 @@
     padding: 5px;
 }
 
-#login-root .login-container {
+#login-root .login-container,.register-container {
     display: grid;
     grid-template-columns: auto auto;
     gap: 10px;
