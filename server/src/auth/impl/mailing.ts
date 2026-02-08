@@ -12,7 +12,7 @@ export async function sendMail(
     content: string
 ): Promise<boolean>
 {
-    const sourceMailAddress = getStringSettingOrThrow(fastify, "mailjet_mail_address");
+    const sourceMailAddress = getStringSettingOrThrow(fastify.state.config, "mailjet_mail_address");
     const mailjet = fastify.state.mailjet;
 
     const response = await mailjet

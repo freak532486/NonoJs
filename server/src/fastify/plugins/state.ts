@@ -6,8 +6,8 @@ import config from "../../config/config"
 import Mailjet from "node-mailjet";
 import TokenStore from "../../auth/types/token-store";
 import SavefileCache from "../../savefile/impl/savefile-cache";
+import { CONFIG_PATH } from "../constants";
 
-const CONFIG_PATH = "nonojs-server-settings.json";
 const CONFIG_KEY_DATABASE_PATH = "database_path";
 
 export interface AppState {
@@ -23,7 +23,7 @@ export default fp(async (fastify) => {
     fastify.decorate("state", {} as AppState);
 
     /* Load config */
-    const serverConfig = config.readConfig("nonojs-server-settings.json");
+    const serverConfig = config.readConfig(CONFIG_PATH);
     if (!serverConfig) {
         throw new Error("Could not read configuration file '" + CONFIG_PATH + "'.");
     }
@@ -31,8 +31,8 @@ export default fp(async (fastify) => {
     fastify.state.config = serverConfig;
 
     /* Initialize mailjet client */
-    const mailjetPrivateKey = config.getStringSetting(fastify, "mailjet_apikey_private");
-    const mailjetPublicKey = config.getStringSetting(fastify, "mailjet_apikey_public");
+    const mailjetPrivateKey = config.getStringSetting(fastify.state.config, "mailjet_apikey_private");
+    const mailjetPublicKey = config.getStringSetting(fastify.state.config, "mailjet_apikey_public");
     if (!mailjetPublicKey || !mailjetPrivateKey) {
         throw new Error("Mailjet keys have not been configured.");
     }
@@ -40,7 +40,7 @@ export default fp(async (fastify) => {
     fastify.state.mailjet = Mailjet.apiConnect(mailjetPublicKey, mailjetPrivateKey);
 
     /* Read database path from config */
-    const dbPath = config.getStringSetting(fastify, CONFIG_KEY_DATABASE_PATH);
+    const dbPath = config.getStringSetting(fastify.state.config, CONFIG_KEY_DATABASE_PATH);
     if (!dbPath) {
         throw new Error("Config setting '" + CONFIG_KEY_DATABASE_PATH + "' was undefined or invalid.");
     }

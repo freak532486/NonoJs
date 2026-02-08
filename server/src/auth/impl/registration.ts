@@ -37,8 +37,8 @@ export async function performUnconfirmedRegistration(
     const token = crypto.randomBytes(16).toString("base64url");
 
     /* Send the mail first. If this fails, then no entry has to be created in the database */
-    const hostname = getStringSettingOrThrow(fastify, "hostname");
-    const confirmationLink = "https://" + hostname + "/register/confirm?token=" + token;
+    const hostname = getStringSettingOrThrow(fastify.state.config, "hostname");
+    const confirmationLink = hostname + "/register/confirm?token=" + token;
     const mailContent = REGISTRATION_MAIL_TEMPLATE
         .replace("$username", username)
         .replace("$link", confirmationLink);
