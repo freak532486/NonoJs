@@ -24,7 +24,7 @@ NPM must be installed.
 
 1. Open a terminal inside an empty folder.
 1. `git clone` this repository into a folder, open a terminal inside the folder.
-1. Run `npm install & npm run build`
+1. Run `npm install && npm run build`
 1. Go into `server/`-folder, copy-paste the example settings, rename to `nonojs-server-settings.json`
 1. Adjust settings to your liking.
   * Note: You _need_ a mailjet API key for sending E-Mails.
