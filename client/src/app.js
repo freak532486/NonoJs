@@ -97,7 +97,7 @@ let loginPage = new LoginComponent(
             case "error":
                 loginPage.loginMessage = "An error occured. Details can be found in the browser console."
                 loginPage.loginMessageColor = "#FF0000";
-                console.log("An error occured during login.", result.data);
+                console.error("An error occured during login.", result.data);
                 break;
         }
     },

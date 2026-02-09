@@ -10,8 +10,6 @@ export default class ExportImportEntry
     constructor(
         private readonly savefileAccess: SavefileAccess
     ) {
-        console.log("Constructed with savefileAccess" + (savefileAccess == undefined ? " " : " not ") + "undefined");
-
         this.#view = htmlToElement(template);
 
         const importButton = this.#view.querySelector("#btn-import-savefile") as HTMLInputElement;
