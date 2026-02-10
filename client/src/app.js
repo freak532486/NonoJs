@@ -8,10 +8,7 @@ import { Router } from "./router";
 import { StartPage } from "./start-page/component/start-page.component";
 import { StartPageNonogramSelector } from "./start-page/internal/start-page-nonogram-selector";
 import LoginComponent from "./auth/components/login/login.component"
-import AuthService from "./auth/services/auth-service"
-import tokenRepositoryInstance from "./auth/services/token-repository-instance"
-import ApiServiceImpl from "./api/api-service-impl"
-import SavefileMigrator, * as storageMigration from "./savefile/savefile-migrator"
+import SavefileMigrator from "./savefile/savefile-migrator"
 import PlayfieldMenuButtonManager from "./menu/button-managers/playfield-menu-button-manager";
 import RegistrationConfirmationManager from "./auth/services/confirm-registration";
 import DefaultMenuButtonManager from "./menu/button-managers/default-menu-button-manager";
@@ -22,6 +19,8 @@ import Settings from "./settings/index/settings.component";
 import MergeLocalSavefileWithAccount from "./savefile/merge-local-savefile-with-account";
 import SavefileMerger from "./savefile/savefile-merger";
 import SavefileSyncService from "./savefile/savefile-sync-service";
+
+import * as auth from "./auth"
 
 const TITLE_STARTPAGE = "NonoJs · Free Nonogram Platform";
 const TITLE_CATALOG = "Looking at catalog";
@@ -34,13 +33,10 @@ const mainDiv = /** @type {HTMLElement} */ (document.getElementById("main-div"))
 
 const catalogAccess = new CatalogAccess();
 
-
-export let apiService = new ApiServiceImpl(tokenRepositoryInstance);
-
 /** If undefined, then the user is not logged in */
 let activeUsername = /** @type {string | undefined} */ (undefined);
 
-const savefileAccess = new SavefileAccess(apiService, msg => alert(msg), () => activeUsername);
+const savefileAccess = new SavefileAccess(msg => alert(msg), () => activeUsername);
 const savefileManager = new SavefileManager(savefileAccess, () => activeUsername);
 const savefileMigrator = new SavefileMigrator(savefileAccess);
 const savefileMerger = new SavefileMerger();
@@ -66,7 +62,6 @@ export let registrationManager = new RegistrationConfirmationManager(
     () => mainDiv.replaceChildren(),
     mainDiv
 );
-let authService = new AuthService(apiService, tokenRepositoryInstance);
 let settings = new Settings(
     savefileAccess,
     () => activeUsername,
@@ -75,14 +70,14 @@ let settings = new Settings(
         navigateTo("/");
     },
     async () => {
-        await authService.deleteUser();
+        await auth.deleteUser();
         navigateTo("/");
     }
 );
 
 let loginPage = new LoginComponent(
     async (username, password) => {
-        const result = await authService.login(username, password);
+        const result = await auth.login(username, password);
 
         switch (result.status) {
             case "ok":
@@ -103,7 +98,7 @@ let loginPage = new LoginComponent(
     },
 
     async (username, password, emailAddress) => {
-        const result = await authService.register(username, password, emailAddress);
+        const result = await auth.registerUser(username, password, emailAddress);
         switch (result.status) {
             case "ok":
                 loginPage.registerMessage = "A confirmation E-Mail has been sent to your address.";
@@ -137,7 +132,7 @@ let openNonogramId = /** @type {string | undefined} */ (undefined);
 export async function init() {
     catalogAccess.invalidateCache();
     
-    activeUsername = await authService.getCurrentUsername();
+    activeUsername = await auth.getCurrentUsername();
     await savefileManager.initializeLocalSavefile();
     savefileMigrator.performStorageMigration();
 
@@ -148,7 +143,7 @@ export async function init() {
         menu,
         () => navigateTo("/login"),
         async () => {
-            await authService.logout();
+            await auth.logout();
             navigateTo("/");
         },
         () => navigateTo("/settings")

@@ -1,6 +1,12 @@
 /**
  * A token for a component. It can be used to fetch a component from an entity.
  */
-export default interface Token<T> {
-    readonly key: string
+export default class Token<T> {
+
+    /**
+     * Creates a new token for component type T with the given key.
+     */
+    constructor(
+        public readonly key: string
+    ) {}
 }

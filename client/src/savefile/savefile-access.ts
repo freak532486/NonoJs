@@ -1,7 +1,6 @@
 import { SaveFile } from "nonojs-common";
-import { ApiService } from "../api/api-service";
 import { ACTIVE_VERSION_KEY } from "./savefile-migrator";
-import { CellKnowledge } from "../common/nonogram-types";
+import * as api from "../api/api-client"
 
 const STORAGE_KEY = "storage";
 
@@ -9,7 +8,6 @@ export default class SavefileAccess
 {
 
     constructor(
-        private readonly apiService: ApiService,
         private readonly onError: (errMsg: string) => void,
         private readonly getActiveUsername: () => string | undefined
     ) {}
@@ -53,7 +51,7 @@ export default class SavefileAccess
     {
         const username = this.getActiveUsername();
         const request = new Request("/api/savefile", { "method": "GET" });
-        const response = await this.apiService.performRequestWithSessionToken(request);
+        const response = await api.performRequestWithSessionToken(request);
         if (response.status !== "ok") {
             return createEmptySavefile(username);
         }
@@ -85,7 +83,7 @@ export default class SavefileAccess
                 "Content-Type": "application/json"
             }
         });
-        const response = await this.apiService.performRequestWithSessionToken(request);
+        const response = await api.performRequestWithSessionToken(request);
 
         if (response.status == "unauthorized") {
             this.onError("Unable to write savefile to server - You are not logged in.");
