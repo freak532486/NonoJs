@@ -1,4 +1,4 @@
-import * as app from "../../app"
+import * as apiClient from "../../api/api-client"
 import RegistrationConfirmationComponent from "../components/registration-confirmation/registration-confirmation.component";
 
 export default class RegistrationConfirmationManager
@@ -10,8 +10,6 @@ export default class RegistrationConfirmationManager
 
     async confirmRegistration(token: string): Promise<void>
     {
-        const apiService = app.apiService;
-
         /* Create display component */
         const component = new RegistrationConfirmationComponent();
         this.resetContentRoot();
@@ -21,7 +19,7 @@ export default class RegistrationConfirmationManager
         const request = new Request("/api/auth/confirm-registration?token=" + token, {
             method: "GET",
         });
-        const response = await apiService.performRequest(request);
+        const response = await apiClient.performRequest(request);
 
         switch (response.status) {
             case "ok":

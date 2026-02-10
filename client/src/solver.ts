@@ -6,11 +6,8 @@ const TIMEOUT_SECS = 5;
 
 /**
  * Checks if the given state is solved.
- * 
- * @param {NonogramState} state
- * @returns {boolean} 
  */
-export function isSolved(state) {
+export function isSolved(state: NonogramState): boolean {
     /* Each row and hint must be solved, then the board is solved */
     const lines = [];
     for (let x = 0; x < state.width; x++) {
@@ -26,12 +23,8 @@ export function isSolved(state) {
 
 /**
  * Returns true if the given line is solved in the given state.
- * 
- * @param {NonogramState} state 
- * @param {LineId} lineId
- * @returns {boolean} 
  */
-function isLineSolved(state, lineId) {
+function isLineSolved(state: NonogramState, lineId: LineId): boolean {
     const lineKnowledge = state.getLineKnowledge(lineId);
 
     /* Each cell must be filled */
@@ -46,11 +39,8 @@ function isLineSolved(state, lineId) {
 
 /**
  * Performs a fullsolve.
- * 
- * @param {NonogramState} state
- * @returns {FullDeductionResult} 
  */
-export function deduceAll(state) {
+export function deduceAll(state: NonogramState): FullDeductionResult {
     /* For debugging, you can print as pbmsolver-xml */
     if (PRINT_XML) {
         printXml(state);
@@ -77,10 +67,10 @@ export function deduceAll(state) {
     /* Deduce until no job is left */
     while (jobQueue.size() > 0) {
         if (Date.now() - startTs > 1000 * TIMEOUT_SECS) {
-            return new FullDeductionResult(DeductionStatus.TIMEOUT, newState);
+            return { status: DeductionStatus.TIMEOUT, newState: newState };
         }
 
-        const job = /** @type {LineDeductionJob} */ (jobQueue.pop());
+        const job = jobQueue.pop()!;
         const deduction = deduceLine(newState, job);
 
         /* Attempt exhaustive after overlap solving */
@@ -95,7 +85,7 @@ export function deduceAll(state) {
 
         /* Quit on timeout or contradiction */
         if (deduction.status !== DeductionStatus.DEDUCTION_MADE) {
-            return new FullDeductionResult(deduction.status, newState);
+            return { status: deduction.status, newState: newState };
         }
 
         /* Add all changed perpendicular lines to lines to check */
@@ -137,7 +127,7 @@ export function deduceAll(state) {
     }
 
     /* Jobs ran out. Check if all cells are filled. */
-    const allSolved = !newState.getCellStates().some(cell => cell == CellKnowledge.UNKNOWN);
+    const allSolved = !newState.cells.some(cell => cell == CellKnowledge.UNKNOWN);
 
     return new FullDeductionResult(
         allSolved ? DeductionStatus.WAS_SOLVED : 
@@ -146,8 +136,7 @@ export function deduceAll(state) {
     );
 }
 
-/** @param {NonogramState} state  */
-function printXml(state) {
+function printXml(state: NonogramState) {
     var xml = "";
 
     xml += "<puzzleset>\n";
@@ -185,10 +174,8 @@ function printXml(state) {
 
 /**
  * Based on the given input, performs the next possible deduction for the nonogram.
- * @param {NonogramState} state
- * @returns {SingleDeductionResult}
  */
-export function deduceNext(state) {
+export function deduceNext(state: NonogramState): SingleDeductionResult {
     /* Create list of all lines */
     const keyFunc = getLineKeyFunction(state);
     const lines = new PriorityQueue(keyFunc);
@@ -205,7 +192,7 @@ export function deduceNext(state) {
 
     let allSolved = true;
     while (lines.size() > 0) {
-        const job = /** @type {LineDeductionJob} */ (lines.pop());
+        const job = lines.pop()!;
         const deduction = deduceLine(state, job);
         allSolved = allSolved && deduction.status == DeductionStatus.WAS_SOLVED;
 
@@ -230,14 +217,11 @@ export function deduceNext(state) {
 }
 
 export class HintCheckResult {
-    /**
-     * @param {LineKnowledge} newKnowledge 
-     * @param {Array<number>} finishedHints List of indices referencing hints that are finished.
-     */
-    constructor(newKnowledge, finishedHints) {
-        this.newKnowledge = newKnowledge;
-        this.finishedHints = finishedHints;
-    }
+    
+    constructor(
+        public newKnowledge: LineKnowledge,
+        public finishedHints: Array<number>
+    ) {}
 }
 
 /**
@@ -245,12 +229,8 @@ export class HintCheckResult {
  * squares can definitely be crossed out because some hints are finished.
  * 
  * Returns undefined if the hints cannot be placed anymore. In that case, the line contains an error.
- * 
- * @param {LineKnowledge} lineKnowledge
- * @param {Array<Number>} hints 
- * @returns {HintCheckResult | undefined}
  */
-export function checkHints(lineKnowledge, hints) {
+export function checkHints(lineKnowledge: LineKnowledge, hints: Array<number>): HintCheckResult | undefined {
     const deduction = overlapLineDeduction(lineKnowledge, hints, false);
 
     /* Detect impossible configuration */
@@ -301,11 +281,8 @@ export function checkHints(lineKnowledge, hints) {
 
 /**
  * Returns the key function for sorting lines.
- * 
- * @param {NonogramState} state 
- * @returns {(line: LineDeductionJob) => number}
  */
-function getLineKeyFunction(state) {
+function getLineKeyFunction(state: NonogramState): (line: LineDeductionJob) => number {
     /* Order by hint size and number of filled squares */
     /** @param {LineDeductionJob} line */
     return (line) => {
@@ -323,19 +300,15 @@ function getLineKeyFunction(state) {
     };
 }
 
-/** @enum {number} */
-const DeductionMode = Object.freeze({
-    OVERLAP: 0,
-    EXHAUSTIVE: 1
-});
+enum DeductionMode {
+    OVERLAP,
+    EXHAUSTIVE
+};
 
 /**
  * Performs a single line deduction.
- * 
- * @param {NonogramState} state 
- * @param {LineDeductionJob} job
  */
-function deduceLine(state, job) {
+function deduceLine(state: NonogramState, job: LineDeductionJob): LineDeductionResult {
     const lineId = job.lineId;
     const mode = job.mode;
 
@@ -354,39 +327,21 @@ function deduceLine(state, job) {
 
 class LineDeductionResult {
 
-    /** @type {DeductionStatus} */
-    status;
+    constructor(
+        public status: DeductionStatus,
+        public newKnowledge: LineKnowledge | undefined
+    ) {}
 
-    /** @type {LineKnowledge | undefined} */
-    newKnowledge;
-
-    /**
-     * @param {DeductionStatus} status 
-     * @param {LineKnowledge | undefined} newKnowledge 
-     */
-    constructor(status, newKnowledge) {
-        this.status = status;
-        this.newKnowledge = newKnowledge;
-    }
 }
 
 class OverlapDeductionResult {
-    /**
-     * 
-     * @param {LineDeductionResult} lineDeductionResult 
-     * @param {Array<number>} finishedHints 
-     */
-    constructor (lineDeductionResult, finishedHints) {
-        this.lineDeductionResult = lineDeductionResult;
-        this.finishedHints = finishedHints;
-    }
 
-    /**
-     * 
-     * @param {DeductionStatus} status 
-     * @returns {OverlapDeductionResult}
-     */
-    static noDeduction(status) {
+    constructor (
+        public lineDeductionResult: LineDeductionResult,
+        public finishedHints: Array<number>)
+    {}
+
+    static noDeduction(status: DeductionStatus): OverlapDeductionResult {
         return new OverlapDeductionResult(new LineDeductionResult(status, undefined), []);
     }
 }
@@ -396,13 +351,13 @@ class OverlapDeductionResult {
  * 
  * If deduceFull is false, overlap deduction is not done. It is only checked whether blocks of black cells finish a
  * hint. If yes, the finished hint is recorded and its neighbours are crossed out.
- *  
- * @param {LineKnowledge} lineKnowledge 
- * @param {Array<number>} hints
- * @param {boolean} deduceFull
- * @returns {OverlapDeductionResult}
  */
-function overlapLineDeduction(lineKnowledge, hints, deduceFull = true) {
+function overlapLineDeduction(
+    lineKnowledge: LineKnowledge,
+    hints: Array<number>,
+    deduceFull: boolean = true
+): OverlapDeductionResult
+{
     const lineLength = lineKnowledge.cells.length;
     const newKnowledge = new LineKnowledge([...lineKnowledge.cells]);
     const finishedHints = [];
@@ -506,26 +461,18 @@ function overlapLineDeduction(lineKnowledge, hints, deduceFull = true) {
     return new OverlapDeductionResult(res, finishedHints);
 }
 
-class ContainedBlockResult {
-    /**
-     * @param {number} hintIdx 
-     * @param {boolean} isGap 
-     */
-    constructor(hintIdx, isGap) {
-        this.hintIdx = hintIdx;
-        this.isGap = isGap;
-    }
+interface ContainedBlockResult {
+    hintIdx: number,
+    isGap: boolean
 }
 
-/**
- * Returns
- * 
- * @param {number} x 
- * @param {Array<number>} hints 
- * @param {Array<number>} solution 
- * @returns {ContainedBlockResult}
- */
-function calcContainedBlock(x, hints, solution) {
+
+function calcContainedBlock(
+    x: number,
+    hints: Array<number>,
+    solution: Array<number>
+): ContainedBlockResult
+{
     if (hints.length != solution.length) {
         throw new Error("Solution must have as many entries as there are hints");
     }
@@ -533,7 +480,7 @@ function calcContainedBlock(x, hints, solution) {
     const idx = findLastPredecessorIdx(solution, x);
     const isGap = idx == -1 || x >= solution[idx] + hints[idx];
 
-    return new ContainedBlockResult(idx, isGap);
+    return { hintIdx: idx, isGap: isGap };
 }
 
 /**
@@ -541,12 +488,12 @@ function calcContainedBlock(x, hints, solution) {
  * be white.
  * 
  * Expensive, so only used after overlap deduction does not find anything anymore.
- * 
- * @param {LineKnowledge} lineKnowledge 
- * @param {Array<number>} hints
- * @returns {LineDeductionResult}
  */
-function exhaustiveLineDeduction(lineKnowledge, hints) {
+function exhaustiveLineDeduction(
+    lineKnowledge: LineKnowledge,
+    hints: Array<number>
+): LineDeductionResult
+{
     const newKnowledge = new LineKnowledge([...lineKnowledge.cells]);
     const lineLength = lineKnowledge.cells.length;
 
@@ -585,12 +532,12 @@ function exhaustiveLineDeduction(lineKnowledge, hints) {
 
 /**
  * After a line deduction, returns the appropriate result based on the deduced new line state.
- * 
- * @param {LineKnowledge} lineKnowledge 
- * @param {LineKnowledge} newKnowledge 
- * @returns 
  */
-function deductionResult(lineKnowledge, newKnowledge) {
+function deductionResult(
+    lineKnowledge: LineKnowledge,
+    newKnowledge: LineKnowledge
+): LineDeductionResult
+{
     const lineLength = lineKnowledge.cells.length;
     let allSolved = true;
     let anyChanged = false;
@@ -615,7 +562,11 @@ function deductionResult(lineKnowledge, newKnowledge) {
  * @param {Array<number>} hints
  * @returns {Array<number> | undefined}
  */
-function rightmostSolution(lineKnowledge, hints) {
+function rightmostSolution(
+    lineKnowledge: LineKnowledge,
+    hints: Array<number>
+): Array<number> | undefined
+{
     const lineLength = lineKnowledge.cells.length;
 
     /* Reverse line and simply use leftSol(...) */
@@ -639,15 +590,15 @@ function rightmostSolution(lineKnowledge, hints) {
 
 /**
  * Finds the leftmost valid solution for the given line.
- * 
- * @param {LineKnowledge} lineKnowledge
- * @param {Array<number>} hints
- * @param {number} lineIdx
- * @param {number} hintIdx
- * @param {Map<String, Array<number> | undefined>} memory
- * @returns {Array<number> | undefined}
  */
-function leftmostSolution( lineKnowledge, hints, lineIdx = 0, hintIdx = 0, memory = new Map()) {
+function leftmostSolution(
+    lineKnowledge: LineKnowledge,
+    hints: Array<number>,
+    lineIdx: number = 0,
+    hintIdx: number = 0,
+    memory: Map<string, Array<number> | undefined> = new Map()
+) : Array<number> | undefined
+{
     const memKey = lineIdx + "," + hintIdx;
     if (memory.has(memKey)) {
         return memory.get(memKey);
@@ -721,12 +672,8 @@ function leftmostSolution( lineKnowledge, hints, lineIdx = 0, hintIdx = 0, memor
 /**
  * Returns the index of the last element in arr that is smaller than or equal to x. If x is smaller than all elements, 
  * returns -1.
- * 
- * @param {Array<number>} arr 
- * @param {number} x 
- * @returns {number}
  */
-function findLastPredecessorIdx(arr, x) {
+function findLastPredecessorIdx(arr: Array<number>, x: number): number {
     if (arr.length == 0 || arr[0] > x) {
         return -1;
     }
@@ -742,64 +689,41 @@ function findLastPredecessorIdx(arr, x) {
 
 class LineDeductionJob {
 
-    /**
-     * 
-     * @param {LineId} lineId 
-     * @param {DeductionMode} mode 
-     */
-    constructor(lineId, mode) {
-        this.lineId = lineId;
-        this.mode = mode;
-    }
+    constructor(
+        public readonly lineId: LineId,
+        public readonly mode: DeductionMode)
+    {}
 
     /**
      * Creates a new overlap deduction job.
-     * 
-     * @param {LineType} lineType 
-     * @param {number} index 
-     * @returns 
      */
-    static overlapDeduction(lineType, index) {
+    static overlapDeduction(lineType: LineType, index: number): LineDeductionJob {
         return new LineDeductionJob(new LineId(lineType, index), DeductionMode.OVERLAP);
     }
 
     /**
      * Creates a new exhaustive deduction job.
-     * 
-     * @param {LineType} lineType 
-     * @param {number} index 
-     * @returns 
      */
-    static exhaustiveDeduction(lineType, index) {
+    static exhaustiveDeduction(lineType: LineType, index: number): LineDeductionJob {
         return new LineDeductionJob(new LineId(lineType, index), DeductionMode.EXHAUSTIVE);
     }
 }
 
 /**
  * Really shitty priority queue
- *
- * @template T
  */
-class PriorityQueue {
-    /** @type {Array<PriorityQueueEntry<T>>} */
-    #arr = [];
+class PriorityQueue<T> {
+    #arr: Array<PriorityQueueEntry<T>> = [];
 
-    #keyFunc;
-
-    /**
-     * @param {(val: T) => number} keyFunc 
-     */
-    constructor(keyFunc) {
-        this.#keyFunc = keyFunc;
-    }
+    constructor(
+        private readonly keyFunc: (val: T) => number
+    ) {}
 
     /**
      * Adds an element to the queue.
-     * 
-     * @param {T} value 
      */
-    push(value) {
-        const key = this.#keyFunc(value);
+    push(value: T) {
+        const key = this.keyFunc(value);
         let i = 0;
         
         /* Move to first entry with a larger key */
@@ -808,25 +732,21 @@ class PriorityQueue {
         }
 
         /* Insert there */
-        const entry = new PriorityQueueEntry(value, key);
+        const entry = { value: value, key: key };
         this.#arr.splice(i, 0, entry);
     }
 
     /**
      * Returns the element with the largest key from the queue.
-     * 
-     * @returns {T | undefined}
      */
-    pop() {
+    pop(): T | undefined {
         return this.#arr.pop()?.value;
     }
 
     /**
      * Removes the given value from the queue.
-     * 
-     * @param {T} val 
      */
-    remove(val) {
+    remove(val: T) {
         /* Search for element */
         const idx = this.#arr.map(entry => entry.value).indexOf(val);
 
@@ -836,37 +756,16 @@ class PriorityQueue {
         }
     }
 
-    size() {
+    size(): number {
         return this.#arr.length;
     }
 
-    get arr() {
+    get arr(): Array<T> {
         return this.#arr.map(entry => entry.value);
     }
 }
 
-/**
- * @template T
- */
-class PriorityQueueEntry {
-    #value;
-    #key;
-
-    /**
-     * 
-     * @param {T} value 
-     * @param {number} key 
-     */
-    constructor(value, key) {
-        this.#value = value;
-        this.#key = key;
-    }
-
-    get value() {
-        return this.#value;
-    }
-
-    get key() {
-        return this.#key;
-    }
+interface PriorityQueueEntry<T> {
+    key: number,
+    value: T
 }

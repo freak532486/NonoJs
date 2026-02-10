@@ -8,7 +8,7 @@ import { BoardComponentFullState, NonogramBoardComponent } from "./nonogram-boar
 import { ZoomWindow } from "./zoom-window/zoom-window.component.js";
 import playfield from "./playfield.html"
 import "./playfield.css"
-import { LineIdSet } from "../common/line-id-set.js";
+import LineIdSet from "../common/line-id-set.js";
 import { Timer } from "./timer/timer.js";
 import PlayfieldSolverService from "./playfield-solver-service.js";
 import { PlayfieldLineHandler } from "./playfield-line-handler.js";

@@ -1,46 +1,39 @@
 import { LineId, LineType } from "./nonogram-types";
 
-export class LineIdSet
+export default class LineIdSet
 {
-    #rows = /** @type {Set<number>} */ (new Set());
-    #cols = /** @type {Set<number>} */ (new Set());
+    #rows = new Set<number>();
+    #cols = new Set<number>();
 
     /**
      * Adds a line to the set.
-     * 
-     * @param {LineId} lineId 
      */
-    add(lineId) {
+    add(lineId: LineId) {
         const relevantSet = lineId.lineType == LineType.ROW ? this.#rows : this.#cols;
         relevantSet.add(lineId.index);
     }
 
     /**
      * Removes a line from the set.
-     * 
-     * @param {LineId} lineId 
      */
-    remove(lineId) {
+    remove(lineId: LineId) {
         const relevantSet = lineId.lineType == LineType.ROW ? this.#rows : this.#cols;
         relevantSet.delete(lineId.index);
     }
 
     /**
      * Checks if a line is contained in this set.
-     * 
-     * @param {LineId} lineId 
-     * @returns {boolean}
      */
-    has(lineId) {
+    has(lineId: LineId): boolean {
         const relevantSet = lineId.lineType == LineType.ROW ? this.#rows : this.#cols;
         return relevantSet.has(lineId.index);
     }
 
     /**
-     * @returns {Array<LineId>}
+     * Returns this set as an array.
      */
-    asArray() {
-        const ret = /** @type {Array<LineId>} */ ([]);
+    asArray(): Array<LineId> {
+        const ret: Array<LineId> = [];
         this.#rows.forEach(idx => ret.push(new LineId(LineType.ROW, idx)));
         this.#cols.forEach(idx => ret.push(new LineId(LineType.COLUMN, idx)));
         return ret;
@@ -48,10 +41,8 @@ export class LineIdSet
 
     /**
      * Returns the current size of the set.
-     * 
-     * @returns {number}
      */
-    get size() {
+    get size(): number {
         return this.#rows.size + this.#cols.size;
     }
 }
