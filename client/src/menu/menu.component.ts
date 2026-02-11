@@ -2,17 +2,17 @@ import { htmlToElement } from "../loader.js";
 
 import menu from "./menu.html"
 import "./menu.css"
+import UIComponent from "../common/ui-component.js";
+import { Entity } from "nonojs-common";
 
-export class Menu {
+export class Menu implements UIComponent {
     
-    #view = /** @type {HTMLElement | null} */ (null);
+    #view?: HTMLElement;
     
     /**
      * Initializes and attaches this component.
-     * 
-     * @param {HTMLElement} parent 
      */
-    async init(parent) {
+    create(parent: HTMLElement): HTMLElement {
         this.#view = htmlToElement(menu);
         parent.appendChild(this.#view);
 
@@ -20,15 +20,18 @@ export class Menu {
         this.view.style.visibility = "hidden";
 
         /* Hide when tapping outside of menu area */
-        const entriesElem = /** @type {HTMLElement} */ (this.view.querySelector(".entries"));
+        const entriesElem = this.view.querySelector(".entries") as HTMLElement;
         this.view.onclick = ev => {
-            if (!entriesElem.contains(/** @type {Node} */ (ev.target))) {
+            if (!entriesElem.contains((ev.target as Node))) {
                 this.view.style.visibility = "hidden";
             }
         }
 
-        /* Assign button actions */
-        const loginButton = /** @type {HTMLElement} */ (entriesElem.querySelector(".login"));
+        return this.#view;
+    }
+
+    cleanup(): void {
+        // Nothing to do
     }
 
     get view() {
@@ -50,21 +53,17 @@ export class Menu {
 
     /**
      * Appends an entry to the menu.
-     * 
-     * @param {HTMLElement} element 
      */
-    appendElement(element) {
-        const entriesElem = /** @type {HTMLElement} */ (this.view.querySelector(".entries"));
+    appendElement(element: HTMLElement) {
+        const entriesElem = this.view.querySelector(".entries") as HTMLElement;
         entriesElem.append(element);
     }
 
     /**
      * Removes all entries of the given class.
-     * 
-     * @param {String} elementClass 
      */
-    removeElements(elementClass) {
-        const entriesElem = /** @type {HTMLElement} */ (this.view.querySelector(".entries"));
+    removeElements(elementClass: string) {
+        const entriesElem = this.view.querySelector(".entries") as HTMLElement;
         entriesElem.querySelectorAll("." + elementClass).forEach(x => x.remove());
     }
 

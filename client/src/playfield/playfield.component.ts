@@ -129,7 +129,7 @@ export class PlayfieldComponent {
         /* Create zoomable window */
         const nonogramRoot = this.#view.querySelector("#nonogram-root") as HTMLElement;
         const zoomWindow = new ZoomWindow(this.#nonogramBoard.view, nonogramRoot);
-        this.#nonogramBoard.init(zoomWindow.view);
+        this.#nonogramBoard.create(zoomWindow.view);
 
         const undoButton = controlPad.getButton(ControlPadButton.UNDO);
         const redoButton = controlPad.getButton(ControlPadButton.REDO);

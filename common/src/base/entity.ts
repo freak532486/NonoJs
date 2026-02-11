@@ -1,6 +1,6 @@
-import Token from "./token.js";
+import { Token } from "./token.js";
 
-export default class Entity
+export class Entity
 {
 
     #componentMap = new Map<string, unknown>();

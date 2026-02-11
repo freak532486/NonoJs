@@ -1,60 +1,56 @@
 import { htmlToElement } from "../../loader.js";
 import { CellKnowledge } from "../../common/nonogram-types.js";
-
 import catalog from "./catalog.html"
 import catalogEntry from "./catalog-entry.html"
 import "./catalog.css"
+import { getAllStoredStates } from "../../savefile/savefile-utils.js";
+import UIComponent from "../../common/ui-component.js";
 import { CatalogAccess } from "../catalog-access.js";
 import SavefileAccess from "../../savefile/savefile-access.js";
-import { getAllStoredStates } from "../../savefile/savefile-utils.js";
+import { Entity } from "nonojs-common";
 
-export class Catalog {
-    #catalogAccess;
-    #savefileAccess;
+export class Catalog implements UIComponent {
 
-    #view = /** @type {HTMLElement | null} */ (null);
-    #entryTemplate = /** @type {HTMLElement | null} */ (null);
+    #view?: HTMLElement;
+    #entryTemplate?: HTMLElement;
 
-    /** @type {(nonogramId: string) => void} */
-    #onNonogramSelected = () => {};
+    #onNonogramSelected: (nonogramId: string) => void = () => {};
 
     /**
      * @param {CatalogAccess} catalogAccess
      * @param {SavefileAccess} savefileAccess
      */
-    constructor (catalogAccess, savefileAccess) {
-        this.#catalogAccess = catalogAccess;
-        this.#savefileAccess = savefileAccess;
-    }
+    constructor (
+        private readonly catalogAccess: CatalogAccess,
+        private readonly savefileAccess: SavefileAccess
+    )
+    {}
 
     /**
      * Creates the catalog and attaches it to the parent.
-     * 
-     * @param {HTMLElement} parent 
      */
-    async init(parent) {
+    async create(parent: HTMLElement): Promise<HTMLElement> {
         if (!this.#view) {
             this.#view = htmlToElement(catalog);
         }
         
         parent.appendChild(this.#view);
         this.refresh();
+        return this.#view;
     }
 
-    destroy() {
-        if (this.#view) {
-            this.#view.remove();
-        }
+    cleanup() {
+        // Nothing to do
     }
 
     /**
      * Reloads all nonograms and updates progress.
      */
     async refresh() {
-        const entriesRoot = /** @type {HTMLElement} */ (this.view.querySelector(".entries"));
+        const entriesRoot = this.view.querySelector(".entries") as HTMLElement;
         entriesRoot.replaceChildren();
 
-        const loaded = await this.#catalogAccess.getAllNonograms();
+        const loaded = await this.catalogAccess.getAllNonograms();
         loaded.sort((a, b) => {
             if (a.colHints.length > b.colHints.length) {
                 return 1;
@@ -65,7 +61,7 @@ export class Catalog {
             }
         });
         
-        const savefile = this.#savefileAccess.fetchLocalSavefile();
+        const savefile = this.savefileAccess.fetchLocalSavefile();
         const stored = getAllStoredStates(savefile);
         for (const nonogram of loaded) {
             const numFilled = stored.get(nonogram.id)
@@ -96,30 +92,23 @@ export class Catalog {
 
     /**
      * Sets the callback for when a nonogram is selected.
-     * 
-     * @param {(nonogramId: string) => void} fn 
      */
-    set onNonogramSelected(fn) {
+    set onNonogramSelected(fn: (nonogramId: string) => void) {
         this.#onNonogramSelected = fn;
     }
 
     /**
      * Creates a catalog entry with the given content.
-     * 
-     * @param {String} id 
-     * @param {String} size 
-     * @param {number} progress 
-     * @returns 
      */
-    async #createEntry(id, size, progress) {
+    #createEntry(id: string, size: string, progress: number): HTMLElement {
         if (!this.#entryTemplate) {
-            this.#entryTemplate = await htmlToElement(catalogEntry);
+            this.#entryTemplate = htmlToElement(catalogEntry);
         }
 
-        const div = /** @type {HTMLElement} */ (this.#entryTemplate.cloneNode(true));
-        /** @type {HTMLElement} */ (div.querySelector(".catalog-entry .name")).textContent = id.substring(0, 6);
-        /** @type {HTMLElement} */ (div.querySelector(".catalog-entry .size")).textContent = size;
-        /** @type {HTMLElement} */ (div.querySelector(".catalog-entry .progress")).textContent = "Progress: " + Math.floor(progress * 100) + "%";
+        const div = this.#entryTemplate.cloneNode(true) as HTMLElement;
+        div.querySelector(".catalog-entry .name")!.textContent = id.substring(0, 6);
+        div.querySelector(".catalog-entry .size")!.textContent = size;
+        div.querySelector(".catalog-entry .progress")!.textContent = "Progress: " + Math.floor(progress * 100) + "%";
         return div;
     }
 }

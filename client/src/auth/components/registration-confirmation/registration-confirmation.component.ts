@@ -2,8 +2,10 @@ import template from "./registration-confirmation.html"
 import "./registration-confirmation.css"
 import "../../../common/styles/boxes.css"
 import { htmlToElement } from "../../../loader";
+import UIComponent from "../../../common/ui-component";
+import { Entity } from "nonojs-common";
 
-export default class RegistrationConfirmationComponent
+export default class RegistrationConfirmationComponent implements UIComponent
 {
     #view: HTMLElement;
 
@@ -11,8 +13,13 @@ export default class RegistrationConfirmationComponent
         this.#view = htmlToElement(template);
     }
 
-    init(parent: HTMLElement) {
+    create(parent: HTMLElement) {
         parent.appendChild(this.#view);
+        return this.#view;
+    }
+
+    cleanup(): void {
+        // Nothing to do
     }
 
     setTitle(title: string) {

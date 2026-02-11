@@ -1,7 +1,6 @@
 import { CellKnowledge, DeductionStatus, FullDeductionResult, LineId, LineType, NonogramState, SingleDeductionResult } from "../common/nonogram-types";
 import { PlayfieldComponent } from "./playfield.component";
 import * as solver from "../solver"
-import { BoardComponentFullState } from "./nonogram-board/nonogram-board.component";
 import PlayfieldSolverMessageService from "./playfield-solver-message-service";
 
 export default class PlayfieldSolverService
@@ -50,7 +49,7 @@ export default class PlayfieldSolverService
     {
         const deduction = solver.deduceAll(this.#extractSolverState());
         this.#solverMessageService.displayFullDeductionMessage(deduction);
-        this.playfield.updateState(deduction.newState.getCellStates(), false);
+        this.playfield.updateState(deduction.newState.cells, false);
         return deduction;
     }
 
@@ -75,15 +74,15 @@ function applyDeduction(
     width: number
 )
 {
-    const isRow = deduction.lineId.lineType == LineType.ROW;
+    const isRow = deduction.lineId!.lineType == LineType.ROW;
     const height = cells.length / width;
     const lineLength = isRow ? width : height;
 
     for (let i = 0; i < lineLength; i++) {
-        const x = isRow ? i : deduction.lineId.index;
-        const y = isRow ? deduction.lineId.index : i;
+        const x = isRow ? i : deduction.lineId!.index;
+        const y = isRow ? deduction.lineId!.index : i;
         const idx = x + y * width;
 
-        cells[idx] = deduction.newKnowledge.cells[i];
+        cells[idx] = deduction.newKnowledge!.cells[i];
     }
 }

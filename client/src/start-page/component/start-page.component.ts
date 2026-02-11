@@ -11,74 +11,59 @@ import { NonogramPreview } from "../../nonogram-preview/nonogram-preview.compone
 import { CellKnowledge, NonogramState } from "../../common/nonogram-types";
 import SavefileAccess from "../../savefile/savefile-access"
 import { getSavestateForNonogram } from "../../savefile/savefile-utils"
+import { Entity } from "nonojs-common"
+import UIComponent from "../../common/ui-component"
 
-export class StartPage {
-
-    #nonogramSelector;
-    #catalogAccess;
-    #savefileAccess;
-
-    /** @type {HTMLElement} */
-    #view;
+export class StartPage implements UIComponent {
+    #view: HTMLElement;
 
     /* Listeners */
 
-    /** @type {(nonogramId: string) => void} */
-    #onNonogramSelected = () => {};
-
-    /** @type {() => void} */
-    #onOpenCatalog = () => {};
-
-    /** @type {() => void} */
-    #onOpenSettings = () => {};
-
-    /** @type {() => void} */
-    #onLogin = () => {};
+    #onNonogramSelected: (nonogramId: string) => void = () => {};
+    #onOpenCatalog: () => void = () => {};
+    #onOpenSettings: () => void = () => {};
+    #onLogin: () => void = () => {};
 
 
     /**
      * Creates a new start page object.
-     * 
-     * @param {StartPageNonogramSelector} nonogramSelector 
-     * @param {CatalogAccess} catalogAccess;
-     * @param {SavefileAccess} savefileAccess
      */
-    constructor (nonogramSelector, catalogAccess, savefileAccess) {
-        this.#nonogramSelector = nonogramSelector;
-        this.#catalogAccess = catalogAccess;
-        this.#savefileAccess = savefileAccess;
+    constructor (
+        private readonly nonogramSelector: StartPageNonogramSelector,
+        private readonly catalogAccess: CatalogAccess,
+        private readonly savefileAccess: SavefileAccess
+    )
+    {
         this.#view = htmlToElement(startPage);
         this.setLoggedInUsername(undefined);
     }
 
 
     /**
-     * Creates this component and attaches it to the given parent.
-     * 
-     * @param {HTMLElement} parent 
+     * Creates this component and attaches it to the given parent. 
      */
-    async init(parent) {
+    async create(parent: HTMLElement): Promise<HTMLElement> {
         /* Append to parent */
         parent.appendChild(this.#view);
 
         /* Register listeners */
         /* Continue */
-        const continueRoot = /** @type {HTMLElement} */ (this.#view.querySelector("#continue-root"));
-        const lastPlayedId = await this.#nonogramSelector.getLastPlayedNonogramId();
-        const lastPlayed = lastPlayedId && await this.#catalogAccess.getNonogram(lastPlayedId);
+        const continueRoot = this.#view.querySelector("#continue-root") as HTMLElement;
+        const lastPlayedId = await this.nonogramSelector.getLastPlayedNonogramId();
+        const lastPlayed = lastPlayedId && await this.catalogAccess.getNonogram(lastPlayedId);
         if (lastPlayed) {
             const continueBox = await this.#createContinueButton(lastPlayed);
             continueRoot.appendChild(continueBox);
 
-            const btnContinue = /** @type {HTMLElement} */ (continueBox.querySelector("#button-continue"));
+            const btnContinue = continueBox.querySelector("#button-continue")  as HTMLElement;
             btnContinue.onclick = () => this.#onNonogramSelected(lastPlayedId);
         }
 
         /* Nonograms of the day */
-        const notdContainer = /** @type {HTMLElement} */ (this.#view.querySelector(".box.notd>.box-content"));
-        const notdIds = await this.#nonogramSelector.getNonogramIdsOfTheDay();
+        const notdContainer = this.#view.querySelector(".box.notd>.box-content")  as HTMLElement;
+        const notdIds = await this.nonogramSelector.getNonogramIdsOfTheDay();
         for (const notdId of notdIds) {
-            const nonogramOfTheDay = await this.#catalogAccess.getNonogram(notdId);
+            const nonogramOfTheDay = await this.catalogAccess.getNonogram(notdId);
             if (!nonogramOfTheDay) {
                 continue;
             }
@@ -89,91 +74,80 @@ export class StartPage {
         }
 
         /* Random nonogram */
-        const btnRandom = /** @type {HTMLElement} */ (this.#view.querySelector("#button-random"));
+        const btnRandom = this.#view.querySelector("#button-random")  as HTMLElement;
         btnRandom.onclick = async () => {
-            const nonogramId = await this.#nonogramSelector.getRandomNonogramId();
+            const nonogramId = await this.nonogramSelector.getRandomNonogramId();
             this.#onNonogramSelected(nonogramId);
         }
 
         /* Catalog */
-        const btnCatalog = /** @type {HTMLElement} */ (this.#view.querySelector("#button-catalog"));
+        const btnCatalog = this.#view.querySelector("#button-catalog")  as HTMLElement;
         btnCatalog.onclick = () => this.#onOpenCatalog();
 
         /* Settings */
-        const btnSettings = /** @type {HTMLElement} */ (this.#view.querySelector("#button-settings"));
+        const btnSettings = this.#view.querySelector("#button-settings")  as HTMLElement;
         btnSettings.onclick = () => this.#onOpenSettings();
 
         /* Login */
-        const btnLogin = /** @type {HTMLElement} */ (this.#view.querySelector("#button-login"));
+        const btnLogin = this.#view.querySelector("#button-login") as HTMLElement;
         btnLogin.onclick = () => this.#onLogin();
+
+        return this.#view;
     }
 
-    destroy() {
-        if (this.#view) {
-            this.#view.remove();
-        }
+    cleanup() {
+        // Nothing to do
     }
 
     /**
      * Sets the callback for when a nonogram gets selected on the start page.
-     * 
-     * @param {(nonogramId: string) => void} fn 
      */
-    set onNonogramSelected(fn) {
+    set onNonogramSelected(fn: (nonogramId: string) => void) {
         this.#onNonogramSelected = fn;
     }
 
     /**
      * Sets the callback for when the catalog should be opened.
-     * 
-     * @param {() => void} fn 
      */
-    set onOpenCatalog(fn) {
+    set onOpenCatalog(fn: () => void) {
         this.#onOpenCatalog = fn;
     }
 
     /**
      * Sets the callback for when the settings should be opened.
-     * 
-     * @param {() => void} fn 
      */
-    set onOpenSettings(fn) {
+    set onOpenSettings(fn: () => void) {
         this.#onOpenSettings = fn;
     }
 
     /**
      * Sets the callback for when the login dialog should be opened.
-     * 
-     * @param {() => void} fn 
      */
-    set onLogin(fn) {
+    set onLogin(fn: () => void) {
         this.#onLogin = fn;
     }
 
     /**
      * Creates a nonogram-of-the-day button.
-     * 
-     * @param {SerializedNonogram} nonogram
-     * @returns {Promise<HTMLElement>}
      */
-    async #createNonogramOfTheDayButton(nonogram) {
-        const ret = await htmlToElement(notdLinkTemplate);
+    async #createNonogramOfTheDayButton(nonogram: SerializedNonogram): Promise<HTMLElement> {
+        const ret = htmlToElement(notdLinkTemplate);
 
         /* Fill body with a preview */
-        const content = /** @type {HTMLElement} */ (ret.querySelector(".preview-container"));
-        const savefile = this.#savefileAccess.fetchLocalSavefile();
+        const content = ret.querySelector(".preview-container") as HTMLElement;
+        const savefile = this.savefileAccess.fetchLocalSavefile();
         const cells = getSavestateForNonogram(savefile, nonogram.id)?.cells;
         const nonogramState = cells ? 
             new NonogramState(nonogram.rowHints, nonogram.colHints, cells) : 
             NonogramState.empty(nonogram.rowHints, nonogram.colHints);
         const preview = new NonogramPreview(nonogramState, 120, 120);
-        await preview.init(content);
+        preview.create(content);
 
         /* Set preview text */
-        const previewTextSpan = /** @type {HTMLElement} */ (ret.querySelector(".preview-text"));
+        const previewTextSpan = ret.querySelector(".preview-text") as HTMLElement;
         
-        const numFilled = nonogramState.getCellStates().filter(x => x != CellKnowledge.UNKNOWN).length;
-        const numTotal = nonogramState.getCellStates().length;
+        const numFilled = nonogramState.cells.filter(x => x != CellKnowledge.UNKNOWN).length;
+        const numTotal = nonogramState.cells.length;
         const progressText = Math.floor(100 * numFilled / numTotal) + "%";
 
         previewTextSpan.textContent = nonogramState.width + "x" + nonogramState.height + ", " + progressText + " finished.";
@@ -183,29 +157,26 @@ export class StartPage {
 
     /**
      * Creates the "continue playing"-box.
-     * 
-     * @param {SerializedNonogram} nonogram
-     * @returns {Promise<HTMLElement>}
      */
-    async #createContinueButton(nonogram) {
-        const ret = await htmlToElement(continuePlayingTemplate);
+    async #createContinueButton(nonogram: SerializedNonogram): Promise<HTMLElement> {
+        const ret = htmlToElement(continuePlayingTemplate);
 
         /* Create preview */
-        const content = /** @type {HTMLElement} */ (ret.querySelector(".preview-container"));
-        const savefile = this.#savefileAccess.fetchLocalSavefile();
+        const content = ret.querySelector(".preview-container") as HTMLElement;
+        const savefile = this.savefileAccess.fetchLocalSavefile();
         const saveState = getSavestateForNonogram(savefile, nonogram.id);
         const cells = saveState?.cells;
         const nonogramState = cells ? 
             new NonogramState(nonogram.rowHints, nonogram.colHints, cells) : 
             NonogramState.empty(nonogram.rowHints, nonogram.colHints);
         const preview = new NonogramPreview(nonogramState, 120, 120);
-        await preview.init(content);
+        preview.create(content);
 
         /* Set preview text */
-        const previewTextSpan = /** @type {HTMLElement} */ (ret.querySelector(".preview-text"));
+        const previewTextSpan = ret.querySelector(".preview-text") as HTMLElement;
         
-        const numFilled = nonogramState.getCellStates().filter(x => x != CellKnowledge.UNKNOWN).length;
-        const numTotal = nonogramState.getCellStates().length;
+        const numFilled = nonogramState.cells.filter(x => x != CellKnowledge.UNKNOWN).length;
+        const numTotal = nonogramState.cells.length;
         const progressText = Math.floor(100 * numFilled / numTotal) + "%";
 
         previewTextSpan.textContent = nonogramState.width + "x" + nonogramState.height + ", " + progressText + " finished.";
@@ -215,12 +186,10 @@ export class StartPage {
 
     /**
      * Sets the message for the currently logged-in user.
-     * 
-     * @param {string | undefined} username 
      */
-    setLoggedInUsername(username) {
-        const msgNotLoggedIn = /** @type {HTMLElement} */ (this.#view.querySelector("#msg-not-logged-in"));
-        const msgLoggedIn = /** @type {HTMLElement} */ (this.#view.querySelector("#msg-logged-in"));
+    setLoggedInUsername(username: string | undefined) {
+        const msgNotLoggedIn = this.#view.querySelector("#msg-not-logged-in") as HTMLElement;
+        const msgLoggedIn = this.#view.querySelector("#msg-logged-in") as HTMLElement;
 
         if (!username) {
             msgNotLoggedIn.style.display = "inline";
@@ -231,7 +200,7 @@ export class StartPage {
         msgNotLoggedIn.style.display = "none";
         msgLoggedIn.style.display = "inline";
 
-        const usernameSpan = /** @type {HTMLElement} */ (msgLoggedIn.querySelector(".username"));
+        const usernameSpan = msgLoggedIn.querySelector(".username") as HTMLElement;
         usernameSpan.textContent = username;
     }
 

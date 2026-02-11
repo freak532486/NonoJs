@@ -2,8 +2,10 @@ import { htmlToElement } from "../../../loader"
 import loginTemplate from "./login.template.html"
 import "./login.style.css"
 import "../../../common/styles/boxes.css"
+import UIComponent from "../../../common/ui-component";
+import { Entity } from "nonojs-common";
 
-export default class LoginComponent {
+export default class LoginComponent implements UIComponent {
 
     #view: HTMLElement;
 
@@ -14,7 +16,7 @@ export default class LoginComponent {
         this.#view = htmlToElement(loginTemplate);
     }
 
-    async init(parent: HTMLElement): Promise<void>
+    async create(parent: HTMLElement): Promise<HTMLElement>
     {
         /* Attach view to parent */
         parent.appendChild(this.#view);
@@ -72,10 +74,12 @@ export default class LoginComponent {
             this.onRegister(username, password, emailAddress);
             return false;
         }
+
+        return this.#view;
     }
 
-    async destroy() {
-        this.#view?.remove();
+    async cleanup() {
+        // Nothing to do
     }
 
     set loginMessage(msg: string) {

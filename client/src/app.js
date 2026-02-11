@@ -21,6 +21,9 @@ import SavefileMerger from "./savefile/savefile-merger";
 import SavefileSyncService from "./savefile/savefile-sync-service";
 
 import * as auth from "./auth"
+import { Entity } from "nonojs-common";
+
+const appCtx = new Entity();
 
 const TITLE_STARTPAGE = "NonoJs · Free Nonogram Platform";
 const TITLE_CATALOG = "Looking at catalog";
@@ -136,8 +139,8 @@ export async function init() {
     await savefileManager.initializeLocalSavefile();
     savefileMigrator.performStorageMigration();
 
-    await menu.init(contentRoot);
-    await header.init(headerDiv);
+    menu.create(contentRoot);
+    header.create(headerDiv);
 
     const defaultMenuButtonManager = new DefaultMenuButtonManager(
         menu,
@@ -173,7 +176,7 @@ export function navigateTo(path) {
 
 export async function openStartPage() {
     activeComponent?.destroy();
-    startPage.init(mainDiv);
+    startPage.create(mainDiv);
     activeComponent = startPage;
 
     /* Check for logged in user */
@@ -184,7 +187,7 @@ export async function openStartPage() {
 
 export async function openCatalog() {
     activeComponent?.destroy();
-    catalog.init(mainDiv);
+    catalog.create(mainDiv);
     activeComponent = catalog;
 
     document.title = TITLE_CATALOG;
@@ -193,7 +196,7 @@ export async function openCatalog() {
 
 export async function openLoginPage() {
     activeComponent?.destroy();
-    loginPage.init(mainDiv);
+    loginPage.create(mainDiv);
     activeComponent = loginPage;
 
     document.title = TITLE_LOGIN;

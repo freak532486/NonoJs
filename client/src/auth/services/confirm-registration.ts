@@ -13,7 +13,7 @@ export default class RegistrationConfirmationManager
         /* Create display component */
         const component = new RegistrationConfirmationComponent();
         this.resetContentRoot();
-        component.init(this.contentRoot);
+        component.create(this.contentRoot);
 
         /* Send confirmation request to server */
         const request = new Request("/api/auth/confirm-registration?token=" + token, {
