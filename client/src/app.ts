@@ -3,7 +3,6 @@ import { Header } from "./header/header.component";
 import { Menu } from "./menu/menu.component";
 import { Router } from "./routing/router";
 import SavefileMigrator from "./savefile/savefile-migrator"
-import RegistrationConfirmationManager from "./auth/services/confirm-registration";
 import DefaultMenuButtonManager from "./menu/button-managers/default-menu-button-manager";
 import SavefileAccess from "./savefile/savefile-access";
 import SavefileManager from "./savefile/savefile-manager";

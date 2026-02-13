@@ -1,7 +1,6 @@
 import Route from "../route";
 import * as apiClient from "../../api/api-client"
 import * as app from "../../app"
-import RegistrationConfirmationManager from "../../auth/services/confirm-registration";
 import UIComponent from "../../common/ui-component";
 import RegistrationConfirmationComponent from "../../auth/components/registration-confirmation/registration-confirmation.component";
 import ActiveComponentManager from "../../active-component-manager";
