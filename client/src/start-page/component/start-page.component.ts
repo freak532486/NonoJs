@@ -16,9 +16,9 @@ import UIComponent from "../../common/ui-component"
 
 export class StartPage implements UIComponent {
     #view: HTMLElement;
+    #nonogramSelector: StartPageNonogramSelector;
 
     /* Listeners */
-
     #onNonogramSelected: (nonogramId: string) => void = () => {};
     #onOpenCatalog: () => void = () => {};
     #onOpenSettings: () => void = () => {};
@@ -29,13 +29,13 @@ export class StartPage implements UIComponent {
      * Creates a new start page object.
      */
     constructor (
-        private readonly nonogramSelector: StartPageNonogramSelector,
         private readonly catalogAccess: CatalogAccess,
         private readonly savefileAccess: SavefileAccess
     )
     {
         this.#view = htmlToElement(startPage);
         this.setLoggedInUsername(undefined);
+        this.#nonogramSelector = new StartPageNonogramSelector(catalogAccess, savefileAccess);
     }
 
 
@@ -49,7 +49,7 @@ export class StartPage implements UIComponent {
         /* Register listeners */
         /* Continue */
         const continueRoot = this.#view.querySelector("#continue-root") as HTMLElement;
-        const lastPlayedId = await this.nonogramSelector.getLastPlayedNonogramId();
+        const lastPlayedId = await this.#nonogramSelector.getLastPlayedNonogramId();
         const lastPlayed = lastPlayedId && await this.catalogAccess.getNonogram(lastPlayedId);
         if (lastPlayed) {
             const continueBox = await this.#createContinueButton(lastPlayed);
@@ -61,7 +61,7 @@ export class StartPage implements UIComponent {
 
         /* Nonograms of the day */
         const notdContainer = this.#view.querySelector(".box.notd>.box-content")  as HTMLElement;
-        const notdIds = await this.nonogramSelector.getNonogramIdsOfTheDay();
+        const notdIds = await this.#nonogramSelector.getNonogramIdsOfTheDay();
         for (const notdId of notdIds) {
             const nonogramOfTheDay = await this.catalogAccess.getNonogram(notdId);
             if (!nonogramOfTheDay) {
@@ -76,7 +76,7 @@ export class StartPage implements UIComponent {
         /* Random nonogram */
         const btnRandom = this.#view.querySelector("#button-random")  as HTMLElement;
         btnRandom.onclick = async () => {
-            const nonogramId = await this.nonogramSelector.getRandomNonogramId();
+            const nonogramId = await this.#nonogramSelector.getRandomNonogramId();
             this.#onNonogramSelected(nonogramId);
         }
 
