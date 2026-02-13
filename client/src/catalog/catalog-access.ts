@@ -1,13 +1,11 @@
 import { SerializedNonogram } from "../common/storage-types";
 
 class JoinedFiletype {
-    /** @type {Array<SerializedNonogram>} */
-    nonograms = [];
+    nonograms: Array<SerializedNonogram> = [];
 }
 
 export class CatalogAccess {
-    /** @type {Map<string, SerializedNonogram> | undefined} */
-    #cache;
+    #cache?: Map<string, SerializedNonogram>;
 
     async getAllNonograms() {
         if (this.#cache) {
@@ -15,7 +13,7 @@ export class CatalogAccess {
         }
 
         const serialized = await fetch("/nonograms/joined.json");
-        const joined = /** @type {JoinedFiletype} */ (JSON.parse(await serialized.text()));
+        const joined = JSON.parse(await serialized.text()) as JoinedFiletype;
         normalizeNonograms(joined);
         
         /* Fill cache */
@@ -28,18 +26,14 @@ export class CatalogAccess {
 
     /**
      * Loads the nonogram with the given id. Returns undefined if no such nonogram exists.
-     * 
-     * @param {string} nonogramId 
-     * @returns {Promise<SerializedNonogram | undefined>}
      */
-    async getNonogram(nonogramId) {
+    async getNonogram(nonogramId: string): Promise<SerializedNonogram | undefined> {
         /* Fill cache if this hasn't happened yet */
         if (!this.#cache) {
             await this.getAllNonograms();
         }
 
-        const cache = /** @type {Map<string, SerializedNonogram>} */ (this.#cache);
-        return cache.get(nonogramId);
+        return this.#cache!.get(nonogramId);
     }
 
     invalidateCache() {
@@ -49,10 +43,8 @@ export class CatalogAccess {
 
 /**
  * Removes all hints smaller than or equal to zero from the hint lists.
- * 
- * @param {JoinedFiletype} joined 
  */
-function normalizeNonograms(joined) {
+function normalizeNonograms(joined: JoinedFiletype) {
     for (const nonogram of joined.nonograms) {
         for (let i = 0; i < nonogram.colHints.length; i++) {
             nonogram.colHints[i] = nonogram.colHints[i].filter(hint => hint > 0);

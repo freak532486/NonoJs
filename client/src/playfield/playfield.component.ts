@@ -12,8 +12,9 @@ import LineIdSet from "../common/line-id-set.js";
 import { Timer } from "./timer/timer.js";
 import PlayfieldSolverService from "./playfield-solver-service.js";
 import { PlayfieldLineHandler } from "./playfield-line-handler.js";
+import UIComponent from "../common/ui-component.js";
 
-export class PlayfieldComponent {
+export class PlayfieldComponent implements UIComponent {
 
     #nonogramId: string;
     #view: HTMLElement | undefined;
@@ -74,7 +75,7 @@ export class PlayfieldComponent {
     /**
      * Initializes this component and attaches it to the parent.
      */
-    async init(parent: HTMLElement) {
+    async create(parent: HTMLElement): Promise<HTMLElement> {
         /* Create view */
         this.#view = htmlToElement(playfield);
         parent.appendChild(this.#view);
@@ -163,6 +164,12 @@ export class PlayfieldComponent {
             undoButton.style.visibility = "visible";
             redoButton.style.visibility = (this.#activeStateIdx == this.#stateHistory.length - 1) ? "hidden" : "visible";
         };
+
+        return this.#view;
+    }
+
+    cleanup(): void {
+        // Nothing to do
     }
 
     #applyLine() {

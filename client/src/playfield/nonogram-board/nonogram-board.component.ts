@@ -1,7 +1,6 @@
 import { CellKnowledge, LineId, LineKnowledge, LineType } from "../../common/nonogram-types.js";
 import { Point } from "../../common/point.js";
 import UIComponent from "../../common/ui-component.js";
-import { deepArraysEqual } from "../../util.js";
 
 import "./nonogram-board.css"
 
@@ -552,6 +551,32 @@ function removeIf<T>(arr: Array<T>, pred: (val: T) => boolean): boolean {
     arr.length = newArr.length;
     for (let i = 0; i < arr.length; i++) {
         arr[i] = newArr[i];
+    }
+
+    return true;
+}
+
+/**
+ * Returns 'true' iff the contents of the two arrays are equal.
+ */
+function deepArraysEqual(arr1: Array<any>, arr2: Array<any>) {
+    if (arr1.length != arr2.length) {
+        return false;
+    }
+
+    for (let i = 0; i < arr1.length; i++) {
+        const val1 = arr1[i];
+        const val2 = arr2[i];
+
+        if (Array.isArray(val1) && Array.isArray(val2)) {
+            if (!deepArraysEqual(val1, val2)) {
+                return false;
+            }
+        } else if (Object.hasOwn(val1, "equals") && !val1.equals(val2)) {
+            return false;
+        } else if (val1 !== val2) {
+            return false;
+        }
     }
 
     return true;

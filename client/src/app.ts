@@ -22,6 +22,7 @@ import SavefileSyncService from "./savefile/savefile-sync-service";
 
 import * as auth from "./auth"
 import { Entity } from "nonojs-common";
+import UIComponent from "./common/ui-component";
 
 const appCtx = new Entity();
 
@@ -30,14 +31,14 @@ const TITLE_CATALOG = "Looking at catalog";
 const TITLE_LOGIN = "Log in to NonoJs";
 const TITLE_SETTINGS = "NonoJs · Settings";
 
-const contentRoot = /** @type {HTMLElement} */ (document.getElementById("content-column"));
-const headerDiv = /** @type {HTMLElement} */ (document.getElementById("header-div"));
-const mainDiv = /** @type {HTMLElement} */ (document.getElementById("main-div"));
+const contentRoot = document.getElementById("content-column") as HTMLElement;
+const headerDiv = document.getElementById("header-div")  as HTMLElement;
+const mainDiv = document.getElementById("main-div") as HTMLElement;
 
 const catalogAccess = new CatalogAccess();
 
 /** If undefined, then the user is not logged in */
-let activeUsername = /** @type {string | undefined} */ (undefined);
+let activeUsername: string | undefined;
 
 const savefileAccess = new SavefileAccess(msg => alert(msg), () => activeUsername);
 const savefileManager = new SavefileManager(savefileAccess, () => activeUsername);
@@ -45,8 +46,7 @@ const savefileMigrator = new SavefileMigrator(savefileAccess);
 const savefileMerger = new SavefileMerger();
 const savefileSyncService = new SavefileSyncService(savefileAccess, savefileMerger);
 
-/** @type {any} */
-let activeComponent = undefined;
+let activeComponent: UIComponent | undefined = undefined;
 
 let mergeLocalSavefileWithAccount = new MergeLocalSavefileWithAccount(
     savefileAccess,
@@ -127,10 +127,8 @@ let loginPage = new LoginComponent(
     }
 );
 
-let playfield = /** @type {PlayfieldComponent | undefined} */ (undefined);
-
-/* If undefined, that means the catalog is open */
-let openNonogramId = /** @type {string | undefined} */ (undefined);
+let playfield: PlayfieldComponent | undefined;
+let openNonogramId: string | undefined;
 
 export async function init() {
     catalogAccess.invalidateCache();
@@ -166,16 +164,12 @@ export async function init() {
     router.run();
 }
 
-/**
- * 
- * @param {string} path 
- */
-export function navigateTo(path) {
+export function navigateTo(path: string) {
     window.location.replace(path);
 }
 
 export async function openStartPage() {
-    activeComponent?.destroy();
+    activeComponent?.cleanup();
     startPage.create(mainDiv);
     activeComponent = startPage;
 
@@ -186,7 +180,7 @@ export async function openStartPage() {
 }
 
 export async function openCatalog() {
-    activeComponent?.destroy();
+    activeComponent?.cleanup();
     catalog.create(mainDiv);
     activeComponent = catalog;
 
@@ -195,7 +189,7 @@ export async function openCatalog() {
 }
 
 export async function openLoginPage() {
-    activeComponent?.destroy();
+    activeComponent?.cleanup();
     loginPage.create(mainDiv);
     activeComponent = loginPage;
 
@@ -204,18 +198,14 @@ export async function openLoginPage() {
 }
 
 export async function openSettings() {
-    settings.init(mainDiv);
+    settings.create(mainDiv);
     activeComponent = settings;
 
     document.title = TITLE_SETTINGS;
     openNonogramId = undefined;
 }
 
-/**
- * @param {string} nonogramId
- * @returns {Promise<Boolean>} 
- */
-export async function openNonogram(nonogramId) {
+export async function openNonogram(nonogramId: string): Promise<boolean> {
     /* Nothing to do if nonogram is already open */
     if (openNonogramId == nonogramId) {
         return true;
@@ -232,7 +222,7 @@ export async function openNonogram(nonogramId) {
     var stored = savefile ? getSavestateForNonogram(savefile, nonogramId) : undefined;
 
     /* Create new playfield */
-    activeComponent?.destroy();
+    activeComponent?.cleanup();
     const localPlayfield = new PlayfieldComponent(
         nonogramId,
         nonogram.rowHints, nonogram.colHints,
@@ -240,7 +230,7 @@ export async function openNonogram(nonogramId) {
         stored?.elapsed
     );
 
-    localPlayfield.init(mainDiv);
+    localPlayfield.create(mainDiv);
     playfield = localPlayfield;
     activeComponent = playfield;
 
@@ -284,10 +274,8 @@ export async function openNonogram(nonogramId) {
 
 /**
  * Stores the current state of the playfield to the local savefile.
- * 
- * @param {PlayfieldComponent} playfield 
  */
-function storePlayfieldStateToStorage(playfield) {
+function storePlayfieldStateToStorage(playfield: PlayfieldComponent) {
     const curState = playfield.currentState;
     const savefile = savefileAccess.fetchLocalSavefile();
 

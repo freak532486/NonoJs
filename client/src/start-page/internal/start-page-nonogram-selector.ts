@@ -4,17 +4,10 @@ import SavefileAccess from "../../savefile/savefile-access";
 
 export class StartPageNonogramSelector {
 
-    #catalogAccess;
-    #savefileAccess;
-
-    /**
-     * @param {CatalogAccess} catalogAccess
-     * @param {SavefileAccess} savefileAccess
-     */
-    constructor(catalogAccess, savefileAccess) {
-        this.#catalogAccess = catalogAccess;
-        this.#savefileAccess = savefileAccess;
-    }
+    constructor(
+        private readonly catalogAccess: CatalogAccess,
+        private readonly savefileAccess: SavefileAccess
+    ) {}
 
     /**
      * Returns the nonogram that the player played most recently.
@@ -22,7 +15,7 @@ export class StartPageNonogramSelector {
      * @returns {Promise<string | undefined>}
      */
     async getLastPlayedNonogramId() {
-        return this.#savefileAccess.fetchLocalSavefile().lastPlayedNonogramId;
+        return this.savefileAccess.fetchLocalSavefile().lastPlayedNonogramId;
     }
 
     /**
@@ -31,13 +24,9 @@ export class StartPageNonogramSelector {
      * @returns {Promise<Array<string>>}
      */
     async getNonogramIdsOfTheDay() {
-        const allNonograms = await this.#catalogAccess.getAllNonograms();
+        const allNonograms = await this.catalogAccess.getAllNonograms();
 
-        /**
-         * @param {SerializedNonogram} nonogram 
-         * @returns {number}
-         */
-        const nonoSize = nonogram => Math.max(nonogram.rowHints.length, nonogram.colHints.length);
+        const nonoSize = (nonogram: SerializedNonogram) => Math.max(nonogram.rowHints.length, nonogram.colHints.length);
 
         /* Sort nonograms into small, medium and large */
         const smallNonograms = allNonograms.filter(x => nonoSize(x) >= 0 && nonoSize(x) < 20);
@@ -56,11 +45,9 @@ export class StartPageNonogramSelector {
 
     /**
      * Returns a random nonogram to play.
-     * 
-     * @returns {Promise<string>}
      */
-    async getRandomNonogramId() {
-        const allNonograms = await this.#catalogAccess.getAllNonograms();
+    async getRandomNonogramId(): Promise<string> {
+        const allNonograms = await this.catalogAccess.getAllNonograms();
         const randomNonogram = allNonograms[randInt(0, allNonograms.length)];
         return randomNonogram.id;
     }
@@ -69,22 +56,15 @@ export class StartPageNonogramSelector {
 
 /**
  * Returns a pseudorandom integer between lo (inclusive) and hi (exclusive). lo and hi must be integers themselves.
- * 
- * @param {number} lo 
- * @param {number} hi 
- * @returns {number}
  */
-function randInt(lo, hi) {
+function randInt(lo: number, hi: number): number {
     return lo + Math.floor(Math.random() * (hi - lo));
 }
 
 /**
  * Creates a 32 bit hash from the given string.
- * 
- * @param {string} str 
- * @returns {number}
  */
-function hash(str) {
+function hash(str: string): number {
     let hash = 0;
     for (const char of str) {
         hash = (hash << 5) - hash + char.charCodeAt(0);
@@ -95,10 +75,8 @@ function hash(str) {
 
 /**
  * Returns the current date in 'YYYY-MM-DD' format.
- * 
- * @returns {string}
  */
-function getCurrentDate() {
+function getCurrentDate(): string {
     const date = new Date();
 
     const day = date.getDate();
