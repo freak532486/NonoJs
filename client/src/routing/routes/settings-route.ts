@@ -2,30 +2,27 @@ import Route from "../route";
 import * as app from "../../app"
 import * as auth from "../../auth"
 import Settings from "../../settings/index/settings.component";
-import SavefileAccess from "../../savefile/savefile-access";
-import MergeLocalSavefileWithAccount from "../../savefile/merge-local-savefile-with-account";
-import ActiveComponentManager from "../../active-component-manager";
+import { Component } from "nonojs-common";
+import tokens from "../../tokens";
 
-export default class SettingsRoute implements Route
+export default class SettingsRoute extends Component implements Route
 {
-
-    constructor(
-        private readonly activeComponentManager: ActiveComponentManager,
-        private readonly savefileAccess: SavefileAccess,
-        private readonly getActiveUsername: () => string | undefined,
-        private readonly mergeLocalSavefileWithAccount: MergeLocalSavefileWithAccount
-    ) {}
 
     matches(path: string): boolean {
         return path == "/settings";
     }
 
-    run(path: string) {
+    async run(path: string) {
+        const savefileAccess = this.ctx.getComponent(tokens.savefileAccess);
+        const authService = this.ctx.getComponent(tokens.authService);
+        const savefileMerger = this.ctx.getComponent(tokens.savefileMerger);
+        const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
+
         let settings = new Settings(
-            this.savefileAccess,
-            this.getActiveUsername,
+            savefileAccess,
+            authService,
             async () => {
-                await this.mergeLocalSavefileWithAccount.perform();
+                await savefileMerger.mergeLocalSavefileWithAccount();
                 app.navigateTo("/");
             },
             async () => {
@@ -34,7 +31,7 @@ export default class SettingsRoute implements Route
             }
         );
         
-        this.activeComponentManager.setActiveComponent(settings);
+        activeComponentManager.setActiveComponent(settings);
         document.title = "NonoJs · Settings";
     }
     

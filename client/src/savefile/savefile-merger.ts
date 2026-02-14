@@ -1,14 +1,18 @@
-import { SaveFile, SaveFileEntry, SaveState } from "nonojs-common";
+import { Component, Context, SaveFile, SaveFileEntry, SaveState } from "nonojs-common";
 import { ACTIVE_VERSION_KEY } from "./savefile-migrator";
+import tokens from "../tokens";
 
 export enum MergeStrategy {
     LOCAL_WINS,
     SERVER_WINS
 };
 
-export default class SavefileMerger
+export default class SavefileMerger extends Component
 {
-
+    /**
+     * Merges the given local savefile and server savefile. Savefiles not belonging to the given username are filtered.
+     * Returns the merge result.
+     */
     getMergedSavefileForUser(
         serverSavefile: SaveFile | undefined,
         localSavefile: SaveFile | undefined,
@@ -48,6 +52,35 @@ export default class SavefileMerger
         const losingSavefile = mergeStrategy == MergeStrategy.LOCAL_WINS ? serverSavefile : localSavefile;
         const winningSavefile = mergeStrategy == MergeStrategy.SERVER_WINS ? serverSavefile : localSavefile;
         return this.mergeSavefiles(losingSavefile, winningSavefile);
+    }
+
+    /**
+     * Merges the local user-less savefile to the local savefile of the active user. The result is written to local
+     * storage and to the server. The userless savefile is deleted.
+     */
+    async mergeLocalSavefileWithAccount()
+    {
+        const authService = this.ctx.getComponent(tokens.authService);
+        const savefileAccess = this.ctx.getComponent(tokens.savefileAccess);
+
+        const username = authService.getCurrentUsername();
+        const freeSavefile = savefileAccess.fetchLocalSavefileForUser(undefined);
+        const accountSavefile = await savefileAccess.fetchLocalSavefile();
+
+        /* No sense merging if not logged in or no free savefile exists */
+        if (!freeSavefile || !username) {
+            return;
+        }
+
+        /* Merge, userless savefile wins */
+        const merged = this.mergeSavefiles(accountSavefile, freeSavefile);
+
+        /* Write savefile */
+        savefileAccess.writeLocalSavefile(merged);
+        await savefileAccess.writeServerSavefile(merged);
+
+        /* Delete userless savefile */
+        savefileAccess.deleteLocalSavefileForUser(undefined);
     }
 
     /**

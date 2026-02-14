@@ -11,7 +11,7 @@ import { NonogramPreview } from "../../nonogram-preview/nonogram-preview.compone
 import { CellKnowledge, NonogramState } from "../../common/nonogram-types";
 import SavefileAccess from "../../savefile/savefile-access"
 import { getSavestateForNonogram } from "../../savefile/savefile-utils"
-import { Entity } from "nonojs-common"
+import { Context } from "nonojs-common"
 import UIComponent from "../../common/ui-component"
 
 export class StartPage implements UIComponent {
@@ -135,7 +135,7 @@ export class StartPage implements UIComponent {
 
         /* Fill body with a preview */
         const content = ret.querySelector(".preview-container") as HTMLElement;
-        const savefile = this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.fetchLocalSavefile();
         const cells = getSavestateForNonogram(savefile, nonogram.id)?.cells;
         const nonogramState = cells ? 
             new NonogramState(nonogram.rowHints, nonogram.colHints, cells) : 
@@ -163,7 +163,7 @@ export class StartPage implements UIComponent {
 
         /* Create preview */
         const content = ret.querySelector(".preview-container") as HTMLElement;
-        const savefile = this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.fetchLocalSavefile();
         const saveState = getSavestateForNonogram(savefile, nonogram.id);
         const cells = saveState?.cells;
         const nonogramState = cells ? 

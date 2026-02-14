@@ -3,18 +3,19 @@ import * as app from "../../app"
 import * as auth from "../../auth"
 import LoginComponent from "../../auth/components/login/login.component";
 import ActiveComponentManager from "../../active-component-manager";
+import { Component } from "nonojs-common";
+import tokens from "../../tokens";
 
-export default class LoginRoute implements Route
+export default class LoginRoute extends Component implements Route
 {
-    constructor(
-        private readonly activeComponentManager: ActiveComponentManager
-    ) {}
 
     matches(path: string): boolean {
         return path == "/login";
     }
 
     run(path: string) {
+        const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
+
         /* Create login page */
         let loginPage = new LoginComponent(
             async (username, password) => {
@@ -65,7 +66,7 @@ export default class LoginRoute implements Route
             }
         );
 
-        this.activeComponentManager.setActiveComponent(loginPage);
+        activeComponentManager.setActiveComponent(loginPage);
         document.title = "Log in to NonoJs";
     }
     

@@ -9,35 +9,36 @@ import ActiveComponentManager from "../../active-component-manager";
 import PlayfieldMenuButtonManager from "../../menu/button-managers/playfield-menu-button-manager";
 import { Menu } from "../../menu/menu.component";
 import SavefileSyncService from "../../savefile/savefile-sync-service";
+import { Component } from "nonojs-common";
+import tokens from "../../tokens";
 
-export default class NonogramRoute implements Route
+export default class NonogramRoute extends Component implements Route
 {
-    constructor(
-        private readonly activeComponentManager: ActiveComponentManager,
-        private readonly notFoundRoute: NotFoundRoute,
-        private readonly catalogAccess: CatalogAccess,
-        private readonly savefileAccess: SavefileAccess,
-        private readonly savefileSyncService: SavefileSyncService,
-        private readonly menu: Menu,
-        private readonly getActiveUsername: () => string | undefined
-    ) {}
 
     matches(path: string): boolean {
         return path.startsWith("/n/")
     }
 
     async run(path: string): Promise<void> {
+        const catalogAccess = this.ctx.getComponent(tokens.catalogAccess);
+        const savefileAccess = this.ctx.getComponent(tokens.savefileAccess);
+        const savefileSyncService = this.ctx.getComponent(tokens.savefileSyncService);
+        const authService = this.ctx.getComponent(tokens.authService);
+        const notFoundRoute = this.ctx.getComponent(tokens.notFoundRoute);
+        const menu = this.ctx.getComponent(tokens.menu);
+        const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
+
         const nonogramId = path.split("/")[2];
     
         /* Load requested nonogram */
-        const nonogram = (await this.catalogAccess.getAllNonograms()).find(x => x.id == nonogramId);
+        const nonogram = (await catalogAccess.getAllNonograms()).find(x => x.id == nonogramId);
         if (!nonogram) {
-            this.notFoundRoute.run(path);
+            notFoundRoute.run(path);
             return;
         }
     
         /* Load current state */
-        const savefile = this.savefileAccess.fetchLocalSavefile();
+        const savefile = await savefileAccess.fetchLocalSavefile();
         var stored = savefile ? getSavestateForNonogram(savefile, nonogramId) : undefined;
     
         /* Create new playfield */
@@ -50,23 +51,23 @@ export default class NonogramRoute implements Route
     
         /* Create playfield menu buttons */
         new PlayfieldMenuButtonManager(
-            this.menu,
+            menu,
             () => playfield.solverService.hint(),
             () => playfield.solverService.solveNext(),
             () => playfield.solverService.solveFull(),
             () => playfield.reset(),
-            () => {
-                this.#storePlayfieldStateToStorage(playfield);
+            async () => {
+                await this.#storePlayfieldStateToStorage(playfield);
                 app.navigateTo("/");
             }
         ).createButtons();
     
-        playfield.onStateChanged = () => {
+        playfield.onStateChanged = async () => {
             /* Save state to local storage */
             this.#storePlayfieldStateToStorage(playfield);
     
             /* Update last played nonogram id */
-            const saveFile = this.savefileAccess.fetchLocalSavefile();
+            const saveFile = await savefileAccess.fetchLocalSavefile();
     
             if (!playfield.hasWon) {
                 saveFile.lastPlayedNonogramId = playfield.nonogramId;
@@ -74,32 +75,34 @@ export default class NonogramRoute implements Route
                 saveFile.lastPlayedNonogramId = undefined;
             }
     
-            this.savefileAccess.writeLocalSavefile(saveFile);
+            savefileAccess.writeLocalSavefile(saveFile);
     
             /* Queue sync */
-            const activeUsername = this.getActiveUsername();
+            const activeUsername = await authService.getCurrentUsername();
             if (activeUsername) {
-                this.savefileSyncService.queueSync();
+                savefileSyncService.queueSync();
             }
         }
     
         document.title = "Playing " + nonogram.colHints.length + "x" + nonogram.rowHints.length + " Nonogram"
-        this.activeComponentManager.setActiveComponent(playfield);
+        activeComponentManager.setActiveComponent(playfield);
     }
 
     /**
      * Stores the current state of the playfield to the local savefile.
      */
-    #storePlayfieldStateToStorage(playfield: PlayfieldComponent) {
+    async #storePlayfieldStateToStorage(playfield: PlayfieldComponent) {
+        const savefileAccess = this.ctx.getComponent(tokens.savefileAccess);
+
         const curState = playfield.currentState;
-        const savefile = this.savefileAccess.fetchLocalSavefile();
+        const savefile = await savefileAccess.fetchLocalSavefile();
 
         putSavestate(savefile, playfield.nonogramId, {
             cells: curState.cells,
             elapsed: playfield.elapsed
         });
 
-        this.savefileAccess.writeLocalSavefile(savefile);
+        savefileAccess.writeLocalSavefile(savefile);
     }
     
 }

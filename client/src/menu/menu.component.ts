@@ -3,9 +3,9 @@ import { htmlToElement } from "../loader.js";
 import menu from "./menu.html"
 import "./menu.css"
 import UIComponent from "../common/ui-component.js";
-import { Entity } from "nonojs-common";
+import { Component, Context } from "nonojs-common";
 
-export class Menu implements UIComponent {
+export class Menu extends Component implements UIComponent {
     
     #view?: HTMLElement;
     

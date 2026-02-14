@@ -4,17 +4,18 @@ import header from "./header.html"
 import "./header.css"
 import UIComponent from "../common/ui-component.js";
 import { Menu } from "../menu/menu.component";
-import { Entity } from "nonojs-common";
+import { Component } from "nonojs-common";
+import tokens from "../tokens.js";
 
-export class Header implements UIComponent {
+export class Header extends Component implements UIComponent {
 
     #view?: HTMLElement;
     #onLogoClicked: () => void = () => {};
 
-    constructor (private readonly menu: Menu) {}
-
     create(parent: HTMLElement): HTMLElement
     {
+        const menu = this.ctx.getComponent(tokens.menu);
+
         this.#view = htmlToElement(header);
         parent.appendChild(this.view);
 
@@ -22,7 +23,7 @@ export class Header implements UIComponent {
         imgLogo.onclick = () => this.#onLogoClicked();
 
         const btnMenu = this.view.querySelector(".button.menu") as HTMLElement;
-        btnMenu.onclick = () => this.menu.toggle();
+        btnMenu.onclick = () => menu.toggle();
 
         return this.#view;
     }

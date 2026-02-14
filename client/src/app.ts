@@ -3,13 +3,10 @@ import { Header } from "./header/header.component";
 import { Menu } from "./menu/menu.component";
 import { Router } from "./routing/router";
 import SavefileMigrator from "./savefile/savefile-migrator"
-import DefaultMenuButtonManager from "./menu/button-managers/default-menu-button-manager";
 import SavefileAccess from "./savefile/savefile-access";
 import SavefileManager from "./savefile/savefile-manager";
-import MergeLocalSavefileWithAccount from "./savefile/merge-local-savefile-with-account";
 import SavefileMerger from "./savefile/savefile-merger";
 import SavefileSyncService from "./savefile/savefile-sync-service";
-import * as auth from "./auth"
 import CatalogRoute from "./routing/routes/catalog-route";
 import ConfirmRegistrationRoute from "./routing/routes/confirm-registration-route";
 import LoginRoute from "./routing/routes/login-route";
@@ -18,70 +15,42 @@ import SettingsRoute from "./routing/routes/settings-route";
 import StartpageRoute from "./routing/routes/startpage-route";
 import ActiveComponentManager from "./active-component-manager";
 import NotFoundRoute from "./routing/routes/not-found-route";
+import { Context } from "nonojs-common";
+import tokens from "./tokens";
+import AuthService from "./auth/auth-service";
+import AppInitializer from "./app-initializer";
 
-const contentRoot = document.getElementById("content-column") as HTMLElement;
-const headerDiv = document.getElementById("header-div")  as HTMLElement;
+/* Create injection context */
+const ctx = new Context();
 
-/** If undefined, then the user is not logged in */
-let activeUsername: string | undefined;
+/* Add basic services */
+ctx.addComponent(tokens.authService, new AuthService());
+ctx.addComponent(tokens.catalogAccess, new CatalogAccess());
+ctx.addComponent(tokens.savefileAccess, new SavefileAccess());
+ctx.addComponent(tokens.savefileManager, new SavefileManager());
+ctx.addComponent(tokens.savefileMigrator, new SavefileMigrator());
+ctx.addComponent(tokens.savefileMerger, new SavefileMerger());
+ctx.addComponent(tokens.savefileSyncService, new SavefileSyncService());
+ctx.addComponent(tokens.activeComponentManager, new ActiveComponentManager());
 
-const catalogAccess = new CatalogAccess();
-const savefileAccess = new SavefileAccess(msg => alert(msg), () => activeUsername);
-const savefileManager = new SavefileManager(savefileAccess, () => activeUsername);
-const savefileMigrator = new SavefileMigrator(savefileAccess);
-const savefileMerger = new SavefileMerger();
-const savefileSyncService = new SavefileSyncService(savefileAccess, savefileMerger);
+/* Add UI components */
+ctx.addComponent(tokens.menu, new Menu());
+ctx.addComponent(tokens.header, new Header());
 
-const mergeLocalSavefileWithAccount = new MergeLocalSavefileWithAccount(
-    savefileAccess,
-    savefileMerger,
-    () => activeUsername
-);
-
-const menu = new Menu();
-const header = new Header(menu);
-
-const activeComponentManager = new ActiveComponentManager();
+/* Add router and routes */
+const router = ctx.addComponent(tokens.router, new Router());
 
 /* Create all routes */
-const notFoundRoute = new NotFoundRoute(activeComponentManager);
-const routes = [
-    new CatalogRoute(activeComponentManager, catalogAccess, savefileAccess),
-    new ConfirmRegistrationRoute(activeComponentManager),
-    new LoginRoute(activeComponentManager),
-    new NonogramRoute(activeComponentManager, notFoundRoute, catalogAccess, savefileAccess, savefileSyncService, menu, () => activeUsername),
-    new SettingsRoute(activeComponentManager, savefileAccess, () => activeUsername, mergeLocalSavefileWithAccount),
-    new StartpageRoute(activeComponentManager, catalogAccess, savefileAccess, () => activeUsername)
-];
+ctx.addComponent(tokens.notFoundRoute, new NotFoundRoute());
+router.addRoute(ctx.addComponent(tokens.catalogRoute, new CatalogRoute()));
+router.addRoute(ctx.addComponent(tokens.confirmRegistrationRoute, new ConfirmRegistrationRoute()));
+router.addRoute(ctx.addComponent(tokens.loginRoute, new LoginRoute()));
+router.addRoute(ctx.addComponent(tokens.nonogramRoute, new NonogramRoute()));
+router.addRoute(ctx.addComponent(tokens.settingsRoute, new SettingsRoute()));
+router.addRoute(ctx.addComponent(tokens.startpageRoute, new StartpageRoute()));
 
-let router = new Router(routes, notFoundRoute);
-
-export async function init() {
-    catalogAccess.invalidateCache();
-    
-    activeUsername = await auth.getCurrentUsername();
-    await savefileManager.initializeLocalSavefile();
-    savefileMigrator.performStorageMigration();
-
-    menu.create(contentRoot);
-    header.create(headerDiv);
-
-    const defaultMenuButtonManager = new DefaultMenuButtonManager(
-        menu,
-        () => navigateTo("/login"),
-        async () => {
-            await auth.logout();
-            navigateTo("/");
-        },
-        () => navigateTo("/settings")
-    );
-
-    defaultMenuButtonManager.createDefaultMenuButtons(activeUsername);
-
-    header.onLogoClicked = () => navigateTo("/");
-
-    router.run();
-}
+/* Initialize app */
+ctx.addComponent(tokens.appInitializer, new AppInitializer()).initApp();
 
 export function navigateTo(path: string) {
     window.location.replace(path);

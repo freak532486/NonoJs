@@ -3,7 +3,7 @@ import "./registration-confirmation.css"
 import "../../../common/styles/boxes.css"
 import { htmlToElement } from "../../../loader";
 import UIComponent from "../../../common/ui-component";
-import { Entity } from "nonojs-common";
+import { Context } from "nonojs-common";
 
 export default class RegistrationConfirmationComponent implements UIComponent
 {

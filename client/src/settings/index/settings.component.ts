@@ -4,6 +4,7 @@ import { htmlToElement } from "../../loader";
 import SettingEntriesManager from "../entries/setting-entries-manager";
 import SavefileAccess from "../../savefile/savefile-access";
 import UIComponent from "../../common/ui-component";
+import AuthService from "../../auth/auth-service";
 
 export default class Settings implements UIComponent
 {
@@ -12,7 +13,7 @@ export default class Settings implements UIComponent
 
     constructor(
         savefileAccess: SavefileAccess,
-        getActiveUsername: () => string | undefined,
+        authService: AuthService,
         mergeLocalSavefileWithAccount: () => void,
         deleteActiveAccount: () => void
     )
@@ -21,16 +22,16 @@ export default class Settings implements UIComponent
         this.#entriesManager = new SettingEntriesManager(
             this,
             savefileAccess,
-            getActiveUsername,
+            authService,
             mergeLocalSavefileWithAccount,
             deleteActiveAccount
         );
     }
 
-    create(parent: HTMLElement): HTMLElement
+    async create(parent: HTMLElement): Promise<HTMLElement>
     {
         parent.appendChild(this.#view);
-        this.#entriesManager.createSettingsEntries();
+        await this.#entriesManager.createSettingsEntries();
         return this.#view;
     }
 

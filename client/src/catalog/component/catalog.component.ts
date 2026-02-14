@@ -7,7 +7,7 @@ import { getAllStoredStates } from "../../savefile/savefile-utils.js";
 import UIComponent from "../../common/ui-component.js";
 import { CatalogAccess } from "../catalog-access.js";
 import SavefileAccess from "../../savefile/savefile-access.js";
-import { Entity } from "nonojs-common";
+import { Context } from "nonojs-common";
 
 export class Catalog implements UIComponent {
 
@@ -61,7 +61,7 @@ export class Catalog implements UIComponent {
             }
         });
         
-        const savefile = this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.fetchLocalSavefile();
         const stored = getAllStoredStates(savefile);
         for (const nonogram of loaded) {
             const numFilled = stored.get(nonogram.id)

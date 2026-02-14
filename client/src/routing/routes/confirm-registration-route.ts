@@ -4,18 +4,19 @@ import * as app from "../../app"
 import UIComponent from "../../common/ui-component";
 import RegistrationConfirmationComponent from "../../auth/components/registration-confirmation/registration-confirmation.component";
 import ActiveComponentManager from "../../active-component-manager";
+import { Component } from "nonojs-common";
+import tokens from "../../tokens";
 
-export default class ConfirmRegistrationRoute implements Route
+export default class ConfirmRegistrationRoute extends Component implements Route
 {
-    constructor(
-        private readonly activeComponentManager: ActiveComponentManager
-    ) {}
 
     matches(path: string): boolean {
         return path == "/register/confirm";
     }
 
     async run(path: string) {
+        const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
+
         const params = new URLSearchParams(window.location.search);
         const token = params.get("token");
         if (!token) {
@@ -24,7 +25,7 @@ export default class ConfirmRegistrationRoute implements Route
         }
 
         const component = await this.#buildConfirmationPage(token);
-        this.activeComponentManager.setActiveComponent(component);
+        activeComponentManager.setActiveComponent(component);
     }
 
     async #buildConfirmationPage(token: string): Promise<UIComponent>

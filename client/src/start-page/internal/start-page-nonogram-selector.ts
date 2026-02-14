@@ -15,7 +15,7 @@ export class StartPageNonogramSelector {
      * @returns {Promise<string | undefined>}
      */
     async getLastPlayedNonogramId() {
-        return this.savefileAccess.fetchLocalSavefile().lastPlayedNonogramId;
+        return (await this.savefileAccess.fetchLocalSavefile()).lastPlayedNonogramId;
     }
 
     /**

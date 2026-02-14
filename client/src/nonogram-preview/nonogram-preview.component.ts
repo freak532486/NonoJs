@@ -1,4 +1,4 @@
-import { Entity } from "nonojs-common";
+import { Context } from "nonojs-common";
 import { CellKnowledge, NonogramState } from "../common/nonogram-types";
 import UIComponent from "../common/ui-component";
 import { htmlToElement } from "../loader";

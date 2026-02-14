@@ -1,18 +1,21 @@
+import { Component } from "./component.js";
 import { Token } from "./token.js";
 
-export class Entity
+
+export class Context
 {
 
-    #componentMap = new Map<string, unknown>();
+    #componentMap = new Map<string, Component>();
 
-    constructor (private readonly parent: Entity | undefined = undefined)
+    constructor (private readonly parent: Context | undefined = undefined)
     {}
 
 
     /**
-     * Adds a component to this entity. Throws if a component with this token already exists. 
+     * Adds a component to this entity. Throws if a component with this token already exists. Returns the added
+     * component.
      */
-    addComponent<T>(token: Token<T>, component: T): void
+    addComponent<T extends Component>(token: Token<T>, component: T): T
     {
         if (component == undefined || component == null) {
             throw new Error("Cannot add null or undefined as component");
@@ -23,20 +26,29 @@ export class Entity
         }
 
         this.#componentMap.set(token.key, component);
+        component.ctx = this;
+        return component;
     }
 
     /**
      * Removes the component with the given token. Returns 'false' if no such component existed.
      */
-    removeComponent<T>(token: Token<T>): boolean
+    removeComponent<T extends Component>(token: Token<T>): boolean
     {
-        return this.#componentMap.delete(token.key);
+        const component = this.#componentMap.get(token.key);
+        if (!component) {
+            return false;
+        }
+
+        this.#componentMap.delete(token.key);
+        component.ctx = undefined;
+        return true;
     }
 
     /**
      * Returns the component with the given key inside this entity.
      */
-    getComponent<T>(token: Token<T>): T
+    getComponent<T extends Component>(token: Token<T>): T
     {
         const ret = this.tryGetComponent(token);
         if (ret == undefined) {
@@ -49,7 +61,7 @@ export class Entity
     /**
      * Returns the component with the given token or undefined if no such component exists in this entity.
      */
-    tryGetComponent<T>(token: Token<T>): T | undefined
+    tryGetComponent<T extends Component>(token: Token<T>): T | undefined
     {
         const ret = this.#componentMap.get(token.key);
         if (ret !== undefined) {

@@ -1,8 +1,9 @@
+import { Component, Context } from "nonojs-common";
 import UIComponent from "./common/ui-component";
 
 const mainDiv: HTMLElement = document.getElementById("main-div")!;
 
-export default class ActiveComponentManager
+export default class ActiveComponentManager extends Component
 {
     #activeComponent?: UIComponent;
 

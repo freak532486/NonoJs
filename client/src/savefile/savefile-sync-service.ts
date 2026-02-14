@@ -1,19 +1,12 @@
-import SavefileAccess from "./savefile-access";
-import SavefileMerger from "./savefile-merger";
+import { Component, Context } from "nonojs-common";
+import tokens from "../tokens";
 
 const SYNC_INTERVAL_MS = 1 * 1000;
 
-export default class SavefileSyncService
+export default class SavefileSyncService extends Component
 {
-
     #syncQueued: boolean = false;
     #lastSyncTs: number | undefined;
-
-    constructor (
-        private readonly access: SavefileAccess,
-        private readonly merger: SavefileMerger
-    ) {}
-
 
     /**
      * Queues a sync between server savefile and local savefile.
@@ -36,10 +29,13 @@ export default class SavefileSyncService
     }
 
     async #doSync() {
-        const serverSavefile = await this.access.fetchServerSavefile() ;
-        const localSavefile = this.access.fetchLocalSavefile();
-        const merged = this.merger.mergeSavefiles(serverSavefile, localSavefile);
-        await this.access.writeServerSavefile(merged);
+        const access = this.ctx.getComponent(tokens.savefileAccess);
+        const merger = this.ctx.getComponent(tokens.savefileMerger);
+
+        const serverSavefile = await access.fetchServerSavefile() ;
+        const localSavefile = await access.fetchLocalSavefile();
+        const merged = merger.mergeSavefiles(serverSavefile, localSavefile);
+        await access.writeServerSavefile(merged);
 
         this.#syncQueued = false;
         this.#lastSyncTs = Date.now();
