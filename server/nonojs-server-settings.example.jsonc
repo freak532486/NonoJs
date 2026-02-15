@@ -13,5 +13,6 @@
     "mailjet_apikey_private": "...", /* Requred: Mailjet private API key for sending mails. */
     "mailjet_apikey_public": "...", /* Required: Mailjet public API key for sending mails. */
     "mailjet_mail_address": "noreply@nonojs.com", /* Required: Address from which mails should be sent */
-    "hostname": "https://nonojs.com" /* Required: Address under which this server is reachable. Is used for generating links. */
+    "hostname": "https://nonojs.com", /* Required: Address under which this server is reachable. Is used for generating links. */
+    "session_timeout_seconds": 604800 /* Required: Number of seconds until an idle session timeouts. Here: 7 days */
 }

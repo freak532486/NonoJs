@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
-import { REFRESH_TOKEN_EXPIRY_MS } from "../internal/constants";
 import UserEntry from "../types/user-entry";
 import database from "../../db/database";
+import { getNumberSettingOrThrow } from "../../config/impl/config-access";
 
 
 export async function putRefreshToken(
@@ -27,7 +27,9 @@ export async function putRefreshToken(
 
 export async function getUserForRefreshToken(fastify: FastifyInstance, refreshToken: string): Promise<number | undefined> {
     const db = fastify.state.db;
-    const lastValidCreationTimestamp = Date.now() - REFRESH_TOKEN_EXPIRY_MS;
+
+    const refreshTokenExpiryMs = getNumberSettingOrThrow(fastify.state.config, "session_timeout_seconds") * 1000;
+    const lastValidCreationTimestamp = Date.now() - refreshTokenExpiryMs;
 
     const sql = `
         SELECT user_id

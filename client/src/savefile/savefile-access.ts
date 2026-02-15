@@ -1,24 +1,20 @@
-import { SaveFile } from "nonojs-common";
-import { ApiService } from "../api/api-service";
+import { Component, Context, SaveFile } from "nonojs-common";
 import { ACTIVE_VERSION_KEY } from "./savefile-migrator";
-import { CellKnowledge } from "../common/nonogram-types";
+import * as api from "../api/api-client"
+import tokens from "../tokens";
 
 const STORAGE_KEY = "storage";
 
-export default class SavefileAccess
+export default class SavefileAccess extends Component
 {
-
-    constructor(
-        private readonly apiService: ApiService,
-        private readonly onError: (errMsg: string) => void,
-        private readonly getActiveUsername: () => string | undefined
-    ) {}
 
      /**
      * Fetches the savefile from local browser storage.
      */
-    fetchLocalSavefile(): SaveFile {
-        const username = this.getActiveUsername();
+    async fetchLocalSavefile(): Promise<SaveFile> {
+        const authService = this.ctx.getComponent(tokens.authService);
+
+        const username = await authService.getCurrentUsername();
         return this.fetchLocalSavefileForUser(username) || createEmptySavefile(username);
     }
 
@@ -51,9 +47,11 @@ export default class SavefileAccess
      */
     async fetchServerSavefile(): Promise<SaveFile>
     {
-        const username = this.getActiveUsername();
+        const authService = this.ctx.getComponent(tokens.authService);
+
+        const username = await authService.getCurrentUsername();
         const request = new Request("/api/savefile", { "method": "GET" });
-        const response = await this.apiService.performRequestWithSessionToken(request);
+        const response = await api.performRequestWithSessionToken(request);
         if (response.status !== "ok") {
             return createEmptySavefile(username);
         }
@@ -64,9 +62,11 @@ export default class SavefileAccess
     /**
      * Writes the given savefile to local browser storage.
      */
-    writeLocalSavefile(savefile: SaveFile)
+    async writeLocalSavefile(savefile: SaveFile)
     {
-        const activeUsername = this.getActiveUsername();
+        const authService = this.ctx.getComponent(tokens.authService);
+
+        const activeUsername = await authService.getCurrentUsername();
         const key = STORAGE_KEY + (activeUsername ? "_" + activeUsername : "");
         const serialized = JSON.stringify(savefile);
         window.localStorage.setItem(key, serialized);
@@ -85,12 +85,12 @@ export default class SavefileAccess
                 "Content-Type": "application/json"
             }
         });
-        const response = await this.apiService.performRequestWithSessionToken(request);
+        const response = await api.performRequestWithSessionToken(request);
 
         if (response.status == "unauthorized") {
-            this.onError("Unable to write savefile to server - You are not logged in.");
+            alert("Unable to write savefile to server - You are not logged in.");
         } else if (response.status == "bad_response" || response.status == "error") {
-            this.onError("An error occured when trying to write savefile to server.");
+            alert("An error occured when trying to write savefile to server.");
         }
     }
 

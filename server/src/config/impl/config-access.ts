@@ -60,9 +60,9 @@ export function getNumberSetting(config: Config, key: string): number | undefine
 /**
  * Returns the value of the key in the given config. Throws if the setting has not been set.
  */
-export function getNumberSettingOrThrow(config: Config, key: string): string
+export function getNumberSettingOrThrow(config: Config, key: string): number
 {
-    const value = getNumberSettingOrThrow(config, key);
+    const value = getNumberSetting(config, key);
     if (!value) {
         throw new Error("Setting '" + key + "' has not been set.");
     }

@@ -1,6 +1,6 @@
 import { CellKnowledge, LineId, LineKnowledge, LineType } from "../../common/nonogram-types.js";
 import { Point } from "../../common/point.js";
-import { deepArraysEqual } from "../../util.js";
+import UIComponent from "../../common/ui-component.js";
 
 import "./nonogram-board.css"
 
@@ -39,17 +39,13 @@ export class BoardComponentFullState {
     }
 }
 
-export class NonogramBoardComponent {
+export class NonogramBoardComponent implements UIComponent {
 
     #width: number;
     #height: number;
 
-    #rowHints: Array<Array<number>>;
     #finishedRowHints: Array<Array<number>>;
-
-    #colHints: Array<Array<number>>;
     #finishedColHints: Array<Array<number>>;
-
 
     #rowHintDivs: Array<HTMLElement>;
     #colHintDivs: Array<HTMLElement>;
@@ -68,13 +64,9 @@ export class NonogramBoardComponent {
 
     #clickListener: (p: Point) => void = () => {};
 
-    /**
-     * @param {Array<Array<number>>} rowHints 
-     * @param {Array<Array<number>>} colHints 
-     */
     constructor (
-        rowHints: Array<Array<number>>, 
-        colHints: Array<Array<number>>
+        public readonly rowHints: Array<Array<number>>, 
+        public readonly colHints: Array<Array<number>>
     )
     {
         /* Copy data */
@@ -83,8 +75,6 @@ export class NonogramBoardComponent {
 
         this.#width = width;
         this.#height = height;
-        this.#rowHints = rowHints;
-        this.#colHints = colHints;
 
         this.#finishedRowHints = Array(height).fill(null).map(() => []);
         this.#finishedColHints = Array(width).fill(null).map(() => []);
@@ -212,14 +202,16 @@ export class NonogramBoardComponent {
         this.#view = view;
     }
 
-    /**
-     * Initializes and attaches this component
-     */
-    init(parent: HTMLElement) {
+    create(parent: HTMLElement): HTMLElement {
         parent.append(this.view);
 
         /* Move selection to top-left corner */
         this.selection = new Point(0, 0);
+        return this.#view;
+    }
+
+    cleanup() {
+        // Nothing to do
     }
 
     /**
@@ -235,14 +227,6 @@ export class NonogramBoardComponent {
 
     get height(): number {
         return this.#height;
-    }
-
-    get rowHints(): Array<Array<number>> {
-        return this.#rowHints;
-    }
-
-    get colHints(): Array<Array<number>> {
-        return this.#colHints;
     }
 
     get selection(): Point {
@@ -567,6 +551,32 @@ function removeIf<T>(arr: Array<T>, pred: (val: T) => boolean): boolean {
     arr.length = newArr.length;
     for (let i = 0; i < arr.length; i++) {
         arr[i] = newArr[i];
+    }
+
+    return true;
+}
+
+/**
+ * Returns 'true' iff the contents of the two arrays are equal.
+ */
+function deepArraysEqual(arr1: Array<any>, arr2: Array<any>) {
+    if (arr1.length != arr2.length) {
+        return false;
+    }
+
+    for (let i = 0; i < arr1.length; i++) {
+        const val1 = arr1[i];
+        const val2 = arr2[i];
+
+        if (Array.isArray(val1) && Array.isArray(val2)) {
+            if (!deepArraysEqual(val1, val2)) {
+                return false;
+            }
+        } else if (Object.hasOwn(val1, "equals") && !val1.equals(val2)) {
+            return false;
+        } else if (val1 !== val2) {
+            return false;
+        }
     }
 
     return true;

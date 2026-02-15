@@ -1,3 +1,4 @@
+import AuthService from "../../auth/auth-service";
 import SavefileAccess from "../../savefile/savefile-access";
 import Settings from "../index/settings.component";
 import DeleteAccountEntry from "./delete-account-entry/delete-account-entry.component";
@@ -10,19 +11,19 @@ export default class SettingEntriesManager
     constructor(
         private readonly settings: Settings,
         private readonly savefileAccess: SavefileAccess,
-        private readonly getActiveUsername: () => string | undefined,
+        private readonly authService: AuthService,
         private readonly mergeLocalSavefileWithAccount: () => void,
         private readonly deleteActiveAccount: () => void
     ) {}
 
-    createSettingsEntries()
+    async createSettingsEntries()
     {
         /* Entry for importing/exporting savefiles */
         const importExportEntry = new ExportImportEntry(this.savefileAccess);
         this.settings.addEntry(importExportEntry.view);
 
         /* Entry for merging local savefile to user savefile */
-        const username = this.getActiveUsername();
+        const username = await this.authService.getCurrentUsername();
         const localSavefile = this.savefileAccess.fetchLocalSavefileForUser(undefined);
 
         if (username && localSavefile) {

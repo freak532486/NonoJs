@@ -1,5 +1,4 @@
-import { Menu } from "./menu/menu.component";
-import * as solver from "./solver"
+import { Menu } from "../menu.component";
 
 /**
  * Object that creates/destroys the menu buttons for the playfield.
