@@ -60,7 +60,15 @@ export default class SavefileCache
         /* Write flush cache into database */
         await database.performInTransaction(this.fastify.state.db, async () => {
             for (const entry of this.#flush.entries()) {
-                await putSavefileForUser(this.fastify, entry[1], entry[0]);
+                try {
+                    await putSavefileForUser(this.fastify, entry[1], entry[0]);
+                } catch (error) {
+                    /* 
+                     * Writing savefile could fail because e.g the user might not exist anymore. We still continue with 
+                     * the flush
+                     */
+                    this.fastify.log.error("Writing savefile for user " + entry[0] + " failed. Cause: " + error);
+                }
             }
         });
     }

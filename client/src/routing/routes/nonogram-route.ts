@@ -64,7 +64,7 @@ export default class NonogramRoute extends Component implements Route
     
         playfield.onStateChanged = async () => {
             /* Save state to local storage */
-            this.#storePlayfieldStateToStorage(playfield);
+            await this.#storePlayfieldStateToStorage(playfield);
     
             /* Update last played nonogram id */
             const saveFile = await savefileAccess.fetchLocalSavefile();
@@ -75,7 +75,7 @@ export default class NonogramRoute extends Component implements Route
                 saveFile.lastPlayedNonogramId = undefined;
             }
     
-            savefileAccess.writeLocalSavefile(saveFile);
+            await savefileAccess.writeLocalSavefile(saveFile);
     
             /* Queue sync */
             const activeUsername = await authService.getCurrentUsername();
