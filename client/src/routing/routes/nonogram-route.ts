@@ -102,12 +102,17 @@ export default class NonogramRoute extends Component implements Route
         });
 
         /* Add listener for hiding reset to valid state button */
+        const updateResetToValidButtonVisibility = () => {
+            playfieldButtonManager.setResetToValidButtonVisibility(
+                playfield.hasUnsolveableLines() &&
+                playfield.historyHasValidState()
+            );
+        }
+
         playfield.addListener({
-            onCellsChanged: () => {
-                playfieldButtonManager.setResetToValidButtonVisibility(playfield.hasUnsolveableLines());
-            }
-        })
-        playfieldButtonManager.setResetToValidButtonVisibility(playfield.hasUnsolveableLines());
+            onCellsChanged: updateResetToValidButtonVisibility
+        });
+        updateResetToValidButtonVisibility();
     
         /* Finish */
         document.title = "Playing " + nonogram.colHints.length + "x" + nonogram.rowHints.length + " Nonogram"

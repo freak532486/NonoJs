@@ -28,6 +28,7 @@ export class PlayfieldComponent implements UIComponent {
 
     #stateHistory: Array<BoardComponentFullState> = [];
     #activeStateIdx: number = 0;
+    #latestValidStateIdx: number | undefined;
 
     #hasWon: boolean = false;
 
@@ -180,13 +181,17 @@ export class PlayfieldComponent implements UIComponent {
         redoButton.style.visibility = (this.#activeStateIdx == this.#stateHistory.length - 1) ? "hidden" : "visible";
     }
 
-    #removeFutureHistoryEntries()
+    /** Returns true iff the history was modified */
+    #removeFutureHistoryEntries(): boolean
     {
+        let somethingChanged = false;
         while (this.#stateHistory.length > this.#activeStateIdx + 1) {
             this.#stateHistory.pop();
+            somethingChanged = true;
         }
 
         this.#controlPad!.getButton(ControlPadButton.REDO).style.visibility = "hidden";
+        return somethingChanged;
     }
 
     #applyLine() {
@@ -292,6 +297,7 @@ export class PlayfieldComponent implements UIComponent {
         this.#nonogramBoard.applyState(emptyState);
         this.#stateHistory = [emptyState];
         this.#activeStateIdx = 0;
+        this.#latestValidStateIdx = 0;
         this.controlPad.getButton(ControlPadButton.UNDO).style.visibility = "hidden";
         this.controlPad.getButton(ControlPadButton.REDO).style.visibility = "hidden";
         this.#hasWon = false;
@@ -305,7 +311,7 @@ export class PlayfieldComponent implements UIComponent {
      */
     resetToLastValidState()
     {
-        const lastValidIndex = this.#getLastValidIndex();
+        const lastValidIndex = this.#latestValidStateIdx;
         if (lastValidIndex == undefined || lastValidIndex == this.#activeStateIdx) {
             return;
         }
@@ -313,19 +319,6 @@ export class PlayfieldComponent implements UIComponent {
         this.#setActiveHistoryIdx(lastValidIndex);
         this.#removeFutureHistoryEntries();
         this.#onCellsChanged();
-    }
-
-    #getLastValidIndex(): number | undefined
-    {
-        for (let i = this.#stateHistory.length - 1; i >= 0; i--) {
-            const state = new NonogramState(this.rowHints, this.colHints, this.#stateHistory[i].cells);
-
-            if (!stateHasError(state, this.solution)) {
-                return i;
-            }
-        }
-
-        return undefined;
     }
 
     /**
@@ -344,9 +337,16 @@ export class PlayfieldComponent implements UIComponent {
         const undoButton = this.controlPad.getButton(ControlPadButton.UNDO);
         const redoButton = this.controlPad.getButton(ControlPadButton.REDO);
 
-        this.#removeFutureHistoryEntries();
+        const futureStatesRemoved = this.#removeFutureHistoryEntries()
         this.#stateHistory.push(this.#nonogramBoard.getFullState());
         this.#activeStateIdx += 1;
+
+        if (futureStatesRemoved) {
+            this.#recalculateLatestValidStateIdx();
+        } else {
+            this.#updateLatestValidStateIdx();
+        }
+
         undoButton.style.visibility = "visible";
         redoButton.style.visibility = "hidden";
     }
@@ -478,6 +478,45 @@ export class PlayfieldComponent implements UIComponent {
     hasUnsolveableLines(): boolean
     {
         return this.#nonogramBoard.errorLines.length > 0;
+    }
+
+    historyHasValidState(): boolean
+    {
+        return this.#latestValidStateIdx !== undefined;
+    }
+
+    /** Should be called only after a click! */
+    #updateLatestValidStateIdx()
+    {
+        if (this.#nonogramBoard.errorLines.length > 0) {
+            return;
+        }
+
+        const curState = this.#extractSolverState();
+        if (stateHasError(curState, this.solution)) {
+            return;
+        }
+
+        this.#latestValidStateIdx = this.#activeStateIdx;
+    }
+
+    /** Performs full recalculation of last valid state index. */
+    #recalculateLatestValidStateIdx()
+    {
+        this.#latestValidStateIdx = this.#calculateLastValidIndex();
+    }
+
+    #calculateLastValidIndex(): number | undefined
+    {
+        for (let i = this.#stateHistory.length - 1; i >= 0; i--) {
+            const state = new NonogramState(this.rowHints, this.colHints, this.#stateHistory[i].cells);
+
+            if (!stateHasError(state, this.solution)) {
+                return i;
+            }
+        }
+
+        return undefined;
     }
 
     /**
