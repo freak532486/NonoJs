@@ -534,6 +534,10 @@ export class NonogramBoardComponent implements UIComponent {
         }
     }
 
+    get errorLines() {
+        return this.#errorLines;
+    }
+
 };
 
 /**

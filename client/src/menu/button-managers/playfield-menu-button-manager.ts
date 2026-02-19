@@ -13,6 +13,7 @@ export default class PlayfieldMenuButtonManager {
         private readonly onSolveLine: () => void,
         private readonly onSolveFull: () => void,
         private readonly onReset: () => void,
+        private readonly onResetToValid: () => void,
         private readonly onExit: () => void
     ) {}
 
@@ -65,6 +66,18 @@ export default class PlayfieldMenuButtonManager {
         }
         menu.appendElement(resetButton);
 
+        /* Add reset to last valid state button */
+        const resetToValidButton = document.createElement("button");
+        resetToValidButton.id = "button-reset-to-valid";
+        resetToValidButton.classList.add("entry", "playfield", "border-top");
+        resetToValidButton.textContent = "Reset to last valid state";
+        resetToValidButton.style.gridColumn = "1 / 3";
+        resetToValidButton.onclick = () => {
+            menu.toggle();
+            this.onResetToValid();
+        }
+        menu.appendElement(resetToValidButton);
+
         /* Add exit button */
         const exitButton = document.createElement("button");
         exitButton.classList.add("entry", "playfield", "border-top", "border-right");
@@ -86,6 +99,12 @@ export default class PlayfieldMenuButtonManager {
         }
 
         this.menu.removeElements("playfield");
+    }
+
+    setResetToValidButtonVisibility(visible: boolean)
+    {
+        const button = this.menu.view.querySelector("#button-reset-to-valid") as HTMLElement;
+        button.style.display = visible ? "block" : "none";
     }
 
 };

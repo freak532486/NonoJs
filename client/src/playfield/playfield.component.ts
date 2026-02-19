@@ -13,10 +13,10 @@ import { Timer } from "./timer/timer.js";
 import PlayfieldSolverService from "./playfield-solver-service.js";
 import { PlayfieldLineHandler } from "./playfield-line-handler.js";
 import UIComponent from "../common/ui-component.js";
+import PlayfieldListener from "./playfield-listener.js";
 
 export class PlayfieldComponent implements UIComponent {
 
-    #nonogramId: string;
     #view: HTMLElement | undefined;
     #nonogramBoard: NonogramBoardComponent;
 
@@ -28,25 +28,26 @@ export class PlayfieldComponent implements UIComponent {
 
     #stateHistory: Array<BoardComponentFullState> = [];
     #activeStateIdx: number = 0;
+    #latestValidStateIdx: number | undefined;
 
     #hasWon: boolean = false;
 
     #solverService: PlayfieldSolverService;
 
-    #onStateChanged: () => void = () => {};
+    #listeners: Array<PlayfieldListener> = [];
 
     /**
      * Constructs a playfield for the given nonogram. Call init() before using!
      */
     constructor (
-        nonogramId: string,
-        rowHints: Array<Array<number>>,
-        colHints: Array<Array<number>>,
+        public readonly nonogramId: string,
+        public readonly rowHints: Array<Array<number>>,
+        public readonly colHints: Array<Array<number>>,
+        public readonly solution: NonogramState,
         initialState: Array<number> | undefined,
-        initialElapsedTime: number | undefined
+        initialElapsedTime: number | undefined,
     )
     {
-        this.#nonogramId = nonogramId;
         this.#nonogramBoard = new NonogramBoardComponent(rowHints, colHints);
         this.#solverService = new PlayfieldSolverService(this);
 
@@ -148,10 +149,7 @@ export class PlayfieldComponent implements UIComponent {
                 return;
             }
 
-            this.#activeStateIdx -= 1;
-            this.#nonogramBoard.applyState(this.#stateHistory[this.#activeStateIdx]);
-            undoButton.style.visibility = (this.#activeStateIdx == 0) ? "hidden" : "visible";
-            redoButton.style.visibility = "visible";
+            this.#setActiveHistoryIdx(this.#activeStateIdx - 1);
         };
 
         redoButton.onclick = () => {
@@ -159,10 +157,7 @@ export class PlayfieldComponent implements UIComponent {
                 return;
             }
 
-            this.#activeStateIdx += 1;
-            this.#nonogramBoard.applyState(this.#stateHistory[this.#activeStateIdx]);
-            undoButton.style.visibility = "visible";
-            redoButton.style.visibility = (this.#activeStateIdx == this.#stateHistory.length - 1) ? "hidden" : "visible";
+            this.#setActiveHistoryIdx(this.#activeStateIdx + 1);
         };
 
         return this.#view;
@@ -170,6 +165,33 @@ export class PlayfieldComponent implements UIComponent {
 
     cleanup(): void {
         // Nothing to do
+    }
+
+    #setActiveHistoryIdx(idx: number) {
+        if (idx < 0 || idx >= this.#stateHistory.length) {
+            throw new Error("Invalid history index");
+        }
+
+        const undoButton = this.#controlPad!.getButton(ControlPadButton.UNDO);
+        const redoButton = this.#controlPad!.getButton(ControlPadButton.REDO);
+
+        this.#activeStateIdx = idx;
+        this.#nonogramBoard.applyState(this.#stateHistory[this.#activeStateIdx]);
+        undoButton.style.visibility = (this.#activeStateIdx == 0) ? "hidden" : "visible";
+        redoButton.style.visibility = (this.#activeStateIdx == this.#stateHistory.length - 1) ? "hidden" : "visible";
+    }
+
+    /** Returns true iff the history was modified */
+    #removeFutureHistoryEntries(): boolean
+    {
+        let somethingChanged = false;
+        while (this.#stateHistory.length > this.#activeStateIdx + 1) {
+            this.#stateHistory.pop();
+            somethingChanged = true;
+        }
+
+        this.#controlPad!.getButton(ControlPadButton.REDO).style.visibility = "hidden";
+        return somethingChanged;
     }
 
     #applyLine() {
@@ -185,7 +207,7 @@ export class PlayfieldComponent implements UIComponent {
 
         const line = this.#lineHandler.getCurrentLine();
         for (const p of line.points) {
-            newState[p.x + p.y * width] =  line.type;
+            newState[p.x + p.y * width] = line.type;
         }
 
         /* Perform checks */
@@ -275,12 +297,28 @@ export class PlayfieldComponent implements UIComponent {
         this.#nonogramBoard.applyState(emptyState);
         this.#stateHistory = [emptyState];
         this.#activeStateIdx = 0;
+        this.#latestValidStateIdx = 0;
         this.controlPad.getButton(ControlPadButton.UNDO).style.visibility = "hidden";
         this.controlPad.getButton(ControlPadButton.REDO).style.visibility = "hidden";
         this.#hasWon = false;
         this.#timer.paused = false;
         this.#timer.restart();
-        this.#onStateChanged();
+        this.#onCellsChanged();
+    }
+
+    /**
+     * Resets the board to the last error-free state.
+     */
+    resetToLastValidState()
+    {
+        const lastValidIndex = this.#latestValidStateIdx;
+        if (lastValidIndex == undefined || lastValidIndex == this.#activeStateIdx) {
+            return;
+        }
+
+        this.#setActiveHistoryIdx(lastValidIndex);
+        this.#removeFutureHistoryEntries();
+        this.#onCellsChanged();
     }
 
     /**
@@ -294,17 +332,21 @@ export class PlayfieldComponent implements UIComponent {
             return; // Nothing to do
         }
 
-        this.#onStateChanged();
+        this.#onCellsChanged();
 
         const undoButton = this.controlPad.getButton(ControlPadButton.UNDO);
         const redoButton = this.controlPad.getButton(ControlPadButton.REDO);
 
-        while (this.#stateHistory.length != this.#activeStateIdx + 1) {
-            this.#stateHistory.pop();
-        }
-
+        const futureStatesRemoved = this.#removeFutureHistoryEntries()
         this.#stateHistory.push(this.#nonogramBoard.getFullState());
         this.#activeStateIdx += 1;
+
+        if (futureStatesRemoved) {
+            this.#recalculateLatestValidStateIdx();
+        } else {
+            this.#updateLatestValidStateIdx();
+        }
+
         undoButton.style.visibility = "visible";
         redoButton.style.visibility = "hidden";
     }
@@ -389,10 +431,6 @@ export class PlayfieldComponent implements UIComponent {
         this.#nonogramBoard.applyLineKnowledge(lineId, deduction.newKnowledge);
     }
 
-    get nonogramId(): string {
-        return this.#nonogramId;
-    }
-
     get view(): HTMLElement {
         if (this.#view == null) {
             throw new Error("init() was not called");
@@ -425,14 +463,6 @@ export class PlayfieldComponent implements UIComponent {
         return this.#timer.elapsed;
     }
 
-    get rowHints(): Array<Array<number>> {
-        return this.#nonogramBoard.rowHints;
-    }
-
-    get colHints(): Array<Array<number>> {
-        return this.#nonogramBoard.colHints;
-    }
-
     get hasWon(): boolean {
         return this.#hasWon;
     }
@@ -445,6 +475,50 @@ export class PlayfieldComponent implements UIComponent {
         return this.#solverService;
     }
 
+    hasUnsolveableLines(): boolean
+    {
+        return this.#nonogramBoard.errorLines.length > 0;
+    }
+
+    historyHasValidState(): boolean
+    {
+        return this.#latestValidStateIdx !== undefined;
+    }
+
+    /** Should be called only after a click! */
+    #updateLatestValidStateIdx()
+    {
+        if (this.#nonogramBoard.errorLines.length > 0) {
+            return;
+        }
+
+        const curState = this.#extractSolverState();
+        if (stateHasError(curState, this.solution)) {
+            return;
+        }
+
+        this.#latestValidStateIdx = this.#activeStateIdx;
+    }
+
+    /** Performs full recalculation of last valid state index. */
+    #recalculateLatestValidStateIdx()
+    {
+        this.#latestValidStateIdx = this.#calculateLastValidIndex();
+    }
+
+    #calculateLastValidIndex(): number | undefined
+    {
+        for (let i = this.#stateHistory.length - 1; i >= 0; i--) {
+            const state = new NonogramState(this.rowHints, this.colHints, this.#stateHistory[i].cells);
+
+            if (!stateHasError(state, this.solution)) {
+                return i;
+            }
+        }
+
+        return undefined;
+    }
+
     /**
      * Displays a message.
      */
@@ -453,10 +527,14 @@ export class PlayfieldComponent implements UIComponent {
     }
 
     /**
-     * Sets the callback that is called when the state of the board changes.
+     * Adds a listener to the playfield.
      */
-    set onStateChanged(fn: () => void) {
-        this.#onStateChanged = fn;
+    addListener(listener: PlayfieldListener) {
+        this.#listeners.push(listener);
+    }
+
+    #onCellsChanged() {
+        this.#listeners.forEach(x => x.onCellsChanged());
     }
 
 };
@@ -483,4 +561,29 @@ function calcChangedLines(
     }
 
     return ret;
+}
+
+function stateHasError(
+    state: NonogramState,
+    solution: NonogramState
+): boolean
+{
+    if (state.width !== solution.width || state.height !== solution.height) {
+        return true;
+    }
+
+    for (let i = 0; i < state.cells.length; i++) {
+        const a = state.cells[i];
+        const b = solution.cells[i];
+
+        if (a == CellKnowledge.DEFINITELY_BLACK && b == CellKnowledge.DEFINITELY_WHITE) {
+            return true;
+        }
+
+        if (a == CellKnowledge.DEFINITELY_WHITE && b == CellKnowledge.DEFINITELY_BLACK) {
+            return true;
+        }
+    }
+
+    return false;
 }

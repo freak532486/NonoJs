@@ -11,6 +11,9 @@ import { Menu } from "../../menu/menu.component";
 import SavefileSyncService from "../../savefile/savefile-sync-service";
 import { Component } from "nonojs-common";
 import tokens from "../../tokens";
+import { deduceAll } from "../../solver";
+import { DeductionStatus, NonogramState } from "../../common/nonogram-types";
+import PlayfieldListener from "../../playfield/playfield-listener";
 
 export default class NonogramRoute extends Component implements Route
 {
@@ -40,50 +43,78 @@ export default class NonogramRoute extends Component implements Route
         /* Load current state */
         const savefile = await savefileAccess.fetchLocalSavefile();
         var stored = savefile ? getSavestateForNonogram(savefile, nonogramId) : undefined;
+
+        /* Presolve the nonogram */
+        const solution = deduceAll(NonogramState.empty(nonogram.rowHints, nonogram.colHints));
+        if (solution.status == DeductionStatus.WAS_IMPOSSIBLE) {
+            window.alert("This nonogram was determined impossible by our solver.");
+        } else if (solution.status !== DeductionStatus.WAS_SOLVED) {
+            window.alert("This nonogram was not solveable by our solver. Good luck!");
+        }
     
         /* Create new playfield */
         const playfield = new PlayfieldComponent(
             nonogramId,
             nonogram.rowHints, nonogram.colHints,
+            solution.newState,
             stored?.cells,
             stored?.elapsed
         );
     
         /* Create playfield menu buttons */
-        new PlayfieldMenuButtonManager(
+        const playfieldButtonManager = new PlayfieldMenuButtonManager(
             menu,
             () => playfield.solverService.hint(),
             () => playfield.solverService.solveNext(),
             () => playfield.solverService.solveFull(),
             () => playfield.reset(),
+            () => playfield.resetToLastValidState(),
             async () => {
                 await this.#storePlayfieldStateToStorage(playfield);
                 app.navigateTo("/");
             }
-        ).createButtons();
+        );
+        playfieldButtonManager.createButtons();
     
-        playfield.onStateChanged = async () => {
-            /* Save state to local storage */
-            await this.#storePlayfieldStateToStorage(playfield);
-    
-            /* Update last played nonogram id */
-            const saveFile = await savefileAccess.fetchLocalSavefile();
-    
-            if (!playfield.hasWon) {
-                saveFile.lastPlayedNonogramId = playfield.nonogramId;
-            } else {
-                saveFile.lastPlayedNonogramId = undefined;
+        /* Add listener for saving to savefile */
+        playfield.addListener({
+            onCellsChanged: async () => {
+                /* Save state to local storage */
+                await this.#storePlayfieldStateToStorage(playfield);
+        
+                /* Update last played nonogram id */
+                const saveFile = await savefileAccess.fetchLocalSavefile();
+        
+                if (!playfield.hasWon) {
+                    saveFile.lastPlayedNonogramId = playfield.nonogramId;
+                } else {
+                    saveFile.lastPlayedNonogramId = undefined;
+                }
+        
+                await savefileAccess.writeLocalSavefile(saveFile);
+        
+                /* Queue sync */
+                const activeUsername = await authService.getCurrentUsername();
+                if (activeUsername) {
+                    savefileSyncService.queueSync();
+                }
             }
-    
-            await savefileAccess.writeLocalSavefile(saveFile);
-    
-            /* Queue sync */
-            const activeUsername = await authService.getCurrentUsername();
-            if (activeUsername) {
-                savefileSyncService.queueSync();
-            }
+        });
+
+        /* Add listener for hiding reset to valid state button */
+        const updateResetToValidButtonVisibility = () => {
+            playfieldButtonManager.setResetToValidButtonVisibility(
+                playfield.hasUnsolveableLines() &&
+                playfield.historyHasValidState()
+            );
         }
+
+        playfield.addListener({
+            onCellsChanged: updateResetToValidButtonVisibility
+        });
+        updateResetToValidButtonVisibility();
     
+        /* Finish */
         document.title = "Playing " + nonogram.colHints.length + "x" + nonogram.rowHints.length + " Nonogram"
         activeComponentManager.setActiveComponent(playfield);
     }
