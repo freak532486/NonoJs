@@ -13,6 +13,7 @@ import { Component } from "nonojs-common";
 import tokens from "../../tokens";
 import { deduceAll } from "../../solver";
 import { DeductionStatus, NonogramState } from "../../common/nonogram-types";
+import PlayfieldListener from "../../playfield/playfield-listener";
 
 export default class NonogramRoute extends Component implements Route
 {
@@ -61,7 +62,7 @@ export default class NonogramRoute extends Component implements Route
         );
     
         /* Create playfield menu buttons */
-        new PlayfieldMenuButtonManager(
+        const playfieldButtonManager = new PlayfieldMenuButtonManager(
             menu,
             () => playfield.solverService.hint(),
             () => playfield.solverService.solveNext(),
@@ -72,30 +73,43 @@ export default class NonogramRoute extends Component implements Route
                 await this.#storePlayfieldStateToStorage(playfield);
                 app.navigateTo("/");
             }
-        ).createButtons();
+        );
+        playfieldButtonManager.createButtons();
     
-        playfield.onStateChanged = async () => {
-            /* Save state to local storage */
-            await this.#storePlayfieldStateToStorage(playfield);
-    
-            /* Update last played nonogram id */
-            const saveFile = await savefileAccess.fetchLocalSavefile();
-    
-            if (!playfield.hasWon) {
-                saveFile.lastPlayedNonogramId = playfield.nonogramId;
-            } else {
-                saveFile.lastPlayedNonogramId = undefined;
+        /* Add listener for saving to savefile */
+        playfield.addListener({
+            onCellsChanged: async () => {
+                /* Save state to local storage */
+                await this.#storePlayfieldStateToStorage(playfield);
+        
+                /* Update last played nonogram id */
+                const saveFile = await savefileAccess.fetchLocalSavefile();
+        
+                if (!playfield.hasWon) {
+                    saveFile.lastPlayedNonogramId = playfield.nonogramId;
+                } else {
+                    saveFile.lastPlayedNonogramId = undefined;
+                }
+        
+                await savefileAccess.writeLocalSavefile(saveFile);
+        
+                /* Queue sync */
+                const activeUsername = await authService.getCurrentUsername();
+                if (activeUsername) {
+                    savefileSyncService.queueSync();
+                }
             }
-    
-            await savefileAccess.writeLocalSavefile(saveFile);
-    
-            /* Queue sync */
-            const activeUsername = await authService.getCurrentUsername();
-            if (activeUsername) {
-                savefileSyncService.queueSync();
+        });
+
+        /* Add listener for hiding reset to valid state button */
+        playfield.addListener({
+            onCellsChanged: () => {
+                playfieldButtonManager.setResetToValidButtonVisibility(playfield.hasUnsolveableLines());
             }
-        }
+        })
+        playfieldButtonManager.setResetToValidButtonVisibility(playfield.hasUnsolveableLines());
     
+        /* Finish */
         document.title = "Playing " + nonogram.colHints.length + "x" + nonogram.rowHints.length + " Nonogram"
         activeComponentManager.setActiveComponent(playfield);
     }

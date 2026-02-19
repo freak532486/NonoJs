@@ -13,6 +13,7 @@ import { Timer } from "./timer/timer.js";
 import PlayfieldSolverService from "./playfield-solver-service.js";
 import { PlayfieldLineHandler } from "./playfield-line-handler.js";
 import UIComponent from "../common/ui-component.js";
+import PlayfieldListener from "./playfield-listener.js";
 
 export class PlayfieldComponent implements UIComponent {
 
@@ -32,7 +33,7 @@ export class PlayfieldComponent implements UIComponent {
 
     #solverService: PlayfieldSolverService;
 
-    #onStateChanged: () => void = () => {};
+    #listeners: Array<PlayfieldListener> = [];
 
     /**
      * Constructs a playfield for the given nonogram. Call init() before using!
@@ -201,7 +202,7 @@ export class PlayfieldComponent implements UIComponent {
 
         const line = this.#lineHandler.getCurrentLine();
         for (const p of line.points) {
-            newState[p.x + p.y * width] =  line.type;
+            newState[p.x + p.y * width] = line.type;
         }
 
         /* Perform checks */
@@ -296,7 +297,7 @@ export class PlayfieldComponent implements UIComponent {
         this.#hasWon = false;
         this.#timer.paused = false;
         this.#timer.restart();
-        this.#onStateChanged();
+        this.#onCellsChanged();
     }
 
     /**
@@ -311,7 +312,7 @@ export class PlayfieldComponent implements UIComponent {
 
         this.#setActiveHistoryIdx(lastValidIndex);
         this.#removeFutureHistoryEntries();
-        this.#onStateChanged();
+        this.#onCellsChanged();
     }
 
     #getLastValidIndex(): number | undefined
@@ -338,7 +339,7 @@ export class PlayfieldComponent implements UIComponent {
             return; // Nothing to do
         }
 
-        this.#onStateChanged();
+        this.#onCellsChanged();
 
         const undoButton = this.controlPad.getButton(ControlPadButton.UNDO);
         const redoButton = this.controlPad.getButton(ControlPadButton.REDO);
@@ -474,6 +475,11 @@ export class PlayfieldComponent implements UIComponent {
         return this.#solverService;
     }
 
+    hasUnsolveableLines(): boolean
+    {
+        return this.#nonogramBoard.errorLines.length > 0;
+    }
+
     /**
      * Displays a message.
      */
@@ -482,10 +488,14 @@ export class PlayfieldComponent implements UIComponent {
     }
 
     /**
-     * Sets the callback that is called when the state of the board changes.
+     * Adds a listener to the playfield.
      */
-    set onStateChanged(fn: () => void) {
-        this.#onStateChanged = fn;
+    addListener(listener: PlayfieldListener) {
+        this.#listeners.push(listener);
+    }
+
+    #onCellsChanged() {
+        this.#listeners.forEach(x => x.onCellsChanged());
     }
 
 };
