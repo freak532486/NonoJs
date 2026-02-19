@@ -13,8 +13,8 @@ export default class PlayfieldMenuButtonManager {
         private readonly onSolveLine: () => void,
         private readonly onSolveFull: () => void,
         private readonly onReset: () => void,
-        private readonly onExit: () => void,
-        private readonly onResetToValid: () => void
+        private readonly onResetToValid: () => void,
+        private readonly onExit: () => void
     ) {}
 
     createButtons()

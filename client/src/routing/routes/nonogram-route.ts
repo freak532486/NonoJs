@@ -11,6 +11,8 @@ import { Menu } from "../../menu/menu.component";
 import SavefileSyncService from "../../savefile/savefile-sync-service";
 import { Component } from "nonojs-common";
 import tokens from "../../tokens";
+import { deduceAll } from "../../solver";
+import { DeductionStatus, NonogramState } from "../../common/nonogram-types";
 
 export default class NonogramRoute extends Component implements Route
 {
@@ -40,11 +42,20 @@ export default class NonogramRoute extends Component implements Route
         /* Load current state */
         const savefile = await savefileAccess.fetchLocalSavefile();
         var stored = savefile ? getSavestateForNonogram(savefile, nonogramId) : undefined;
+
+        /* Presolve the nonogram */
+        const solution = deduceAll(NonogramState.empty(nonogram.rowHints, nonogram.colHints));
+        if (solution.status == DeductionStatus.WAS_IMPOSSIBLE) {
+            window.alert("This nonogram was determined impossible by our solver.");
+        } else if (solution.status !== DeductionStatus.WAS_SOLVED) {
+            window.alert("This nonogram was not solveable by our solver. Good luck!");
+        }
     
         /* Create new playfield */
         const playfield = new PlayfieldComponent(
             nonogramId,
             nonogram.rowHints, nonogram.colHints,
+            solution.newState,
             stored?.cells,
             stored?.elapsed
         );
@@ -56,6 +67,7 @@ export default class NonogramRoute extends Component implements Route
             () => playfield.solverService.solveNext(),
             () => playfield.solverService.solveFull(),
             () => playfield.reset(),
+            () => playfield.resetToLastValidState(),
             async () => {
                 await this.#storePlayfieldStateToStorage(playfield);
                 app.navigateTo("/");
