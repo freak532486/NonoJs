@@ -9,6 +9,7 @@
         "sourceMap": true,
         "checkJs": true,
         "allowJs": true,
+        "noImplicitOverride": true,
         "outDir": "dist/"
     }
 }

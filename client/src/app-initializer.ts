@@ -2,12 +2,17 @@ import * as app from "./app"
 import { Component } from "nonojs-common";
 import tokens from "./tokens";
 import DefaultMenuButtonManager from "./menu/button-managers/default-menu-button-manager";
-
-const contentRoot = document.getElementById("content-column") as HTMLElement;
-const headerDiv = document.getElementById("header-div")  as HTMLElement;
+import MobileRootComponent from "./mobile-root-component/mobile-root";
 
 export default class AppInitializer extends Component
 {
+
+    constructor(
+        private readonly mobileRoot: MobileRootComponent
+    ) {
+        super();
+    }
+
     async initApp() {
         const catalogAccess = this.ctx.getComponent(tokens.catalogAccess);
         const savefileManager = this.ctx.getComponent(tokens.savefileManager);
@@ -21,8 +26,8 @@ export default class AppInitializer extends Component
         await savefileManager.initializeLocalSavefile();
         savefileMigrator.performStorageMigration();
     
-        menu.create(contentRoot);
-        header.create(headerDiv);
+        menu.create(this.mobileRoot.mainContainer);
+        header.create(this.mobileRoot.headerContainer);
     
         const defaultMenuButtonManager = new DefaultMenuButtonManager(
             menu,

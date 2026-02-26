@@ -19,9 +19,14 @@ import { Context } from "nonojs-common";
 import tokens from "./tokens";
 import AuthService from "./auth/auth-service";
 import AppInitializer from "./app-initializer";
+import MobileRootComponent from "./mobile-root-component/mobile-root";
 
 /* Create injection context */
 const ctx = new Context();
+
+/* Create root container for mobile */
+const mobileRoot = new MobileRootComponent();
+mobileRoot.create(document.body);
 
 /* Add basic services */
 ctx.addComponent(tokens.authService, new AuthService());
@@ -31,7 +36,7 @@ ctx.addComponent(tokens.savefileManager, new SavefileManager());
 ctx.addComponent(tokens.savefileMigrator, new SavefileMigrator());
 ctx.addComponent(tokens.savefileMerger, new SavefileMerger());
 ctx.addComponent(tokens.savefileSyncService, new SavefileSyncService());
-ctx.addComponent(tokens.activeComponentManager, new ActiveComponentManager());
+ctx.addComponent(tokens.activeComponentManager, new ActiveComponentManager(mobileRoot));
 
 /* Add UI components */
 ctx.addComponent(tokens.menu, new Menu());
@@ -50,7 +55,7 @@ router.addRoute(ctx.addComponent(tokens.settingsRoute, new SettingsRoute()));
 router.addRoute(ctx.addComponent(tokens.startpageRoute, new StartpageRoute()));
 
 /* Initialize app */
-ctx.addComponent(tokens.appInitializer, new AppInitializer()).initApp();
+ctx.addComponent(tokens.appInitializer, new AppInitializer(mobileRoot)).initApp();
 
 export function navigateTo(path: string) {
     window.location.replace(path);
