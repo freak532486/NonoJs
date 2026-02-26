@@ -4,7 +4,7 @@ import * as path from "path";
 
 export default fp(async (fastify) => {
     fastify.register(fastifyStatic, {
-        root: path.resolve(__dirname, "../../../../client/dist"),
+        root: path.resolve(__dirname, "../../../../client"),
         prefix: "/"
     });
 
