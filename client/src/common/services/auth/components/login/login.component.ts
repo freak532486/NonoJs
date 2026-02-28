@@ -1,7 +1,6 @@
 import { htmlToElement } from "../../../../../common/services/html-to-element"
 import loginTemplate from "./login.template.html"
 import "./login.style.css"
-import "../../../../../common/styles/boxes.css"
 import UIComponent from "../../../../../common/types/ui-component";
 
 export default class LoginComponent implements UIComponent {

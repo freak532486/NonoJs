@@ -1,6 +1,5 @@
 import template from "./registration-confirmation.html"
 import "./registration-confirmation.css"
-import "../../../../../common/styles/boxes.css"
 import { htmlToElement } from "../../../../../common/services/html-to-element";
 import UIComponent from "../../../../../common/types/ui-component";
 

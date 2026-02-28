@@ -6,6 +6,9 @@
     --border-color: rgb(162, 162, 162);
     --border-color-dark: #00000080;
     --header-gradient-color: color-mix(in srgb, var(--bg1) 90%, black 10%);
-
     --header-size: 50px;
+}
+
+body {
+    margin: 0px;
 }

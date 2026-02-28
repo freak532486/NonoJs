@@ -2,7 +2,6 @@ import startPage from "./start-page.html"
 import notdLinkTemplate from "./notd-link-template.html"
 import continuePlayingTemplate from "./continue-playing-template.html"
 import "./start-page.css"
-import "../../../common/styles/boxes.css"
 import { htmlToElement } from "../../../common/services/html-to-element";
 import { StartPageNonogramSelector } from "../../../common/services/start-page/start-page-nonogram-selector";
 import { CatalogAccess } from "../../../common/services/catalog/catalog-access";
@@ -140,8 +139,9 @@ export class StartPage implements UIComponent {
         const nonogramState = cells ? 
             new NonogramState(nonogram.rowHints, nonogram.colHints, cells) : 
             NonogramState.empty(nonogram.rowHints, nonogram.colHints);
-        const preview = new NonogramPreview(nonogramState, 120, 120);
+        const preview = new NonogramPreview(nonogramState);
         preview.create(content);
+        limitCanvasSize(preview.view, 120, 120);
 
         /* Set preview text */
         const previewTextSpan = ret.querySelector(".preview-text") as HTMLElement;
@@ -169,8 +169,9 @@ export class StartPage implements UIComponent {
         const nonogramState = cells ? 
             new NonogramState(nonogram.rowHints, nonogram.colHints, cells) : 
             NonogramState.empty(nonogram.rowHints, nonogram.colHints);
-        const preview = new NonogramPreview(nonogramState, 120, 120);
+        const preview = new NonogramPreview(nonogramState);
         preview.create(content);
+        limitCanvasSize(preview.view, 120, 120);
 
         /* Set preview text */
         const previewTextSpan = ret.querySelector(".preview-text") as HTMLElement;
@@ -204,4 +205,17 @@ export class StartPage implements UIComponent {
         usernameSpan.textContent = username;
     }
 
+}
+
+/**
+ * Scales the given canvas to fit into the given bounds.
+ */
+function limitCanvasSize(canvas: HTMLCanvasElement, maxWidth: number, maxHeight: number)
+{
+    const hScale = Math.min(1, maxWidth / canvas.width);
+    const vScale = Math.min(1, maxHeight / canvas.height);
+    const scale = Math.min(hScale, vScale);
+
+    canvas.style.width = (canvas.width * scale) + "px";
+    canvas.style.height = (canvas.height * scale) + "px";
 }

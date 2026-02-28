@@ -1,0 +1,25 @@
+.preview-container {
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: var(--bg1);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+
+    cursor: pointer;
+
+    display: grid;
+    grid-template-rows: 1fr auto;
+}
+
+.preview-container:active {
+    background-color: color-mix(in srgb, var(--bg1) 90%, black 10%);
+}
+
+.preview-container .label
+{
+    font-family: serif;
+    font-size: 25pt;
+    font-style: italic;
+
+    justify-self: center;
+}

@@ -1,4 +1,3 @@
-import { Context } from "nonojs-common";
 import { CellKnowledge, NonogramState } from "../../types/nonogram-types";
 import UIComponent from "../../types/ui-component";
 import { htmlToElement } from "../../services/html-to-element";
@@ -11,9 +10,7 @@ export class NonogramPreview implements UIComponent {
     #view?: HTMLCanvasElement;
 
     constructor (
-        private readonly nonogram: NonogramState,
-        private readonly maxWidth: number = Number.MAX_VALUE,
-        private readonly maxHeight: number = Number.MAX_VALUE
+        private readonly nonogram: NonogramState
     ) {}
 
     /**
@@ -51,12 +48,11 @@ export class NonogramPreview implements UIComponent {
         const totalWidth = rowHintsWidth + cellsWidth + 2;
         const totalHeight = colHintsHeight + cellsHeight + 2;
 
-        const scale = Math.min(1, Math.min(this.maxWidth / totalWidth, this.maxHeight / totalHeight));
-
-        /* Set width/height */
+        /* Set width/height of canvas */
         this.#view.width = totalWidth;
         this.#view.height = totalHeight;
-        this.#view.style.transform = "scale(" + scale + ", " + scale + ")";
+        this.#view.style.width = totalWidth + "px";
+        this.#view.style.height = totalHeight + "px";
 
         /* Draw outer border */
         canvasCtx.lineWidth = 2;

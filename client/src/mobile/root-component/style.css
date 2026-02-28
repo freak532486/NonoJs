@@ -1,11 +1,7 @@
-body {
-    margin: 0px;
-    background-color: black;
-}
-
 #content-root {
     position: fixed;
     inset: 0px;
+    background-color: black;
 }
 
 #content-column {

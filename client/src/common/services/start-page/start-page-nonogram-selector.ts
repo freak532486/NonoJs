@@ -11,19 +11,15 @@ export class StartPageNonogramSelector {
 
     /**
      * Returns the nonogram that the player played most recently.
-     * 
-     * @returns {Promise<string | undefined>}
      */
-    async getLastPlayedNonogramId() {
+    async getLastPlayedNonogramId(): Promise<string | undefined> {
         return (await this.savefileAccess.fetchLocalSavefile()).lastPlayedNonogramId;
     }
 
     /**
      * Returns the list of "nonograms of the day".
-     * 
-     * @returns {Promise<Array<string>>}
      */
-    async getNonogramIdsOfTheDay() {
+    async getNonogramIdsOfTheDay(): Promise<Array<string>> {
         const allNonograms = await this.catalogAccess.getAllNonograms();
 
         const nonoSize = (nonogram: SerializedNonogram) => Math.max(nonogram.rowHints.length, nonogram.colHints.length);
