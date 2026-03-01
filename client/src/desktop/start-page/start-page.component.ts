@@ -7,6 +7,7 @@ import Color from "../../common/types/color";
 import NonogramsOfTheDay from "./notd/nonogram-of-the-day.component";
 import { CatalogAccess } from "../../common/services/catalog/catalog-access";
 import { StartPageNonogramSelector } from "../../common/services/start-page/start-page-nonogram-selector";
+import LoginBox from "./login-box/login-box.component";
 
 export default class StartPage implements UIComponent
 {
@@ -24,8 +25,8 @@ export default class StartPage implements UIComponent
         const centerCol = this.#view.querySelector(".center") as HTMLDivElement;
         const rightCol = this.#view.querySelector(".right") as HTMLDivElement;
 
-        const navBox = new BoxComponent("Navigation", Color.BLUE);
-        navBox.create(leftCol);
+        const loginBox = new LoginBox(undefined, () => {}, () => {});
+        loginBox.create(leftCol);
 
         const continueBox = new BoxComponent("Continue playing", Color.RED);
         continueBox.view.classList.add("continue-box");

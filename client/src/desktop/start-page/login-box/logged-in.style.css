@@ -1,0 +1,19 @@
+.logged-in-root {
+    padding: 5px;
+    box-sizing: border-box;
+    height: 100%;
+    line-height: 1.5;
+
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: 5px;
+}
+
+.logged-in-root .username {
+    font-weight: bold;
+    color: green;
+}
+
+.logged-in-root button {
+    justify-self: end;
+}
