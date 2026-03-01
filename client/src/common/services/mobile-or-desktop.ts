@@ -22,6 +22,7 @@ function isMobileBasedOnDeviceParameters(): boolean
 
     // Basic mobile user agent detection
     const isMobileUA = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    const isDesktopUA = /windows nt|macintosh|mac os x|x11|linux/i.test(userAgent);
 
     // Touch capability check (helps with tablets and newer devices)
     const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -29,7 +30,7 @@ function isMobileBasedOnDeviceParameters(): boolean
     // Optional viewport heuristic (useful fallback)
     const isSmallScreen = window.matchMedia("(max-width: 768px)").matches;
 
-    return isMobileUA || (hasTouch && isSmallScreen);
+    return isMobileUA || (hasTouch && isSmallScreen && !isDesktopUA);
 }
 
 

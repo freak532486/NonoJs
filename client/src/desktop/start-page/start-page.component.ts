@@ -20,9 +20,20 @@ export default class StartPage implements UIComponent
     {
         this.#view = htmlToElement(template);
 
+        const leftCol = this.#view.querySelector(".left") as HTMLDivElement;
+        const centerCol = this.#view.querySelector(".center") as HTMLDivElement;
+        const rightCol = this.#view.querySelector(".right") as HTMLDivElement;
+
+        const navBox = new BoxComponent("Navigation", Color.BLUE);
+        navBox.create(leftCol);
+
+        const continueBox = new BoxComponent("Continue playing", Color.RED);
+        continueBox.view.classList.add("continue-box");
+        continueBox.create(centerCol);
+
         const nonogramsOfTheDayBox = new BoxComponent("Nonograms of the day", Color.YELLOW);
         nonogramsOfTheDayBox.view.classList.add("notd-box");
-        nonogramsOfTheDayBox.create(this.#view);
+        nonogramsOfTheDayBox.create(centerCol);
 
         const nonogramsOfTheDay = new NonogramsOfTheDay(catalog, nonogramSelector, () => {});
         nonogramsOfTheDay.create(nonogramsOfTheDayBox.content);

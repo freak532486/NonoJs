@@ -1,6 +1,7 @@
 #desktop-header {
     height: 100%;
     width: 100%;
+    border-bottom: 1px solid var(--border-color);
 
     padding: 5px;
     box-sizing: border-box;

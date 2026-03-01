@@ -1,0 +1,14 @@
+.nonogram-button .box-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.nonogram-button .box-content:active
+{
+    background-color: #00000010;
+}
