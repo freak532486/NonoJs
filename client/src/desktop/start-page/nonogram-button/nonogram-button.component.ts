@@ -5,6 +5,8 @@ import BoxComponent from "../../../common/components/box/box.component";
 import Color from "../../../common/types/color";
 import NonogramThumbnail from "../../../common/components/nonogram-thumbnail/nonogram-thumbnail.component";
 
+const PADDING = 10;
+
 export default class NonogramButton implements UIComponent
 {
 
@@ -23,7 +25,7 @@ export default class NonogramButton implements UIComponent
         this.box.content.onclick = onClick;
         this.box.view.classList.add("nonogram-button");
 
-        const thumbnail = NonogramThumbnail.forDimensions(nonogram, width - 10, height - 10);
+        const thumbnail = NonogramThumbnail.forDimensions(nonogram, width - 2 * PADDING, height - 2 * PADDING);
         thumbnail.create(this.box.content);
     }
 

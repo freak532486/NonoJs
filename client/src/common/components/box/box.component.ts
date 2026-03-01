@@ -13,10 +13,15 @@ export default class BoxComponent implements UIComponent
      * Creates a box with the given title and color.
      */
     constructor(title: string, color: Color) {
-        const fadedColor = new Color(color.r, color.g, color.b, 0x30);
+        const fadedColor = new Color(
+            Math.floor(255 * 0.8 + color.r * 0.2),
+            Math.floor(255 * 0.8 + color.g * 0.2),
+            Math.floor(255 * 0.8 + color.b * 0.2)
+        );
+
         this.#view = htmlToElement(template);
         this.header.textContent = title;
-        this.header.style.background = `linear-gradient(#ffffff00 -100%, ${fadedColor.cssString} 100%)`;
+        this.header.style.backgroundColor = fadedColor.cssString;
     }
 
     create(parent: HTMLElement): HTMLElement {

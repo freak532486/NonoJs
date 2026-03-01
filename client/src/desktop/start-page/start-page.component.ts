@@ -8,6 +8,7 @@ import NonogramsOfTheDay from "./notd/nonogram-of-the-day.component";
 import { CatalogAccess } from "../../common/services/catalog/catalog-access";
 import { StartPageNonogramSelector } from "../../common/services/start-page/start-page-nonogram-selector";
 import LoginBox from "./login-box/login-box.component";
+import LinkCollection from "./navigation/navigation.component";
 
 export default class StartPage implements UIComponent
 {
@@ -38,6 +39,10 @@ export default class StartPage implements UIComponent
 
         const nonogramsOfTheDay = new NonogramsOfTheDay(catalog, nonogramSelector, () => {});
         nonogramsOfTheDay.create(nonogramsOfTheDayBox.content);
+
+        const navigationBox = new BoxComponent("Other", Color.GREEN);
+        new LinkCollection().create(navigationBox.content);
+        navigationBox.create(centerCol);
     }
 
     create(parent: HTMLElement): HTMLElement {

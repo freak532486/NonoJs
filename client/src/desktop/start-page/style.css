@@ -1,15 +1,27 @@
 #desktop-startpage {
     height: 100%;
-    width: fit-content;
+    width: 100%;
     overflow: auto;
     box-sizing: border-box;
 
-    margin-left: auto;
-    margin-right: auto;
-
     display: grid;
-    grid-template-columns: auto auto auto;
+    grid-template-columns: 400px max-content 400px;
     grid-template-rows: 1fr;
+    justify-content: center;
+
+    line-height: 1.5;
+}
+
+#desktop-startpage .left.column {
+    justify-self: right;
+}
+
+#desktop-startpage .center.column {
+    justify-self: center;
+}
+
+#desktop-startpage .right.column {
+    justify-self: left;
 }
 
 #desktop-startpage .column {
