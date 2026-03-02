@@ -1,4 +1,4 @@
-import { NonogramState } from "../../types/nonogram-types";
+import { CellKnowledge, NonogramState } from "../../types/nonogram-types";
 import UIComponent from "../../types/ui-component";
 
 export default class NonogramThumbnail implements UIComponent
@@ -76,9 +76,10 @@ function createThumbnailCanvas(nonogram: NonogramState, cellSize: number): HTMLC
 
     drawGrayGridLines(ctx, maxNumRowhints, nonogram.width, cellSize, height, true);
     drawGrayGridLines(ctx, maxNumColhints, nonogram.height, cellSize, width, false);
+    fillTopLeftCorner(ctx, maxNumRowhints, maxNumColhints, cellSize);
+    fillSquares(ctx, nonogram, cellSize);
     drawBlackGridLines(ctx, maxNumRowhints, nonogram.width, cellSize, height, true);
     drawBlackGridLines(ctx, maxNumColhints, nonogram.height, cellSize, width, false);
-    fillTopLeftCorner(ctx, maxNumRowhints, maxNumColhints, cellSize);
 
     /* Done */
     return canvas;
@@ -171,4 +172,56 @@ function fillTopLeftCorner(
 )
 {
     ctx.clearRect(1, 1, maxNumRowhints * (cellSize + 1) - 1, maxNumColhints * (cellSize + 1) - 1);
+}
+
+function fillSquares(
+    ctx: CanvasRenderingContext2D,
+    nonogram: NonogramState,
+    cellSize: number
+)
+{
+    const maxNumRowhints = nonogram.rowHints.map(arr => arr.length).reduce((a, b) => a >= b ? a : b, 0);
+    const maxNumColhints = nonogram.colHints.map(arr => arr.length).reduce((a, b) => a >= b ? a : b, 0);
+
+    ctx.fillStyle = "#00000080";
+
+    /* Row hint squares */
+    for (let i = 0; i < nonogram.height; i++) {
+        const right = (cellSize + 1) * maxNumRowhints;
+        const left = right - (cellSize + 1) * nonogram.rowHints[i].length;
+        const top = (cellSize + 1) * (maxNumColhints + i) + 2;
+        const bottom = top + cellSize + 1;
+
+        ctx.fillRect(left, top, right - left, bottom - top);
+    }
+
+    /* Column hint squares */
+    for (let i = 0; i < nonogram.width; i++) {
+        const bottom = (cellSize + 1) * maxNumColhints;
+        const top = bottom - (cellSize + 1) * nonogram.colHints[i].length;
+        const left = (cellSize + 1) * (maxNumRowhints + i) + 2;
+        const right = left + cellSize + 1;
+
+        ctx.fillRect(left, top, right - left, bottom - top);
+    }
+
+    /* Cells */
+    ctx.fillStyle = "#000000"
+    const cellsLeft = (cellSize + 1) * maxNumRowhints + 2;
+    const cellsTop = (cellSize + 1) * maxNumColhints + 2;
+
+    for (let y = 0; y < nonogram.height; y++) {
+        for (let x = 0; x < nonogram.width; x++) {
+            if (nonogram.getCell(x, y) !== CellKnowledge.DEFINITELY_BLACK) {
+                continue;
+            }
+
+            ctx.fillRect(
+                cellsLeft + (cellSize + 1) * x - 1,
+                cellsTop + (cellSize + 1) * y - 1,
+                cellSize + 2,
+                cellSize + 2
+            );
+        }
+    }
 }
