@@ -1,4 +1,3 @@
-import Route from "../../common/services/routing/route";
 import { getSavestateForNonogram, putSavestate } from "../../common/services/savefile/savefile-utils";
 import { PlayfieldComponent } from "../playfield/playfield.component";
 import PlayfieldMenuButtonManager from "../menu/button-managers/playfield-menu-button-manager";
@@ -9,7 +8,7 @@ import { DeductionStatus, NonogramState } from "../../common/types/nonogram-type
 import { navigateTo } from "../../common/services/navigate-to";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
 
-export default class NonogramRoute extends Component implements Route
+export default class NonogramPageInitializer extends Component
 {
 
     constructor(
@@ -19,24 +18,18 @@ export default class NonogramRoute extends Component implements Route
         super();
     }
 
-    matches(path: string): boolean {
-        return path.startsWith("/n/")
-    }
-
-    async run(path: string): Promise<void> {
+    async run(nonogramId: string): Promise<void> {
         const catalogAccess = this.ctx.getComponent(tokens.catalogAccess);
         const savefileSyncService = this.ctx.getComponent(tokens.savefileSyncService);
         const authService = this.ctx.getComponent(tokens.authService);
         const notFoundRoute = this.ctx.getComponent(tokens.notFoundRoute);
         const menu = this.ctx.getComponent(tokens.menu);
         const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
-
-        const nonogramId = path.split("/")[2];
     
         /* Load requested nonogram */
         const nonogram = (await catalogAccess.getAllNonograms()).find(x => x.id == nonogramId);
         if (!nonogram) {
-            notFoundRoute.run(path);
+            notFoundRoute.run();
             return;
         }
     

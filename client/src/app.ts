@@ -1,9 +1,9 @@
 import { isMobileDevice } from "./common/services/mobile-or-desktop";
-import { launchDesktopApp } from "./desktop/desktop-app";
-import { launchMobileApp } from "./mobile/mobile-app";
+import { Router } from "./common/services/routing/router";
+import DesktopClient from "./desktop/desktop-client";
+import MobileClient from "./mobile/mobile-client";
 
-if (isMobileDevice()) {
-    launchMobileApp();
-} else {
-    launchDesktopApp();
-}
+
+const client = isMobileDevice() ? new MobileClient() : new DesktopClient();
+const router = new Router(client);
+router.run();

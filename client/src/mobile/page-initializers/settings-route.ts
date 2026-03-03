@@ -1,4 +1,3 @@
-import Route from "../../common/services/routing/route";
 import * as auth from "../../common/services/auth"
 import Settings from "../settings/index/settings.component";
 import { Component } from "nonojs-common";
@@ -6,7 +5,7 @@ import tokens from "../../common/tokens";
 import { navigateTo } from "../../common/services/navigate-to";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
 
-export default class SettingsRoute extends Component implements Route
+export default class SettingsRoute extends Component
 {
 
     constructor(
@@ -16,11 +15,7 @@ export default class SettingsRoute extends Component implements Route
         super();
     }
 
-    matches(path: string): boolean {
-        return path == "/settings";
-    }
-
-    async run(path: string) {
+    async run() {
         const authService = this.ctx.getComponent(tokens.authService);
         const savefileMerger = this.ctx.getComponent(tokens.savefileMerger);
         const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);

@@ -7,13 +7,13 @@ import SavefileMigrator from "./services/savefile/savefile-migrator";
 import SavefileMerger from "./services/savefile/savefile-merger";
 import SavefileSyncService from "./services/savefile/savefile-sync-service";
 import ActiveComponentManager from "../mobile/active-component-manager";
-import CatalogRoute from "../mobile/routes/catalog-route";
-import ConfirmRegistrationRoute from "../mobile/routes/confirm-registration-route";
-import LoginRoute from "../mobile/routes/login-route";
-import NonogramRoute from "../mobile/routes/nonogram-route";
-import NotFoundRoute from "../mobile/routes/not-found-route";
-import SettingsRoute from "../mobile/routes/settings-route";
-import StartpageRoute from "../mobile/routes/startpage-route";
+import CatalogPageInitializer from "../mobile/page-initializers/catalog";
+import ConfirmRegistrationPageInitializer from "../mobile/page-initializers/confirm-registration";
+import LoginPageInitializer from "../mobile/page-initializers/login-route";
+import NonogramPageInitializer from "../mobile/page-initializers/nonogram";
+import NotFoundPageInitializer from "../mobile/page-initializers/not-found-route";
+import SettingsRoute from "../mobile/page-initializers/settings-route";
+import StartpageRoute from "../mobile/page-initializers/startpage-route";
 import { Menu } from "../mobile/menu/menu.component";
 import { Header } from "../mobile/header/header.component";
 import { Router } from "./services/routing/router";
@@ -33,11 +33,11 @@ const tokens = Object.freeze({
 
     /* Routes */
     "router": new Token<Router>("Router"),
-    "catalogRoute": new Token<CatalogRoute>("CatalogRoute"),
-    "confirmRegistrationRoute": new Token<ConfirmRegistrationRoute>("ConfirmRegistrationRoute"),
-    "loginRoute": new Token<LoginRoute>("LoginRoute"),
-    "nonogramRoute": new Token<NonogramRoute>("NonogramRoute"),
-    "notFoundRoute": new Token<NotFoundRoute>("NotFoundRoute"),
+    "catalogRoute": new Token<CatalogPageInitializer>("CatalogRoute"),
+    "confirmRegistrationRoute": new Token<ConfirmRegistrationPageInitializer>("ConfirmRegistrationRoute"),
+    "loginRoute": new Token<LoginPageInitializer>("LoginRoute"),
+    "nonogramRoute": new Token<NonogramPageInitializer>("NonogramRoute"),
+    "notFoundRoute": new Token<NotFoundPageInitializer>("NotFoundRoute"),
     "settingsRoute": new Token<SettingsRoute>("SettingsRoute"),
     "startpageRoute": new Token<StartpageRoute>("StartpageRoute"),
 

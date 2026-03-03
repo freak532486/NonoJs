@@ -3,14 +3,10 @@ import { NotFoundPage } from "../not-found-page/not-found-page";
 import { Component } from "nonojs-common";
 import tokens from "../../common/tokens";
 
-export default class NotFoundRoute extends Component implements Route
+export default class NotFoundPageInitializer extends Component
 {
 
-    matches(path: string): boolean {
-        return path == "/catalog";
-    }
-
-    run(path: string) {
+    run() {
         const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
 
         let notFoundPage = new NotFoundPage();

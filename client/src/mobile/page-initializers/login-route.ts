@@ -1,18 +1,13 @@
-import Route from "../../common/services/routing/route";
 import * as auth from "../../common/services/auth"
 import LoginComponent from "../../common/services/auth/components/login/login.component";
 import { Component } from "nonojs-common";
 import tokens from "../../common/tokens";
 import { navigateTo } from "../../common/services/navigate-to";
 
-export default class LoginRoute extends Component implements Route
+export default class LoginPageInitializer extends Component
 {
 
-    matches(path: string): boolean {
-        return path == "/login";
-    }
-
-    run(path: string) {
+    run() {
         const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
 
         /* Create login page */

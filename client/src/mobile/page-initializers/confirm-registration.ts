@@ -1,4 +1,3 @@
-import Route from "../../common/services/routing/route";
 import * as apiClient from "../../common/services/api/api-client"
 import UIComponent from "../../common/types/ui-component";
 import RegistrationConfirmationComponent from "../../common/services/auth/components/registration-confirmation/registration-confirmation.component";
@@ -6,18 +5,11 @@ import { Component } from "nonojs-common";
 import tokens from "../../common/tokens";
 import { navigateTo } from "../../common/services/navigate-to";
 
-export default class ConfirmRegistrationRoute extends Component implements Route
+export default class ConfirmRegistrationPageInitializer extends Component
 {
 
-    matches(path: string): boolean {
-        return path == "/register/confirm";
-    }
-
-    async run(path: string) {
+    async run(token: string) {
         const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
-
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get("token");
         if (!token) {
             navigateTo("/");
             return;

@@ -18,7 +18,6 @@ export default class AppInitializer extends Component
         const savefileManager = this.ctx.getComponent(tokens.savefileManager);
         const savefileMigrator = this.ctx.getComponent(tokens.savefileMigrator);
         const authService = this.ctx.getComponent(tokens.authService);
-        const router = this.ctx.getComponent(tokens.router);
         const menu = this.ctx.getComponent(tokens.menu);
         const header = this.ctx.getComponent(tokens.header);
 
@@ -42,7 +41,5 @@ export default class AppInitializer extends Component
         defaultMenuButtonManager.createDefaultMenuButtons(await authService.getCurrentUsername());
     
         header.onLogoClicked = () => navigateTo("/");
-    
-        router.run();
     }
 }

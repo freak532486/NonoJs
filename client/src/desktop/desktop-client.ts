@@ -1,0 +1,67 @@
+import AuthService from "../common/services/auth/auth-service";
+import { CatalogAccess } from "../common/services/catalog/catalog-access";
+import { navigateTo } from "../common/services/navigate-to";
+import SavefileAccess from "../common/services/savefile/savefile-access";
+import NonojsClient from "../common/types/nonojs-client";
+import Header from "./header/header.component";
+import DesktopRoot from "./root-component/desktop-root";
+import StartPage from "./start-page/start-page.component";
+
+export default class DesktopClient implements NonojsClient
+{
+
+    private readonly authService: AuthService;
+    private readonly savefileAccess: SavefileAccess;
+    private readonly catalogAccess: CatalogAccess;
+    private readonly root: DesktopRoot;
+
+    constructor() {
+        /* Basic services */
+        this.authService = new AuthService();
+        this.savefileAccess = new SavefileAccess(this.authService);
+        this.catalogAccess = new CatalogAccess();
+    
+        this.root = new DesktopRoot();
+        this.root.create(document.body);
+    
+        const header = new Header();
+        header.create(this.root.headerContainer);
+        
+        
+    }
+
+    async openStartPage(): Promise<void> {
+        const startPage = new StartPage(
+            this.authService,
+            this.catalogAccess,
+            this.savefileAccess,
+            nonogramId => navigateTo("/n/" + nonogramId)
+        );
+        await startPage.create(this.root.mainContainer);
+    }
+
+    openNonogram(nonogramId: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    openCatalog(): Promise<void> {
+        return this.openStartPage();
+    }
+
+    openSettings(): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    openLogin(): Promise<void> {
+        return this.openStartPage();
+    }
+
+    confirmRegistration(token: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    openNotFoundPage(): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    
+}

@@ -5,7 +5,7 @@ import tokens from "../../common/tokens";
 import { navigateTo } from "../../common/services/navigate-to";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
 
-export default class StartpageRoute extends Component implements Route
+export default class StartpageRoute extends Component
 {
 
     constructor(
@@ -15,11 +15,7 @@ export default class StartpageRoute extends Component implements Route
         super();
     }
 
-    matches(path: string): boolean {
-        return path == "/";
-    }
-
-    async run(path: string) {
+    async run() {
         const catalogAccess = this.ctx.getComponent(tokens.catalogAccess);
         const authService = this.ctx.getComponent(tokens.authService);
         const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);

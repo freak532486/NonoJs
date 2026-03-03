@@ -64,7 +64,7 @@ export default class StartPage implements UIComponent
             this.catalogAccess,
             this.savefileAccess,
             this.nonogramSelector,
-            () => {}
+            nonogramId => this.onNonogramSelected(nonogramId)
         );
         nonogramsOfTheDay.create(nonogramsOfTheDayBox.content);
 

@@ -1,3 +1,5 @@
+import NonojsClient from "../../types/nonojs-client";
+
 export default interface Route
 {
     /**
@@ -8,5 +10,5 @@ export default interface Route
     /**
      * Performs the action associated with this route.
      */
-    run(path: string): void | Promise<void>;
+    run(client: NonojsClient): void | Promise<void>;
 }
