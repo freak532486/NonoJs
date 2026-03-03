@@ -9,7 +9,7 @@
     display: grid;
     grid-template-columns: 300px max-content 300px;
     grid-template-rows: 1fr;
-    gap: 5px;
+    gap: 10px;
     justify-content: center;
 
     line-height: 1.5;
@@ -32,6 +32,10 @@
     flex-direction: column;
     gap: 10px;
     box-sizing: border-box;
+}
+
+#desktop-startpage .column>.box {
+    box-shadow: 0px 2px 8px #00000050;
 }
 
 #desktop-startpage .box-content
