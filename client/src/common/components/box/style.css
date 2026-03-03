@@ -11,7 +11,7 @@
 .box-header {
     border: 1px solid var(--border-color);
     border-radius: 5px 5px 0px 0px;
-    padding: 5px;
+    padding: 4px;
 
     display: flex;
     justify-content: center;
@@ -28,6 +28,4 @@
 
     align-self: stretch;
     justify-self: stretch;
-
-    overflow: hidden;
 }

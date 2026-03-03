@@ -3,9 +3,17 @@ import { StartPage } from "../start-page/component/start-page.component";
 import { Component } from "nonojs-common";
 import tokens from "../../common/tokens";
 import { navigateTo } from "../../common/services/navigate-to";
+import SavefileAccess from "../../common/services/savefile/savefile-access";
 
 export default class StartpageRoute extends Component implements Route
 {
+
+    constructor(
+        private readonly savefileAccess: SavefileAccess
+    )
+    {
+        super();
+    }
 
     matches(path: string): boolean {
         return path == "/";
@@ -13,11 +21,10 @@ export default class StartpageRoute extends Component implements Route
 
     async run(path: string) {
         const catalogAccess = this.ctx.getComponent(tokens.catalogAccess);
-        const savefileAccess = this.ctx.getComponent(tokens.savefileAccess);
         const authService = this.ctx.getComponent(tokens.authService);
         const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
 
-        let startPage = new StartPage(catalogAccess, savefileAccess);
+        let startPage = new StartPage(catalogAccess, this.savefileAccess);
         startPage.onNonogramSelected = nonogramId => navigateTo("/n/" + nonogramId);
         startPage.onLogin = () => navigateTo("/login");
         startPage.onOpenCatalog = () => navigateTo("/catalog");

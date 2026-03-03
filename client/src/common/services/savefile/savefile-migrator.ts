@@ -1,14 +1,20 @@
 import { Component, Context, SaveFile } from "nonojs-common";
 import tokens from "../../tokens.js";
+import SavefileAccess from "./savefile-access.js";
 
 export const ACTIVE_VERSION_KEY = 3;
 
 export default class SavefileMigrator extends Component {
 
-    async performStorageMigration() {
-        const savefileAccess = this.ctx.getComponent(tokens.savefileAccess);
+    constructor(
+        private readonly savefileAccess: SavefileAccess
+    )
+    {
+        super();
+    }
 
-        const val = await savefileAccess.fetchLocalSavefile();
+    async performStorageMigration() {
+        const val = await this.savefileAccess.fetchLocalSavefile();
         if (!val) {
             return;
         }
@@ -17,7 +23,7 @@ export default class SavefileMigrator extends Component {
         await MIGR002_addSolvedFlag(val);
         await MIGR003_addUsername(val);
 
-        savefileAccess.writeLocalSavefile(val);
+        this.savefileAccess.writeLocalSavefile(val);
     }
 
 }

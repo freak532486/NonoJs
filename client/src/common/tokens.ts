@@ -25,7 +25,6 @@ const tokens = Object.freeze({
     "appInitializer": new Token<AppInitializer>("AppInitializer"),
     "authService": new Token<AuthService>("AuthService"),
     "catalogAccess": new Token<CatalogAccess>("CatalogAccess"),
-    "savefileAccess": new Token<SavefileAccess>("SavefileAccess"),
     "savefileManager": new Token<SavefileManager>("SavefileManager"),
     "savefileMigrator": new Token<SavefileMigrator>("SavefileMigrator"),
     "savefileMerger": new Token<SavefileMerger>("SavefileMerger"),

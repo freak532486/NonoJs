@@ -5,7 +5,7 @@
 
     background: linear-gradient(
         180deg,
-        var(--bg1) 0%,
+        color-mix(in srgb, var(--bg1) 100%, black 0%) 0%,
         color-mix(in srgb, var(--bg1) 90%, black 10%) 100%
     );
 

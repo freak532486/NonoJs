@@ -2,19 +2,22 @@ import { Component, Context, SaveFile } from "nonojs-common";
 import { ACTIVE_VERSION_KEY } from "./savefile-migrator";
 import * as api from "../api/api-client"
 import tokens from "../../tokens";
+import AuthService from "../auth/auth-service";
 
 const STORAGE_KEY = "storage";
 
-export default class SavefileAccess extends Component
+export default class SavefileAccess
 {
+
+    constructor(
+        private readonly authService: AuthService
+    ) {}
 
      /**
      * Fetches the savefile from local browser storage.
      */
     async fetchLocalSavefile(): Promise<SaveFile> {
-        const authService = this.ctx.getComponent(tokens.authService);
-
-        const username = await authService.getCurrentUsername();
+        const username = await this.authService.getCurrentUsername();
         return this.fetchLocalSavefileForUser(username) || createEmptySavefile(username);
     }
 
@@ -47,9 +50,7 @@ export default class SavefileAccess extends Component
      */
     async fetchServerSavefile(): Promise<SaveFile>
     {
-        const authService = this.ctx.getComponent(tokens.authService);
-
-        const username = await authService.getCurrentUsername();
+        const username = await this.authService.getCurrentUsername();
         const request = new Request("/api/savefile", { "method": "GET" });
         const response = await api.performRequestWithSessionToken(request);
         if (response.status !== "ok") {
@@ -64,9 +65,7 @@ export default class SavefileAccess extends Component
      */
     async writeLocalSavefile(savefile: SaveFile)
     {
-        const authService = this.ctx.getComponent(tokens.authService);
-
-        const activeUsername = await authService.getCurrentUsername();
+        const activeUsername = await this.authService.getCurrentUsername();
         const key = STORAGE_KEY + (activeUsername ? "_" + activeUsername : "");
         const serialized = JSON.stringify(savefile);
         window.localStorage.setItem(key, serialized);

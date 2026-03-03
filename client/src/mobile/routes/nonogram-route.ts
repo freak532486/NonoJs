@@ -7,9 +7,17 @@ import tokens from "../../common/tokens";
 import { deduceAll } from "../../common/services/solver/solver";
 import { DeductionStatus, NonogramState } from "../../common/types/nonogram-types";
 import { navigateTo } from "../../common/services/navigate-to";
+import SavefileAccess from "../../common/services/savefile/savefile-access";
 
 export default class NonogramRoute extends Component implements Route
 {
+
+    constructor(
+        private readonly savefileAccess: SavefileAccess
+    )
+    {
+        super();
+    }
 
     matches(path: string): boolean {
         return path.startsWith("/n/")
@@ -17,7 +25,6 @@ export default class NonogramRoute extends Component implements Route
 
     async run(path: string): Promise<void> {
         const catalogAccess = this.ctx.getComponent(tokens.catalogAccess);
-        const savefileAccess = this.ctx.getComponent(tokens.savefileAccess);
         const savefileSyncService = this.ctx.getComponent(tokens.savefileSyncService);
         const authService = this.ctx.getComponent(tokens.authService);
         const notFoundRoute = this.ctx.getComponent(tokens.notFoundRoute);
@@ -34,7 +41,7 @@ export default class NonogramRoute extends Component implements Route
         }
     
         /* Load current state */
-        const savefile = await savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.fetchLocalSavefile();
         var stored = savefile ? getSavestateForNonogram(savefile, nonogramId) : undefined;
 
         /* Presolve the nonogram */
@@ -76,7 +83,7 @@ export default class NonogramRoute extends Component implements Route
                 await this.#storePlayfieldStateToStorage(playfield);
         
                 /* Update last played nonogram id */
-                const saveFile = await savefileAccess.fetchLocalSavefile();
+                const saveFile = await this.savefileAccess.fetchLocalSavefile();
         
                 if (!playfield.hasWon) {
                     saveFile.lastPlayedNonogramId = playfield.nonogramId;
@@ -84,7 +91,7 @@ export default class NonogramRoute extends Component implements Route
                     saveFile.lastPlayedNonogramId = undefined;
                 }
         
-                await savefileAccess.writeLocalSavefile(saveFile);
+                await this.savefileAccess.writeLocalSavefile(saveFile);
         
                 /* Queue sync */
                 const activeUsername = await authService.getCurrentUsername();
@@ -116,17 +123,15 @@ export default class NonogramRoute extends Component implements Route
      * Stores the current state of the playfield to the local savefile.
      */
     async #storePlayfieldStateToStorage(playfield: PlayfieldComponent) {
-        const savefileAccess = this.ctx.getComponent(tokens.savefileAccess);
-
         const curState = playfield.currentState;
-        const savefile = await savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.fetchLocalSavefile();
 
         putSavestate(savefile, playfield.nonogramId, {
             cells: curState.cells,
             elapsed: playfield.elapsed
         });
 
-        savefileAccess.writeLocalSavefile(savefile);
+        this.savefileAccess.writeLocalSavefile(savefile);
     }
     
 }

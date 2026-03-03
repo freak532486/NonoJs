@@ -35,11 +35,11 @@ export function launchMobileApp() {
     /* Add basic services */
     ctx.addComponent(tokens.authService, new AuthService());
     ctx.addComponent(tokens.catalogAccess, new CatalogAccess());
-    ctx.addComponent(tokens.savefileAccess, new SavefileAccess());
-    ctx.addComponent(tokens.savefileManager, new SavefileManager());
-    ctx.addComponent(tokens.savefileMigrator, new SavefileMigrator());
-    ctx.addComponent(tokens.savefileMerger, new SavefileMerger());
-    ctx.addComponent(tokens.savefileSyncService, new SavefileSyncService());
+    const savefileAccess = new SavefileAccess(ctx.getComponent(tokens.authService));
+    ctx.addComponent(tokens.savefileManager, new SavefileManager(savefileAccess));
+    ctx.addComponent(tokens.savefileMigrator, new SavefileMigrator(savefileAccess));
+    ctx.addComponent(tokens.savefileMerger, new SavefileMerger(savefileAccess));
+    ctx.addComponent(tokens.savefileSyncService, new SavefileSyncService(savefileAccess));
     ctx.addComponent(tokens.activeComponentManager, new ActiveComponentManager(mobileRoot));
 
     /* Add UI components */
@@ -51,12 +51,12 @@ export function launchMobileApp() {
 
     /* Create all routes */
     ctx.addComponent(tokens.notFoundRoute, new NotFoundRoute());
-    router.addRoute(ctx.addComponent(tokens.catalogRoute, new CatalogRoute()));
+    router.addRoute(ctx.addComponent(tokens.catalogRoute, new CatalogRoute(savefileAccess)));
     router.addRoute(ctx.addComponent(tokens.confirmRegistrationRoute, new ConfirmRegistrationRoute()));
     router.addRoute(ctx.addComponent(tokens.loginRoute, new LoginRoute()));
-    router.addRoute(ctx.addComponent(tokens.nonogramRoute, new NonogramRoute()));
-    router.addRoute(ctx.addComponent(tokens.settingsRoute, new SettingsRoute()));
-    router.addRoute(ctx.addComponent(tokens.startpageRoute, new StartpageRoute()));
+    router.addRoute(ctx.addComponent(tokens.nonogramRoute, new NonogramRoute(savefileAccess)));
+    router.addRoute(ctx.addComponent(tokens.settingsRoute, new SettingsRoute(savefileAccess)));
+    router.addRoute(ctx.addComponent(tokens.startpageRoute, new StartpageRoute(savefileAccess)));
 
     /* Initialize app */
     ctx.addComponent(tokens.appInitializer, new AppInitializer(mobileRoot)).initApp();

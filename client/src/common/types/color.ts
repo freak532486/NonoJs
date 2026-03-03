@@ -21,6 +21,27 @@ export default class Color
     }
 
     /**
+     * Creates a color from a hex string.
+     */
+    static fromHex(hex: string): Color
+    {
+        if (hex.startsWith("#")) {
+            hex = hex.slice(1);
+        }
+
+        if (hex.length < 6) {
+            throw new Error("Hex string must be at least 6 characters long.");
+        }
+
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        const a = hex.length >= 8 ? parseInt(hex.slice(6, 8), 16) : 255;
+
+        return new Color(r, g, b, a);
+    }
+
+    /**
      * Returns the CSS string for this color.
      */
     get cssString() {

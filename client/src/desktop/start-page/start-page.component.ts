@@ -9,45 +9,71 @@ import { CatalogAccess } from "../../common/services/catalog/catalog-access";
 import { StartPageNonogramSelector } from "../../common/services/start-page/start-page-nonogram-selector";
 import LoginBox from "./login-box/login-box.component";
 import LinkCollection from "./navigation/navigation.component";
+import SavefileAccess from "../../common/services/savefile/savefile-access";
+import AuthService from "../../common/services/auth/auth-service";
+import ContinuePlaying from "./continue-playing/continue-playing.component";
 
 export default class StartPage implements UIComponent
 {
 
-    #view: HTMLElement;
+    private view: HTMLElement;
+    private nonogramSelector: StartPageNonogramSelector;
 
     constructor(
-        catalog: CatalogAccess,
-        nonogramSelector: StartPageNonogramSelector
+        private readonly authService: AuthService,
+        private readonly catalogAccess: CatalogAccess,
+        private readonly savefileAccess: SavefileAccess,
+        private readonly onNonogramSelected: (nonogramId: string) => void
     )
     {
-        this.#view = htmlToElement(template);
+        this.view = htmlToElement(template);
+        this.nonogramSelector = new StartPageNonogramSelector(catalogAccess, savefileAccess);
+    }
 
-        const leftCol = this.#view.querySelector(".left") as HTMLDivElement;
-        const centerCol = this.#view.querySelector(".center") as HTMLDivElement;
-        const rightCol = this.#view.querySelector(".right") as HTMLDivElement;
+    async create(parent: HTMLElement): Promise<HTMLElement> {
+        const leftCol = this.view.querySelector(".left") as HTMLDivElement;
+        const centerCol = this.view.querySelector(".center") as HTMLDivElement;
+        const rightCol = this.view.querySelector(".right") as HTMLDivElement;
 
-        const loginBox = new LoginBox(undefined, () => {}, () => {});
-        loginBox.create(leftCol);
+        this.authService.getCurrentUsername().then(activeUsername => {
+            const loginBox = new LoginBox(activeUsername, () => {}, () => {});
+            loginBox.create(leftCol);
+        });
 
-        const continueBox = new BoxComponent("Continue playing", Color.RED);
-        continueBox.view.classList.add("continue-box");
-        continueBox.create(centerCol);
+        const lastPlayedNonogramId = (await this.savefileAccess.fetchLocalSavefile()).lastPlayedNonogramId;
+        if (lastPlayedNonogramId !== undefined) {
+            const continueBox = new BoxComponent("Continue playing", Color.RED);
+            continueBox.view.classList.add("continue-box");
+            continueBox.create(centerCol);
+
+            const continuePlaying = new ContinuePlaying(
+                this.catalogAccess,
+                this.savefileAccess,
+                lastPlayedNonogramId,
+                () => this.onNonogramSelected(lastPlayedNonogramId)
+            );
+
+            await continuePlaying.create(continueBox.content);
+        }
 
         const nonogramsOfTheDayBox = new BoxComponent("Nonograms of the day", Color.YELLOW);
         nonogramsOfTheDayBox.view.classList.add("notd-box");
         nonogramsOfTheDayBox.create(centerCol);
 
-        const nonogramsOfTheDay = new NonogramsOfTheDay(catalog, nonogramSelector, () => {});
+        const nonogramsOfTheDay = new NonogramsOfTheDay(
+            this.catalogAccess,
+            this.savefileAccess,
+            this.nonogramSelector,
+            () => {}
+        );
         nonogramsOfTheDay.create(nonogramsOfTheDayBox.content);
 
         const navigationBox = new BoxComponent("Other", Color.GREEN);
         new LinkCollection().create(navigationBox.content);
         navigationBox.create(centerCol);
-    }
 
-    create(parent: HTMLElement): HTMLElement {
-        parent.appendChild(this.#view);
-        return this.#view;
+        parent.appendChild(this.view);
+        return this.view;
     }
 
     cleanup(): void {

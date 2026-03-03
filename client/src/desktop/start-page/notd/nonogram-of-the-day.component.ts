@@ -7,6 +7,8 @@ import { CatalogAccess } from "../../../common/services/catalog/catalog-access";
 import { NonogramState } from "../../../common/types/nonogram-types";
 import NonogramButton from "../nonogram-button/nonogram-button.component"
 import NonogramThumbnail from "../../../common/components/nonogram-thumbnail/nonogram-thumbnail.component";
+import SavefileAccess from "../../../common/services/savefile/savefile-access";
+import { getSavestateForNonogram } from "../../../common/services/savefile/savefile-utils";
 
 export default class NonogramsOfTheDay implements UIComponent
 {
@@ -15,6 +17,7 @@ export default class NonogramsOfTheDay implements UIComponent
 
     constructor(
         private readonly catalog: CatalogAccess,
+        private readonly savefileAccess: SavefileAccess,
         private readonly selector: StartPageNonogramSelector,
         private readonly onNonogramSelected: (nonogramId: string) => void
     )
@@ -23,6 +26,7 @@ export default class NonogramsOfTheDay implements UIComponent
     }
 
     async create(parent: HTMLElement): Promise<HTMLElement> {
+        const savefile = await this.savefileAccess.fetchLocalSavefile();
         parent.appendChild(this.view);
 
         /* Create nonogram buttons */
@@ -33,8 +37,13 @@ export default class NonogramsOfTheDay implements UIComponent
                 continue;
             }
 
-            const button = new NonogramButton(
-                NonogramState.empty(nonogram.rowHints, nonogram.colHints) ,
+            const savestate = getSavestateForNonogram(savefile, nonogramId);
+            const nonogramState = savestate ? 
+                new NonogramState(nonogram.rowHints, nonogram.colHints, savestate.cells) : 
+                NonogramState.empty(nonogram.rowHints, nonogram.colHints);
+                
+            const button = NonogramButton.withMaximumSize(
+                nonogramState,
                 200, 200,
                 () => this.onNonogramSelected(nonogramId)
             );

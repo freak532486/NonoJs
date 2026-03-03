@@ -1,0 +1,12 @@
+#continue-playing {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px;
+}
+
+#continue-playing .box-header {
+    font-size: 9pt;
+    padding: 2px;
+}

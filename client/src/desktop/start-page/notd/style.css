@@ -1,8 +1,15 @@
 #notd-root {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    display: flex;
+    flex-direction: row;
     gap: 20px;
-    justify-items: center;
+
+    align-items: stretch;
+    justify-content: space-evenly;
 
     padding: 20px;
+}
+
+#notd-root .box-header {
+    font-size: 9pt;
+    padding: 2px;
 }

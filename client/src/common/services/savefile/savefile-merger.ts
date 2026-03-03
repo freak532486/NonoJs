@@ -1,6 +1,7 @@
 import { Component, SaveFile, SaveFileEntry, SaveState } from "nonojs-common";
 import { ACTIVE_VERSION_KEY } from "./savefile-migrator";
 import tokens from "../../tokens";
+import SavefileAccess from "./savefile-access";
 
 export enum MergeStrategy {
     LOCAL_WINS,
@@ -9,6 +10,14 @@ export enum MergeStrategy {
 
 export default class SavefileMerger extends Component
 {
+
+    constructor(
+        private readonly savefileAccess: SavefileAccess
+    )
+    {
+        super();
+    }
+
     /**
      * Merges the given local savefile and server savefile. Savefiles not belonging to the given username are filtered.
      * Returns the merge result.
@@ -61,11 +70,10 @@ export default class SavefileMerger extends Component
     async mergeLocalSavefileWithAccount()
     {
         const authService = this.ctx.getComponent(tokens.authService);
-        const savefileAccess = this.ctx.getComponent(tokens.savefileAccess);
 
         const username = authService.getCurrentUsername();
-        const freeSavefile = savefileAccess.fetchLocalSavefileForUser(undefined);
-        const accountSavefile = await savefileAccess.fetchLocalSavefile();
+        const freeSavefile = this.savefileAccess.fetchLocalSavefileForUser(undefined);
+        const accountSavefile = await this.savefileAccess.fetchLocalSavefile();
 
         /* No sense merging if not logged in or no free savefile exists */
         if (!freeSavefile || !username) {
@@ -76,11 +84,11 @@ export default class SavefileMerger extends Component
         const merged = this.mergeSavefiles(accountSavefile, freeSavefile);
 
         /* Write savefile */
-        savefileAccess.writeLocalSavefile(merged);
-        await savefileAccess.writeServerSavefile(merged);
+        this.savefileAccess.writeLocalSavefile(merged);
+        await this.savefileAccess.writeServerSavefile(merged);
 
         /* Delete userless savefile */
-        savefileAccess.deleteLocalSavefileForUser(undefined);
+        this.savefileAccess.deleteLocalSavefileForUser(undefined);
     }
 
     /**

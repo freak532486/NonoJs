@@ -1,5 +1,23 @@
+import Color from "../../types/color";
 import { CellKnowledge, NonogramState } from "../../types/nonogram-types";
 import UIComponent from "../../types/ui-component";
+
+export interface NonogramThumbnailColors
+{
+    background: Color;
+    weakLine: Color;
+    strongLine: Color;
+    hint: Color;
+    cell: Color;
+}
+
+const DEFAULT_COLORS: NonogramThumbnailColors = {
+    background: Color.fromHex("#FFFFFF"),
+    weakLine: Color.fromHex("#CCCCCC"),
+    strongLine: Color.fromHex("#000000"),
+    hint: Color.fromHex("#00000080"),
+    cell: Color.fromHex("#000000")
+};
 
 export default class NonogramThumbnail implements UIComponent
 {
@@ -12,10 +30,11 @@ export default class NonogramThumbnail implements UIComponent
      */
     constructor(
         private readonly nonogram: NonogramState,
-        private readonly cellSize: number
+        private readonly cellSize: number,
+        private readonly colors: NonogramThumbnailColors = DEFAULT_COLORS
     )
     {
-        this.view = createThumbnailCanvas(nonogram, cellSize);
+        this.view = createThumbnailCanvas(nonogram, cellSize, colors);
     }
 
     /**
@@ -58,7 +77,11 @@ function getCellSizeForDimensions(
     return Math.max(1, Math.min(Math.floor(hCellSize), Math.floor(vCellSize)));
 }
 
-function createThumbnailCanvas(nonogram: NonogramState, cellSize: number): HTMLCanvasElement
+function createThumbnailCanvas(
+    nonogram: NonogramState,
+    cellSize: number,
+    colors: NonogramThumbnailColors
+): HTMLCanvasElement
 {
     /* Calculate dimensions */
     const maxNumRowhints = nonogram.rowHints.map(arr => arr.length).reduce((a, b) => a >= b ? a : b, 0);
@@ -73,13 +96,13 @@ function createThumbnailCanvas(nonogram: NonogramState, cellSize: number): HTMLC
     canvas.height = height;
     const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     ctx.lineWidth = 1;
-
-    drawGrayGridLines(ctx, maxNumRowhints, nonogram.width, cellSize, height, true);
-    drawGrayGridLines(ctx, maxNumColhints, nonogram.height, cellSize, width, false);
+    
+    drawGrayGridLines(ctx, colors, maxNumRowhints, nonogram.width, cellSize, height, true);
+    drawGrayGridLines(ctx, colors, maxNumColhints, nonogram.height, cellSize, width, false);
     fillTopLeftCorner(ctx, maxNumRowhints, maxNumColhints, cellSize);
-    fillSquares(ctx, nonogram, cellSize);
-    drawBlackGridLines(ctx, maxNumRowhints, nonogram.width, cellSize, height, true);
-    drawBlackGridLines(ctx, maxNumColhints, nonogram.height, cellSize, width, false);
+    fillSquares(ctx, colors, nonogram, cellSize);
+    drawBlackGridLines(ctx, colors, maxNumRowhints, nonogram.width, cellSize, height, true);
+    drawBlackGridLines(ctx, colors, maxNumColhints, nonogram.height, cellSize, width, false);
 
     /* Done */
     return canvas;
@@ -87,6 +110,7 @@ function createThumbnailCanvas(nonogram: NonogramState, cellSize: number): HTMLC
 
 function drawBlackGridLines(
     ctx: CanvasRenderingContext2D,
+    colors: NonogramThumbnailColors,
     numHints: number,
     numCells: number,
     cellSize: number,
@@ -99,7 +123,7 @@ function drawBlackGridLines(
 
     /* Outer nonogram border */
     ctx.beginPath();
-    ctx.strokeStyle = "#000000";
+    ctx.strokeStyle = colors.strongLine.cssString;
     moveTo(0.5, 0);
     lineTo(0.5, lineLength);
     ctx.stroke();
@@ -129,6 +153,7 @@ function drawBlackGridLines(
 
 function drawGrayGridLines(
     ctx: CanvasRenderingContext2D,
+    colors: NonogramThumbnailColors,
     numHints: number,
     numCells: number,
     cellSize: number,
@@ -140,7 +165,7 @@ function drawGrayGridLines(
     const lineTo = (x: number, y: number) => vertical ? ctx.lineTo(x, y) : ctx.lineTo(y, x);
     
     /* Column hint lines */
-    ctx.strokeStyle = "#CCCCCC";
+    ctx.strokeStyle = colors.weakLine.cssString;
     for (let i = 1; i < numHints; i++) {
         const x = 0.5 + (cellSize + 1) * i;
         ctx.beginPath();
@@ -176,6 +201,7 @@ function fillTopLeftCorner(
 
 function fillSquares(
     ctx: CanvasRenderingContext2D,
+    colors: NonogramThumbnailColors,
     nonogram: NonogramState,
     cellSize: number
 )
@@ -183,7 +209,7 @@ function fillSquares(
     const maxNumRowhints = nonogram.rowHints.map(arr => arr.length).reduce((a, b) => a >= b ? a : b, 0);
     const maxNumColhints = nonogram.colHints.map(arr => arr.length).reduce((a, b) => a >= b ? a : b, 0);
 
-    ctx.fillStyle = "#00000080";
+    ctx.fillStyle = colors.hint.cssString;
 
     /* Row hint squares */
     for (let i = 0; i < nonogram.height; i++) {
@@ -206,7 +232,7 @@ function fillSquares(
     }
 
     /* Cells */
-    ctx.fillStyle = "#000000"
+    ctx.fillStyle = colors.cell.cssString;
     const cellsLeft = (cellSize + 1) * maxNumRowhints + 2;
     const cellsTop = (cellSize + 1) * maxNumColhints + 2;
 
