@@ -4,6 +4,7 @@ import { navigateTo } from "../common/services/navigate-to";
 import SavefileAccess from "../common/services/savefile/savefile-access";
 import NonojsClient from "../common/types/nonojs-client";
 import Header from "./header/header.component";
+import NonogramPage from "./nonogram-page/nonogram-page.component";
 import DesktopRoot from "./root-component/desktop-root";
 import StartPage from "./start-page/start-page.component";
 
@@ -26,8 +27,6 @@ export default class DesktopClient implements NonojsClient
     
         const header = new Header();
         header.create(this.root.headerContainer);
-        
-        
     }
 
     async openStartPage(): Promise<void> {
@@ -40,8 +39,13 @@ export default class DesktopClient implements NonojsClient
         await startPage.create(this.root.mainContainer);
     }
 
-    openNonogram(nonogramId: string): Promise<void> {
-        throw new Error("Method not implemented.");
+    async openNonogram(nonogramId: string): Promise<void> {
+        const nonogramPage = new NonogramPage(
+            nonogramId,
+            this.catalogAccess,
+            this.savefileAccess
+        );
+        await nonogramPage.create(this.root.mainContainer);
     }
 
     openCatalog(): Promise<void> {

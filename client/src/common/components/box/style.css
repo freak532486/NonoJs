@@ -13,6 +13,9 @@
     border-radius: 5px 5px 0px 0px;
     padding: 4px;
 
+    box-sizing: border-box;
+    width: 100%;
+
     display: flex;
     justify-content: center;
 
@@ -24,6 +27,8 @@
     border-radius: 0px 0px 5px 5px;
     border-top: none;
     background-color: var(--bg2);
+
+    width: 100%;
     box-sizing: border-box;
 
     align-self: stretch;

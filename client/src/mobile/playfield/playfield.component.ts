@@ -4,7 +4,7 @@ import { htmlToElement } from "../../common/services/html-to-element";
 import { checkHints, HintCheckResult, isSolved } from "../../common/services/solver/solver";
 import { ControlPad, ControlPadButton } from "./control-pad/control-pad.component";
 import { MessageBox } from "./message-box/message-box.component";
-import { BoardComponentFullState, NonogramBoardComponent } from "./nonogram-board/nonogram-board.component";
+import { BoardComponentFullState, NonogramBoardComponent } from "../../common/components/nonogram-board/nonogram-board.component";
 import { ZoomWindow } from "./zoom-window/zoom-window.component";
 import playfield from "./playfield.html"
 import "./playfield.css"
@@ -37,7 +37,7 @@ export class PlayfieldComponent implements UIComponent {
     #listeners: Array<PlayfieldListener> = [];
 
     /**
-     * Constructs a playfield for the given nonogram. Call init() before using!
+     * Constructs a playfield for the given nonogram.
      */
     constructor (
         public readonly nonogramId: string,

@@ -1,6 +1,6 @@
-import { CellKnowledge, LineId, LineKnowledge, LineType } from "../../../common/types/nonogram-types.js";
-import { Point } from "../../../common/types/point.js";
-import UIComponent from "../../../common/types/ui-component.js";
+import { CellKnowledge, LineId, LineKnowledge, LineType } from "../../types/nonogram-types.js";
+import { Point } from "../../types/point.js";
+import UIComponent from "../../types/ui-component.js";
 
 import "./nonogram-board.css"
 
