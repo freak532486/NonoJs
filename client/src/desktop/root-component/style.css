@@ -26,4 +26,7 @@
     flex-grow: 1;
     flex-shrink: 1;
     overflow: hidden;
+
+    width: fit-content;
+    align-self: center;
 }

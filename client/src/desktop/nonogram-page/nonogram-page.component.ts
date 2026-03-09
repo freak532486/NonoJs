@@ -4,16 +4,12 @@ import timerTemplate from "./timer.html"
 import "./style.css"
 import UIComponent from "../../common/types/ui-component";
 import { htmlToElement } from "../../common/services/html-to-element";
-import { PlayfieldComponent } from "../../mobile/playfield/playfield.component";
 import { CatalogAccess } from "../../common/services/catalog/catalog-access";
-import { deduceAll } from "../../common/services/solver/solver";
-import { NonogramState } from "../../common/types/nonogram-types";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
-import { getSavestateForNonogram } from "../../common/services/savefile/savefile-utils";
 import { NonogramBoardComponent } from "../../common/components/nonogram-board/nonogram-board.component";
 import BoxComponent from "../../common/components/box/box.component";
 import Color from "../../common/types/color";
-import NonogramDesktopControls from "./controls/nonogram-desktop-controls.component";
+import NonogramKeyboardListener from "./key-listener";
 
 export default class NonogramPage implements UIComponent
 {
@@ -55,6 +51,11 @@ export default class NonogramPage implements UIComponent
         board.create(nonogramBox.content);
 
         parent.appendChild(this.view);
+
+        /* Create keyboard listener */
+        const keyboardListener = new NonogramKeyboardListener(board);
+        window.addEventListener("keyup", ev => keyboardListener.onKeyUp(ev));
+        window.addEventListener("keydown", ev => keyboardListener.onKeyDown(ev));
 
         /* Create timer */
         const timerBox = new BoxComponent("Timer", Color.GREEN);
