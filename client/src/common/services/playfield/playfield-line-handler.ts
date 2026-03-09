@@ -1,5 +1,5 @@
-import { CellKnowledge } from "../../common/types/nonogram-types";
-import { Point } from "../../common/types/point";
+import { CellKnowledge } from "../../types/nonogram-types";
+import { Point } from "../../types/point";
 
 interface LineData
 {
@@ -71,10 +71,12 @@ export class PlayfieldLineHandler
     }
 
     /**
-     * Clears the line.
+     * Clears the line. Returns true if this actually did something (i.e. the line was started)
      */
-    clearLine() {
+    clearLine(): boolean {
+        const ret = this.lineStarted();
         this.#line = undefined;
+        return ret;
     }
 
     /**

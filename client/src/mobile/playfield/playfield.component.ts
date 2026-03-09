@@ -11,7 +11,7 @@ import "./playfield.css"
 import LineIdSet from "../../common/types/line-id-set";
 import { Timer } from "./timer/timer";
 import PlayfieldSolverService from "./playfield-solver-service";
-import { PlayfieldLineHandler } from "./playfield-line-handler";
+import { PlayfieldLineHandler } from "../../common/services/playfield/playfield-line-handler";
 import UIComponent from "../../common/types/ui-component";
 import PlayfieldListener from "./playfield-listener";
 

@@ -1,7 +1,6 @@
 #nonogram-page {
     padding: 5px;
     height: 100%;
-    background-color: var(--bg1);
 
     display: flex;
     flex-direction: row;
@@ -51,8 +50,12 @@
     );
 }
 
-#nonogram-container button:active {
+#nonogram-container button:active, #nonogram-container .color-toggle.checked {
     background: color-mix(in srgb, var(--bg1) 90%, black 10%) 100%
+}
+
+#nonogram-container button:disabled {
+    background: #DDDDDD;
 }
 
 #nonogram-container .button-group.vertical {
@@ -81,4 +84,33 @@
 
 #nonogram-container .timer .elapsed {
     font-size: 32pt;
+}
+
+#nonogram-page .color-toggle {
+    position: relative;
+    height: 32px;
+}
+
+#nonogram-page .color-toggle::before {
+    content: "";
+    position: absolute;
+    inset: 0px;
+    z-index: 10;
+
+    background-color: var(--fg1);
+    mask-position: center center;
+    mask-size: 16px;
+    mask-repeat: no-repeat;
+}
+
+#nonogram-page .color-toggle.checked::before {
+    background-color: var(--fg2);
+}
+
+#nonogram-page #btn-black::before {
+    mask-image: url("/images/black.png");
+}
+
+#nonogram-page #btn-white::before {
+    mask-image: url("/images/cross.png");
 }

@@ -326,6 +326,14 @@ export class NonogramBoardComponent implements UIComponent {
         }
     }
 
+    updateCells(cells: Array<CellKnowledge>) {
+        for (let y = 0; y < this.#height; y++) {
+            for (let x = 0; x < this.#width; x++) {
+                this.setCellState(x, y, cells[x + y * this.#width]);
+            }
+        }
+    }
+
     /**
      * Returns the full state of this board. Can be applied again later.
      */
@@ -391,7 +399,8 @@ export class NonogramBoardComponent implements UIComponent {
      */
     updateLinePreview(line: Array<Point>, lineType: CellKnowledge) {
         if (lineType == CellKnowledge.UNKNOWN) {
-            throw new Error("Cannot draw preview line for unknown type");
+            this.clearLinePreview();
+            return;
         }
 
         const template = (lineType == CellKnowledge.DEFINITELY_BLACK) ? this.#cellBlackTemplate : 

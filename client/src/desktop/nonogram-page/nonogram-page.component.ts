@@ -10,6 +10,10 @@ import { NonogramBoardComponent } from "../../common/components/nonogram-board/n
 import BoxComponent from "../../common/components/box/box.component";
 import Color from "../../common/types/color";
 import NonogramKeyboardListener from "./key-listener";
+import NonogramController from "./controller";
+import { NonogramColor, NonogramComponentState } from "./state";
+import NonogramViewUpdater from "./view-update";
+import NonogramButtonsListener from "./buttons-listener";
 
 export default class NonogramPage implements UIComponent
 {
@@ -47,13 +51,33 @@ export default class NonogramPage implements UIComponent
             throw new Error("Nonogram with id " + this.nonogramId + "doesn't exist.");
         }
 
+        const state = new NonogramComponentState(nonogram.rowHints, nonogram.colHints);
         const board = new NonogramBoardComponent(nonogram.rowHints, nonogram.colHints);
         board.create(nonogramBox.content);
-
         parent.appendChild(this.view);
 
+        /* Buttons */
+        const btnBlack = this.view.querySelector("#btn-black") as HTMLButtonElement;
+        btnBlack.onclick = () => state.chosenColor = NonogramColor.BLACK;
+
+        const btnWhite = this.view.querySelector("#btn-white") as HTMLButtonElement;
+        btnWhite.onclick = () => state.chosenColor = NonogramColor.WHITE;
+
+        const btnUndo = this.view.querySelector("#btn-undo") as HTMLButtonElement;
+        btnUndo.onclick = () => state.undo();
+
+        const btnRedo = this.view.querySelector("#btn-redo") as HTMLButtonElement;
+        btnRedo.onclick = () => state.redo();
+
+        /* State Listeners */
+        const viewUpdater = new NonogramViewUpdater(state, board);
+        state.listeners.push(viewUpdater);
+
+        const buttonsUpdater = new NonogramButtonsListener(state, btnUndo, btnRedo, btnBlack, btnWhite);
+        state.listeners.push(buttonsUpdater);
+
         /* Create keyboard listener */
-        const keyboardListener = new NonogramKeyboardListener(board);
+        const keyboardListener = new NonogramKeyboardListener(state);
         window.addEventListener("keyup", ev => keyboardListener.onKeyUp(ev));
         window.addEventListener("keydown", ev => keyboardListener.onKeyDown(ev));
 
