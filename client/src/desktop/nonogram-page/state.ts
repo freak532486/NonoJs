@@ -1,12 +1,15 @@
 import { PlayfieldLineHandler } from "../../common/services/playfield/playfield-line-handler";
-import { CellKnowledge, NonogramState } from "../../common/types/nonogram-types";
+import { checkHints } from "../../common/services/solver/solver";
+import LineIdSet from "../../common/types/line-id-set";
+import { CellKnowledge, LineId, LineType, NonogramState } from "../../common/types/nonogram-types";
 import { Point } from "../../common/types/point";
 
 export enum StateChangeType {
     BOARD_STATE,
     CHOSEN_COLOR,
     CURSOR,
-    LINE_PREVIEW
+    LINE_PREVIEW,
+    ERROR_LINES
 };
 
 export interface NonogramComponentStateListener
@@ -21,11 +24,16 @@ export enum NonogramColor {
     BLACK, WHITE
 };
 
+export interface HistoryEntry {
+    state: NonogramState,
+    errorLines: Array<LineId>
+}
+
 export class NonogramComponentState
 {
     private _chosenColor: NonogramColor = NonogramColor.BLACK;
 
-    private _history: Array<NonogramState>;
+    private _history: Array<HistoryEntry>;
     private _historyIdx: number = 0;
 
     private _lineHandler: PlayfieldLineHandler = new PlayfieldLineHandler();
@@ -38,9 +46,13 @@ export class NonogramComponentState
 
     constructor(
         public readonly rowHints: Array<Array<number>>,
-        public readonly colHints: Array<Array<number>>)
+        public readonly colHints: Array<Array<number>>
+    )
     {
-        this._history = [NonogramState.empty(rowHints, colHints)];
+        this._history = [{
+            state: NonogramState.empty(rowHints, colHints),
+            errorLines: []
+        }];
     }
 
     get nonogramWidth(): number {
@@ -52,10 +64,10 @@ export class NonogramComponentState
     }
 
     get activeState(): NonogramState {
-        return this._history[this._historyIdx];
+        return this._history[this._historyIdx].state;
     }
 
-    get history(): Array<NonogramState> {
+    get history(): Array<HistoryEntry> {
         return this._history;
     }
 
@@ -99,6 +111,7 @@ export class NonogramComponentState
 
         this._historyIdx -= 1;
         this.notifyListeners(StateChangeType.BOARD_STATE);
+        this.notifyListeners(StateChangeType.ERROR_LINES);
     }
 
     redo() {
@@ -108,6 +121,7 @@ export class NonogramComponentState
 
         this._historyIdx += 1;
         this.notifyListeners(StateChangeType.BOARD_STATE);
+        this.notifyListeners(StateChangeType.ERROR_LINES);
     }
 
     putNextState(state: NonogramState) {
@@ -115,9 +129,60 @@ export class NonogramComponentState
             this._history.pop();
         }
 
-        this._history.push(state);
+        const errLines = this.applyHintDeduction(state);
+
+        this._history.push({ state: state, errorLines: errLines });
         this._historyIdx = this._history.length - 1;
         this.notifyListeners(StateChangeType.BOARD_STATE);
+        this.notifyListeners(StateChangeType.ERROR_LINES);
+    }
+
+    private applyHintDeduction(newState: NonogramState): Array<LineId> {
+        const errLines: Array<LineId> = [];
+        /* Deduce over changed lines over and over again */
+        const queue = calcChangedLines(this.activeState, newState).asArray();
+
+        const deducedState = new NonogramState(newState.rowHints, newState.colHints, [...newState.cells]);
+        while (queue.length > 0) {
+            /* Pop a line from the queue */
+            const line = queue.pop()!;
+            const lineLength = line.lineType == LineType.ROW ? newState.width : newState.height;
+
+            const lineKnowledge = deducedState.getLineKnowledge(line);
+            const hints = deducedState.getLineHints(line);
+
+            /* Perform deduction */
+            const deduction = checkHints(lineKnowledge, hints);
+            if (deduction == undefined) {
+                errLines.push(line);
+                continue;
+            }
+
+            /* Update deduced state, push changed orthogonal lines into queue */
+            for (let i = 0; i < lineLength; i++) {
+                const oldCell = lineKnowledge.cells[i];
+                const newCell = deduction.newKnowledge.cells[i];
+
+                if (oldCell == newCell) {
+                    continue;
+                }
+
+                if (line.lineType == LineType.ROW) {
+                    queue.push(LineId.column(i));
+                    deducedState.updateCell(i, line.index, newCell);
+                } else {
+                    queue.push(LineId.row(i));
+                    deducedState.updateCell(line.index, i, newCell);
+                }
+            }
+        }
+
+        /* Replace old cells with new cells */
+        for (let i = 0; i < newState.cells.length; i++) {
+            newState.cells[i] = deducedState.cells[i];
+        }
+
+        return errLines;
     }
 
     get lineStarted(): boolean {
@@ -169,10 +234,36 @@ export class NonogramComponentState
         this.notifyListeners(StateChangeType.LINE_PREVIEW);
     }
 
+    get errorLines(){
+        return this._history[this._historyIdx].errorLines;
+    }
+
     private notifyListeners(type: StateChangeType) {
         for (const listener of this.listeners) {
             listener.onChange(type);
         }
     }
+}
 
+
+/**
+ * Calculates which lines have changed between the two states.
+ */
+function calcChangedLines(
+    oldState: NonogramState,
+    newState: NonogramState
+): LineIdSet
+{
+    const ret = new LineIdSet();
+
+    for (let y = 0; y < oldState.height; y++) {
+        for (let x = 0; x < oldState.width; x++) {
+            if (oldState.getCell(x, y) !== newState.getCell(x, y)) {
+                ret.add(new LineId(LineType.ROW, y));
+                ret.add(new LineId(LineType.COLUMN, x));
+            }
+        }
+    }
+
+    return ret;
 }

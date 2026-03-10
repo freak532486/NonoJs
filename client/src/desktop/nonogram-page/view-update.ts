@@ -23,6 +23,13 @@ export default class NonogramViewUpdater implements NonogramComponentStateListen
             this.board.updateCells(this.state.activeState.cells);
             return;
         }
+
+        if (type == StateChangeType.ERROR_LINES) {
+            this.board.clearLineErrors();
+            for (const line of this.state.errorLines) {
+                this.board.markError(line, true);
+            }
+        }
     }
 
     private onLinePreviewChanged() {

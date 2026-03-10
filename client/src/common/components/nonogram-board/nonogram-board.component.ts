@@ -471,6 +471,16 @@ export class NonogramBoardComponent implements UIComponent {
         this.#updateHintDivDisplay();
     }
 
+    clearLineErrors() {
+        for (let x = 0; x < this.width; x++) {
+            this.markError(LineId.column(x), false);
+        }
+
+        for (let y = 0; y < this.height; y++) {
+            this.markError(LineId.row(y), false);
+        }
+    }
+
     /**
      * Marks error lines red, the selected line blue, and all other lines white. Crosses out finished hints.
      */
