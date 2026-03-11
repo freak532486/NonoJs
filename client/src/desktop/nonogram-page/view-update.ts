@@ -11,20 +11,14 @@ export default class NonogramViewUpdater implements NonogramComponentStateListen
     onChange(type: StateChangeType): void {
         if (type == StateChangeType.LINE_PREVIEW) {
             this.onLinePreviewChanged();
-            return;
         }
 
         if (type == StateChangeType.CURSOR) {
             this.board.selection = this.state.cursorPos;
-            return;
         }
 
         if (type == StateChangeType.BOARD_STATE) {
             this.board.updateCells(this.state.activeState.cells);
-            return;
-        }
-
-        if (type == StateChangeType.ERROR_LINES) {
             this.board.clearLineErrors();
             for (const line of this.state.errorLines) {
                 this.board.markError(line, true);

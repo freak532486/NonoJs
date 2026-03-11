@@ -8,8 +8,7 @@ export enum StateChangeType {
     BOARD_STATE,
     CHOSEN_COLOR,
     CURSOR,
-    LINE_PREVIEW,
-    ERROR_LINES
+    LINE_PREVIEW
 };
 
 export interface NonogramComponentStateListener
@@ -37,7 +36,7 @@ export class NonogramComponentState
     private _historyIdx: number = 0;
 
     private _lineHandler: PlayfieldLineHandler = new PlayfieldLineHandler();
-    private _cursor: Point = new Point(0, 0);
+    private _cursor?: Point;
 
     /**
      * List of listeners. Will be notified on any state change.
@@ -100,7 +99,7 @@ export class NonogramComponentState
         return this._lineHandler.getCurrentLine().type;
     }
 
-    get cursorPos(): Point {
+    get cursorPos(): Point | undefined {
         return this._cursor;
     }
 
@@ -111,7 +110,6 @@ export class NonogramComponentState
 
         this._historyIdx -= 1;
         this.notifyListeners(StateChangeType.BOARD_STATE);
-        this.notifyListeners(StateChangeType.ERROR_LINES);
     }
 
     redo() {
@@ -121,7 +119,6 @@ export class NonogramComponentState
 
         this._historyIdx += 1;
         this.notifyListeners(StateChangeType.BOARD_STATE);
-        this.notifyListeners(StateChangeType.ERROR_LINES);
     }
 
     putNextState(state: NonogramState) {
@@ -134,7 +131,6 @@ export class NonogramComponentState
         this._history.push({ state: state, errorLines: errLines });
         this._historyIdx = this._history.length - 1;
         this.notifyListeners(StateChangeType.BOARD_STATE);
-        this.notifyListeners(StateChangeType.ERROR_LINES);
     }
 
     private applyHintDeduction(newState: NonogramState): Array<LineId> {
@@ -189,8 +185,16 @@ export class NonogramComponentState
         return this._lineHandler.lineStarted();
     }
 
+    get lineStartPosition(): Point | undefined {
+        return this._lineHandler.startPosition;
+    }
+
     startLine()
     {
+        if (this.cursorPos == undefined) {
+            return;
+        }
+
         if (this._lineHandler.lineStarted()) {
             this._lineHandler.clearLine();
         }
@@ -203,12 +207,12 @@ export class NonogramComponentState
         this.notifyListeners(StateChangeType.LINE_PREVIEW);
     }
 
-    set cursorPos(p: Point) {
+    set cursorPos(p: Point | undefined) {
         this._cursor = p;
         this.notifyListeners(StateChangeType.CURSOR);
 
         if (this._lineHandler.lineStarted()) {
-            if (this._lineHandler.setEndPosition(p)) {
+            if (p == undefined || this._lineHandler.setEndPosition(p)) {
                 this._lineHandler.clearLine();
             }
 

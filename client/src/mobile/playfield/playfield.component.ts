@@ -49,6 +49,7 @@ export class PlayfieldComponent implements UIComponent {
     )
     {
         this.#nonogramBoard = new NonogramBoardComponent(rowHints, colHints);
+        this.#nonogramBoard.setClickListener((ev, p) => this.#nonogramBoard.selection = p);
         this.#solverService = new PlayfieldSolverService(this);
 
         /* Apply stored state if exists */
@@ -94,6 +95,10 @@ export class PlayfieldComponent implements UIComponent {
         controlPad.setButtonFunction(ControlPadButton.RIGHT, () => this.#moveSelectionAndSet(1, 0));
         controlPad.setButtonFunction(ControlPadButton.DOWN, () => this.#moveSelectionAndSet(0, 1));
         controlPad.setButtonFunction(ControlPadButton.ERASE, () => {
+            if (this.#nonogramBoard.selection == undefined) {
+                return;
+            }
+
             const x = this.#nonogramBoard.selection.x;
             const y = this.#nonogramBoard.selection.y;
             const curState = this.#nonogramBoard.getFullState().cells;
@@ -109,6 +114,10 @@ export class PlayfieldComponent implements UIComponent {
 
         controlPad.setButtonFunction(ControlPadButton.BLACK, () => {
                 const p = this.#nonogramBoard.selection;
+                if (p == undefined) {
+                    return;
+                }
+
                 if (!controlPad.isBlackChecked()) {
                     this.#lineHandler.startLine(p, CellKnowledge.DEFINITELY_BLACK);
                     this.#setLineEndPosition(p);
@@ -118,6 +127,10 @@ export class PlayfieldComponent implements UIComponent {
         });
         controlPad.setButtonFunction(ControlPadButton.WHITE, () => { 
                 const p = this.#nonogramBoard.selection;
+                if (p == undefined) {
+                    return;
+                }
+
                 if (!controlPad.isWhiteChecked()) {
                     this.#lineHandler.startLine(p, CellKnowledge.DEFINITELY_WHITE);
                     this.#setLineEndPosition(p);
@@ -248,6 +261,10 @@ export class PlayfieldComponent implements UIComponent {
      * Moves the selection on the nonogram board and extends the current line.
      */
     #moveSelectionAndSet(dx: number, dy: number) {
+        if (this.#nonogramBoard.selection == undefined) {
+            return;
+        }
+        
         this.#nonogramBoard.moveSelection(dx, dy);
         if (this.#lineHandler.lineStarted()) {
             this.#setLineEndPosition(this.#nonogramBoard.selection);

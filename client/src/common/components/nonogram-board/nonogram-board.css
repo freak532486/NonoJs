@@ -85,7 +85,6 @@
     align-items: center;
     align-content: center;
     user-select: none;
-    cursor: pointer;
 }
 
 .selection-cursor {
@@ -98,6 +97,9 @@
 
     position: absolute;
     z-index: 10;
+
+    user-select: none;
+    pointer-events: none;
 }
 
 .line-preview {

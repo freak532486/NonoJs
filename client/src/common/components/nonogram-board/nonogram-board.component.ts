@@ -4,6 +4,8 @@ import UIComponent from "../../types/ui-component.js";
 
 import "./nonogram-board.css"
 
+const CELL_SIZE_PX = 16;
+
 const COLOR_BADLINE = "#c27676ff"
 const COLOR_SELECTION = "#aedbff"
 
@@ -54,7 +56,7 @@ export class NonogramBoardComponent implements UIComponent {
     #cellBlackTemplate: HTMLElement;
     #cellWhiteTemplate: HTMLElement; 
 
-    #selection: Point = new Point();
+    #selection?: Point;
     #selectionDiv: HTMLElement = document.createElement("div");
 
     #view: HTMLElement
@@ -62,7 +64,7 @@ export class NonogramBoardComponent implements UIComponent {
     #state: Array<CellKnowledge>;
     #errorLines: Array<LineId> = [];
 
-    #clickListener: (p: Point) => void = () => {};
+    #clickListener: (ev: MouseEvent, p: Point) => void = () => {};
 
     constructor (
         public readonly rowHints: Array<Array<number>>, 
@@ -149,9 +151,9 @@ export class NonogramBoardComponent implements UIComponent {
                 div.style.borderRight = (col % 5 == 4) ? "2px solid black" : "1px solid black";
                 div.style.borderBottom = (row % 5 == 4) ? "2px solid black" : "1px solid black";
 
-                div.onclick = () => {
-                    this.selection = new Point(col, row);
-                    this.#clickListener(new Point(col, row));
+                div.oncontextmenu = () => false; // Disable context menu for right click
+                div.onmousedown = ev => {
+                    this.#clickListener(ev, new Point(col, row));
                 };
 
                 this.#cellDivs.push(div);
@@ -229,20 +231,22 @@ export class NonogramBoardComponent implements UIComponent {
         return this.#height;
     }
 
-    get selection(): Point {
+    get selection(): Point | undefined {
         return this.#selection;
     }
 
-    set selection(p: Point) {
+    set selection(p: Point | undefined) {
+        if (p == undefined) {
+            this.#selection = undefined;
+            this.#selectionDiv.style.visibility = "hidden";
+            this.#updateHintDivDisplay();
+            return;
+        }
+
+        this.#selectionDiv.style.visibility = "visible";
         p.x = Math.max(0, Math.min(this.#width - 1, p.x));
         p.y = Math.max(0, Math.min(this.#height - 1, p.y));
         this.#selection = p;
-
-        /* Update selection div */
-        if (p == null) {
-            this.#selectionDiv.style = "hidden";
-            return;
-        }
 
         const cellDiv = this.#getCellDiv(p.x, p.y);
 
@@ -383,7 +387,7 @@ export class NonogramBoardComponent implements UIComponent {
     /**
      * Sets the change listener that listens to any changes made to the board.
      */
-    setClickListener(listener: () => void) {
+    setClickListener(listener: (ev: MouseEvent, p: Point) => void) {
         this.#clickListener = listener;
     }
 
@@ -495,7 +499,7 @@ export class NonogramBoardComponent implements UIComponent {
             /* Coloring */
             if (errRows.has(y)) {
                 div.style.backgroundColor = COLOR_BADLINE;
-            } else if (y == this.#selection.y) {
+            } else if (this.#selection !== undefined && y == this.#selection.y) {
                 div.style.backgroundColor = COLOR_SELECTION;
             } else {
                 div.style.backgroundColor = "transparent";
@@ -522,7 +526,7 @@ export class NonogramBoardComponent implements UIComponent {
             /* Coloring */
             if (errCols.has(x)) {
                 div.style.backgroundColor = COLOR_BADLINE;
-            } else if (x == this.#selection.x) {
+            } else if (this.#selection !== undefined && x == this.#selection.x) {
                 div.style.backgroundColor = COLOR_SELECTION;
             }  else {
                 div.style.backgroundColor = "transparent";
@@ -551,6 +555,53 @@ export class NonogramBoardComponent implements UIComponent {
 
             this.setCellState(x, y, lineKnowledge.cells[i]);
         }
+    }
+
+    /**
+     * Returns cell coordinates that match the given offset coordinates (relative to this.view).
+     */
+    toCellCoordinates(clientX: number, clientY: number): Point | undefined {
+        const topLeftCellRect = this.#getCellDiv(0, 0).getBoundingClientRect();
+
+        const dx = clientX - topLeftCellRect.left;
+        const dy = clientY - topLeftCellRect.top;
+
+        if (dx < 0 || dy < 0) {
+            return undefined;
+        }
+
+        const xHi = Math.floor(dx / CELL_SIZE_PX);
+        const xLo = Math.floor(dx / (CELL_SIZE_PX + 4));
+        const yHi = Math.floor(dy / CELL_SIZE_PX);
+        const yLo = Math.floor(dy / (CELL_SIZE_PX + 4));
+        
+        let x: number | undefined = undefined;
+        for (let cx = xLo; cx <= xHi; cx++) {
+            if (cx >= this.width) {
+                return undefined;
+            }
+
+            const cellRect = this.#getCellDiv(cx, 0).getBoundingClientRect();
+            if (cellRect.left <= clientX && cellRect.right > clientX) {
+                x = cx;
+                break;
+            }
+        }
+
+        let y: number | undefined = undefined;
+        for (let cy = yLo; cy <= yHi; cy++) {
+            if (cy >= this.height) {
+                return undefined;
+            }
+
+            const cellRect = this.#getCellDiv(0, cy).getBoundingClientRect();
+            if (cellRect.top <= clientY && cellRect.bottom > clientY) {
+                y = cy;
+                break;
+            }
+        }
+
+        return new Point(x, y);
     }
 
     get errorLines() {

@@ -86,4 +86,8 @@ export class PlayfieldLineHandler
         return this.#line !== undefined;
     }
 
+    get startPosition(): Point | undefined {
+        return this.#line?.startPos;
+    }
+
 }

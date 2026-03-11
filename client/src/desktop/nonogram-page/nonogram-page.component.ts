@@ -14,6 +14,8 @@ import NonogramController from "./controller";
 import { NonogramColor, NonogramComponentState } from "./state";
 import NonogramViewUpdater from "./view-update";
 import NonogramButtonsListener from "./buttons-listener";
+import { CellKnowledge, NonogramState } from "../../common/types/nonogram-types";
+import NonogramMouseControlsHandler from "./mouse-controls";
 
 export default class NonogramPage implements UIComponent
 {
@@ -55,6 +57,8 @@ export default class NonogramPage implements UIComponent
         const board = new NonogramBoardComponent(nonogram.rowHints, nonogram.colHints);
         board.create(nonogramBox.content);
         parent.appendChild(this.view);
+
+        new NonogramMouseControlsHandler(state, board);
 
         /* Buttons */
         const btnBlack = this.view.querySelector("#btn-black") as HTMLButtonElement;
