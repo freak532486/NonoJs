@@ -35,13 +35,13 @@ export default class MobileClient implements NonojsClient
         mobileRoot.create(document.body);
 
         /* Add basic services */
-        ctx.addComponent(tokens.authService, new AuthService());
+        const authService = ctx.addComponent(tokens.authService, new AuthService()) as AuthService;
         ctx.addComponent(tokens.catalogAccess, new CatalogAccess());
         const savefileAccess = new SavefileAccess(ctx.getComponent(tokens.authService));
-        ctx.addComponent(tokens.savefileManager, new SavefileManager(savefileAccess));
+        const savefileManager = new SavefileManager(authService, savefileAccess);
         ctx.addComponent(tokens.savefileMigrator, new SavefileMigrator(savefileAccess));
         ctx.addComponent(tokens.savefileMerger, new SavefileMerger(savefileAccess));
-        ctx.addComponent(tokens.savefileSyncService, new SavefileSyncService(savefileAccess));
+        const syncService = new SavefileSyncService(savefileAccess);
         ctx.addComponent(tokens.activeComponentManager, new ActiveComponentManager(mobileRoot));
 
         /* Add UI components */
@@ -58,8 +58,12 @@ export default class MobileClient implements NonojsClient
         ctx.addComponent(tokens.startpageRoute, new StartpageRoute(savefileAccess));
 
         /* Initialize app */
-        ctx.addComponent(tokens.appInitializer, new AppInitializer(mobileRoot)).initApp();
+        ctx.addComponent(tokens.appInitializer, new AppInitializer(authService, savefileAccess, mobileRoot)).initApp();
         this.ctx = ctx;
+    }
+
+    async init(): Promise<void> {
+        // Nothing to do
     }
 
     openStartPage(): Promise<void> {

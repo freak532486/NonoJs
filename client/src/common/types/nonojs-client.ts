@@ -4,6 +4,11 @@
 export default interface NonojsClient {
     
     /**
+     * Performs any sort of necessary initialization steps.
+     */
+    init(): Promise<void>
+
+    /**
      * Opens the start page.
      */
     openStartPage(): Promise<void>;

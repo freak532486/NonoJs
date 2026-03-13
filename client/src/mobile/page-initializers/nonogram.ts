@@ -7,20 +7,23 @@ import { deduceAll } from "../../common/services/solver/solver";
 import { DeductionStatus, NonogramState } from "../../common/types/nonogram-types";
 import { navigateTo } from "../../common/services/navigate-to";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
+import SavefileSyncService from "../../common/services/savefile/savefile-sync-service";
 
 export default class NonogramPageInitializer extends Component
 {
 
+    private readonly savefileSyncService: SavefileSyncService;
+
     constructor(
-        private readonly savefileAccess: SavefileAccess
+        private readonly savefileAccess: SavefileAccess,
     )
     {
         super();
+        this.savefileSyncService = new SavefileSyncService(savefileAccess);
     }
 
     async run(nonogramId: string): Promise<void> {
         const catalogAccess = this.ctx.getComponent(tokens.catalogAccess);
-        const savefileSyncService = this.ctx.getComponent(tokens.savefileSyncService);
         const authService = this.ctx.getComponent(tokens.authService);
         const notFoundRoute = this.ctx.getComponent(tokens.notFoundRoute);
         const menu = this.ctx.getComponent(tokens.menu);
@@ -89,7 +92,7 @@ export default class NonogramPageInitializer extends Component
                 /* Queue sync */
                 const activeUsername = await authService.getCurrentUsername();
                 if (activeUsername) {
-                    savefileSyncService.queueSync();
+                    this.savefileSyncService.queueSync();
                 }
             }
         });

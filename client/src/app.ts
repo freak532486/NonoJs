@@ -5,5 +5,6 @@ import MobileClient from "./mobile/mobile-client";
 
 
 const client = isMobileDevice() ? new MobileClient() : new DesktopClient();
+await client.init();
 const router = new Router(client);
 router.run();

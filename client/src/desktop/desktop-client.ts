@@ -2,6 +2,7 @@ import AuthService from "../common/services/auth/auth-service";
 import { CatalogAccess } from "../common/services/catalog/catalog-access";
 import { navigateTo } from "../common/services/navigate-to";
 import SavefileAccess from "../common/services/savefile/savefile-access";
+import SavefileManager from "../common/services/savefile/savefile-manager";
 import NonojsClient from "../common/types/nonojs-client";
 import Header from "./header/header.component";
 import NonogramPage from "./nonogram-page/nonogram-page.component";
@@ -27,6 +28,10 @@ export default class DesktopClient implements NonojsClient
     
         const header = new Header();
         header.create(this.root.headerContainer);
+    }
+
+    async init(): Promise<void> {
+        await new SavefileManager(this.authService, this.savefileAccess).initializeLocalSavefile();
     }
 
     async openStartPage(): Promise<void> {

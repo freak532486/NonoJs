@@ -1,16 +1,20 @@
-import { MergeStrategy } from "./savefile-merger";
+import SavefileMerger, { MergeStrategy } from "./savefile-merger";
 import { Component } from "nonojs-common";
 import tokens from "../../tokens";
 import SavefileAccess from "./savefile-access";
+import AuthService from "../auth/auth-service";
 
-export default class SavefileManager extends Component
+export default class SavefileManager
 {
 
+    private merger: SavefileMerger;
+
     constructor(
+        private readonly authService: AuthService,
         private readonly savefileAccess: SavefileAccess
     )
     {
-        super();
+        this.merger = new SavefileMerger(savefileAccess);
     }
 
     /**
@@ -18,15 +22,12 @@ export default class SavefileManager extends Component
      */
     async initializeLocalSavefile()
     {
-        const merger = this.ctx.getComponent(tokens.savefileMerger);
-        const authService = this.ctx.getComponent(tokens.authService);
-
         const serverSavefile = await this.savefileAccess.fetchServerSavefile();
         const localSavefile = await this.savefileAccess.fetchLocalSavefile();
-        const username = await authService.getCurrentUsername();
+        const username = await this.authService.getCurrentUsername();
 
         /* When loading savefiles, the server savefile wins */
-        const merged = merger.getMergedSavefileForUser(
+        const merged = this.merger.getMergedSavefileForUser(
             serverSavefile,
             localSavefile,
             username,
@@ -41,12 +42,9 @@ export default class SavefileManager extends Component
      */
     async writeLocalSavefileToServer()
     {
-        const authService = this.ctx.getComponent(tokens.authService);
-        const merger = this.ctx.getComponent(tokens.savefileMerger);
-
         const serverSavefile = await this.savefileAccess.fetchServerSavefile();
         const localSavefile = await this.savefileAccess.fetchLocalSavefile();
-        const username = await authService.getCurrentUsername();
+        const username = await this.authService.getCurrentUsername();
 
         /* Nothing to do if not logged in */
         if (!username) {
@@ -54,7 +52,7 @@ export default class SavefileManager extends Component
         }
 
         /* When writing savefiles, the local savefile wins */
-        const merged = merger.getMergedSavefileForUser(
+        const merged = this.merger.getMergedSavefileForUser(
             serverSavefile,
             localSavefile,
             username,
