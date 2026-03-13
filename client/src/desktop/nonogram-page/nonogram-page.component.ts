@@ -67,6 +67,13 @@ export default class NonogramPage implements UIComponent
         solverMsg.style.maxWidth = nonogramBox.view.getBoundingClientRect().width + "px";
         middleCol.appendChild(solverMsg);
 
+        /* Create timer */
+        const timerBox = new BoxComponent("Timer", Color.GREEN);
+        timerBox.create(rightCol);
+
+        const timerDiv = htmlToElement(timerTemplate);
+        timerBox.content.appendChild(timerDiv);
+
         /* Buttons */
         const btnBlack = this.view.querySelector("#btn-black") as HTMLButtonElement;
         btnBlack.onclick = () => state.chosenColor = NonogramColor.BLACK;
@@ -100,7 +107,8 @@ export default class NonogramPage implements UIComponent
         btnReset.onclick = () => state.reset();
 
         /* State Listeners */
-        const viewUpdater = new NonogramViewUpdater(state, board, solverMsg);
+        const timerSpan = this.view.querySelector(".timer .elapsed") as HTMLSpanElement;
+        const viewUpdater = new NonogramViewUpdater(state, board, solverMsg, timerSpan);
         state.listeners.push(viewUpdater);
 
         const buttonsUpdater = new NonogramButtonsListener(state, btnUndo, btnRedo, btnBlack, btnWhite, btnResetToValid);
@@ -111,12 +119,7 @@ export default class NonogramPage implements UIComponent
         window.addEventListener("keyup", ev => keyboardListener.onKeyUp(ev));
         window.addEventListener("keydown", ev => keyboardListener.onKeyDown(ev));
 
-        /* Create timer */
-        const timerBox = new BoxComponent("Timer", Color.GREEN);
-        timerBox.create(rightCol);
-
-        const timerDiv = htmlToElement(timerTemplate);
-        timerBox.content.appendChild(timerDiv);
+        
 
         /* Add padding so that board is perfectly in the middle */
         const paddingLeft = Math.max(0, rightCol.clientWidth - leftCol.clientWidth);

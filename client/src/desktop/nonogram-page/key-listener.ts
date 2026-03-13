@@ -12,7 +12,10 @@ export default class NonogramKeyboardListener
     ) {}
 
     onKeyDown(ev: KeyboardEvent) {
-        const curPos = this.state.cursorPos;
+        let curPos = this.state.cursorPos;
+        if (curPos == undefined) {
+            curPos = new Point(0, 0);
+        }
 
         if (ev.key == "ArrowUp") {
             const yOff = (!ev.ctrlKey || curPos.y % 5 == 0) ? 1 : curPos.y % 5;

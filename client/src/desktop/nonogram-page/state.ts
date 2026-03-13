@@ -9,7 +9,8 @@ export enum StateChangeType {
     CHOSEN_COLOR,
     CURSOR,
     LINE_PREVIEW,
-    SOLVER_MSG
+    SOLVER_MSG,
+    TIMER
 };
 
 export interface NonogramComponentStateListener
@@ -33,17 +34,15 @@ export interface HistoryEntry {
 export class NonogramComponentState
 {
     private _solution: NonogramState;
-
     private _chosenColor: NonogramColor = NonogramColor.BLACK;
-
     private _history: Array<HistoryEntry>;
     private _historyIdx: number = 0;
     private _validHistoryIdx: number = 0;
-
     private _lineHandler: PlayfieldLineHandler = new PlayfieldLineHandler();
     private _cursor?: Point;
-
     private _solverMsg: string = "";
+    private _elapsed: number = 0;
+    private _lastElapsedAnimTs: number = 0;
 
     /**
      * List of listeners. Will be notified on any state change.
@@ -71,6 +70,26 @@ export class NonogramComponentState
 
         this._history = [initialState];
         this._solution = deduceAll(initialState.state).newState;
+
+        const timerAnim = (ts: number) => {
+            if (this._lastElapsedAnimTs == 0) {
+                this._lastElapsedAnimTs = ts;
+                requestAnimationFrame(timerAnim);
+                return;
+            }
+
+            if (ts - this._lastElapsedAnimTs < 1000) {
+                requestAnimationFrame(timerAnim);
+                return;
+            }
+
+            this._elapsed += 1;
+            this.notifyListeners(StateChangeType.TIMER);
+            this._lastElapsedAnimTs = ts;
+            requestAnimationFrame(timerAnim);
+        }
+
+        requestAnimationFrame(timerAnim);
     }
 
     get nonogramWidth(): number {
@@ -124,6 +143,13 @@ export class NonogramComponentState
 
     get cursorPos(): Point | undefined {
         return this._cursor;
+    }
+
+    /**
+     * Returns the elapsed time, in seconds.
+     */
+    get elapsed(): number {
+        return this._elapsed;
     }
 
     undo() {

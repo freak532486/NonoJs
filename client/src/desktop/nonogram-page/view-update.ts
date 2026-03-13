@@ -1,4 +1,5 @@
 import { BoardComponentFullState, NonogramBoardComponent } from "../../common/components/nonogram-board/nonogram-board.component";
+import { getTimeString } from "../../common/services/playfield/timer-formatting";
 import { NonogramComponentState, NonogramComponentStateListener, StateChangeType } from "./state"
 
 export default class NonogramViewUpdater implements NonogramComponentStateListener {
@@ -6,7 +7,8 @@ export default class NonogramViewUpdater implements NonogramComponentStateListen
     constructor(
         private readonly state: NonogramComponentState,
         private readonly board: NonogramBoardComponent,
-        private readonly solverMsgSpan: HTMLElement
+        private readonly solverMsgSpan: HTMLElement,
+        private readonly timerSpan: HTMLElement
     ) {}
 
     onChange(type: StateChangeType): void {
@@ -32,6 +34,10 @@ export default class NonogramViewUpdater implements NonogramComponentStateListen
 
         if (type == StateChangeType.SOLVER_MSG) {
             this.solverMsgSpan.textContent = this.state.solverMsg;
+        }
+
+        if (type == StateChangeType.TIMER) {
+            this.timerSpan.textContent = getTimeString(this.state.elapsed);
         }
     }
 
