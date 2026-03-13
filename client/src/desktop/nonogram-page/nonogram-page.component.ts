@@ -16,6 +16,7 @@ import NonogramViewUpdater from "./view-update";
 import NonogramButtonsListener from "./buttons-listener";
 import { CellKnowledge, NonogramState } from "../../common/types/nonogram-types";
 import NonogramMouseControlsHandler from "./mouse-controls";
+import SolverButtonHandler from "./solver-button-handler";
 
 export default class NonogramPage implements UIComponent
 {
@@ -60,6 +61,12 @@ export default class NonogramPage implements UIComponent
 
         new NonogramMouseControlsHandler(state, board);
 
+        /* Create solver message panel */
+        const solverMsg = document.createElement("span");
+        solverMsg.id = "solver-msg";
+        solverMsg.style.maxWidth = nonogramBox.view.getBoundingClientRect().width + "px";
+        middleCol.appendChild(solverMsg);
+
         /* Buttons */
         const btnBlack = this.view.querySelector("#btn-black") as HTMLButtonElement;
         btnBlack.onclick = () => state.chosenColor = NonogramColor.BLACK;
@@ -73,8 +80,20 @@ export default class NonogramPage implements UIComponent
         const btnRedo = this.view.querySelector("#btn-redo") as HTMLButtonElement;
         btnRedo.onclick = () => state.redo();
 
+        /* Solver buttons */
+        const solverButtonHandler = new SolverButtonHandler(state);
+
+        const btnHint = this.view.querySelector("#btn-hint") as HTMLButtonElement;
+        btnHint.onclick = () => solverButtonHandler.hint();
+
+        const btnNext = this.view.querySelector("#btn-next") as HTMLButtonElement;
+        btnNext.onclick = () => solverButtonHandler.solveNext();
+
+        const btnSolve = this.view.querySelector("#btn-solve") as HTMLButtonElement;
+        btnSolve.onclick = () => solverButtonHandler.solve();
+
         /* State Listeners */
-        const viewUpdater = new NonogramViewUpdater(state, board);
+        const viewUpdater = new NonogramViewUpdater(state, board, solverMsg);
         state.listeners.push(viewUpdater);
 
         const buttonsUpdater = new NonogramButtonsListener(state, btnUndo, btnRedo, btnBlack, btnWhite);

@@ -7,6 +7,12 @@
     justify-content: center;
 }
 
+#nonogram-container > .column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 #nonogram-container {
     display: grid;
     grid-template-columns: max-content max-content max-content;
@@ -22,12 +28,18 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+
+    width: 200px;
+}
+
+#nonogram-container .controls #solver-msg {
+    height: 50px;
 }
 
 #nonogram-container .left, #nonogram-container .right {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: start;
     gap: 10px;
 }
 

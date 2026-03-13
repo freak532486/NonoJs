@@ -5,7 +5,8 @@ export default class NonogramViewUpdater implements NonogramComponentStateListen
 
     constructor(
         private readonly state: NonogramComponentState,
-        private readonly board: NonogramBoardComponent
+        private readonly board: NonogramBoardComponent,
+        private readonly solverMsgSpan: HTMLElement
     ) {}
 
     onChange(type: StateChangeType): void {
@@ -27,6 +28,10 @@ export default class NonogramViewUpdater implements NonogramComponentStateListen
             for (const entry of this.state.crossedOutHints) {
                 this.board.updateFinishedHints(entry[0], entry[1]);
             }
+        }
+
+        if (type == StateChangeType.SOLVER_MSG) {
+            this.solverMsgSpan.textContent = this.state.solverMsg;
         }
     }
 

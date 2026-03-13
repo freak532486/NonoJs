@@ -8,7 +8,8 @@ export enum StateChangeType {
     BOARD_STATE,
     CHOSEN_COLOR,
     CURSOR,
-    LINE_PREVIEW
+    LINE_PREVIEW,
+    SOLVER_MSG
 };
 
 export interface NonogramComponentStateListener
@@ -38,6 +39,8 @@ export class NonogramComponentState
 
     private _lineHandler: PlayfieldLineHandler = new PlayfieldLineHandler();
     private _cursor?: Point;
+
+    private _solverMsg: string = "";
 
     /**
      * List of listeners. Will be notified on any state change.
@@ -144,6 +147,7 @@ export class NonogramComponentState
 
         this._history.push({ state: state, errorLines: errLines, crossedOutHints: crossedOutHints });
         this._historyIdx = this._history.length - 1;
+        this.solverMsg = "";
         this.notifyListeners(StateChangeType.BOARD_STATE);
     }
 
@@ -264,6 +268,15 @@ export class NonogramComponentState
 
     get crossedOutHints() {
         return this._history[this._historyIdx].crossedOutHints;
+    }
+
+    get solverMsg() {
+        return this._solverMsg;
+    }
+
+    set solverMsg(msg: string) {
+        this._solverMsg = msg;
+        this.notifyListeners(StateChangeType.SOLVER_MSG);
     }
 
     private notifyListeners(type: StateChangeType) {
