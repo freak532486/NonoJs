@@ -1,5 +1,5 @@
 import { PlayfieldLineHandler } from "../../common/services/playfield/playfield-line-handler";
-import { checkHints } from "../../common/services/solver/solver";
+import { checkHints, deduceAll, statesAreCompatible } from "../../common/services/solver/solver";
 import LineIdSet from "../../common/types/line-id-set";
 import { CellKnowledge, LineId, LineType, NonogramState } from "../../common/types/nonogram-types";
 import { Point } from "../../common/types/point";
@@ -32,10 +32,13 @@ export interface HistoryEntry {
 
 export class NonogramComponentState
 {
+    private _solution: NonogramState;
+
     private _chosenColor: NonogramColor = NonogramColor.BLACK;
 
     private _history: Array<HistoryEntry>;
     private _historyIdx: number = 0;
+    private _validHistoryIdx: number = 0;
 
     private _lineHandler: PlayfieldLineHandler = new PlayfieldLineHandler();
     private _cursor?: Point;
@@ -67,6 +70,7 @@ export class NonogramComponentState
         }
 
         this._history = [initialState];
+        this._solution = deduceAll(initialState.state).newState;
     }
 
     get nonogramWidth(): number {
@@ -87,6 +91,10 @@ export class NonogramComponentState
 
     get historyIdx(): number {
         return this._historyIdx;
+    }
+
+    get lastValidHistoryIdx(): number {
+        return this._validHistoryIdx;
     }
 
     get chosenColor(): NonogramColor {
@@ -119,20 +127,19 @@ export class NonogramComponentState
     }
 
     undo() {
-        if (this.historyIdx == 0) {
-            return;
-        }
-
-        this._historyIdx -= 1;
-        this.notifyListeners(StateChangeType.BOARD_STATE);
+        this.historyIdx = this.historyIdx - 1;
     }
 
     redo() {
-        if (this.historyIdx == this.history.length - 1) {
+        this.historyIdx = this.historyIdx + 1;
+    }
+
+    set historyIdx(idx: number) {
+        if (idx == this._historyIdx || idx < 0 || idx >= this._history.length) {
             return;
         }
 
-        this._historyIdx += 1;
+        this._historyIdx = idx;
         this.notifyListeners(StateChangeType.BOARD_STATE);
     }
 
@@ -144,9 +151,11 @@ export class NonogramComponentState
         const hintDeduction = this.performHintDeduction(state);
         const errLines = hintDeduction.errorLines;
         const crossedOutHints = mergeMaps(hintDeduction.newFinishedHints, this.crossedOutHints);
+        const isCorrect = statesAreCompatible(state, this._solution);
 
         this._history.push({ state: state, errorLines: errLines, crossedOutHints: crossedOutHints });
         this._historyIdx = this._history.length - 1;
+        this._validHistoryIdx = isCorrect ? this._historyIdx : this._validHistoryIdx;
         this.solverMsg = "";
         this.notifyListeners(StateChangeType.BOARD_STATE);
     }
@@ -260,6 +269,25 @@ export class NonogramComponentState
 
         this._lineHandler.clearLine();
         this.notifyListeners(StateChangeType.LINE_PREVIEW);
+    }
+
+    reset() {
+        this._chosenColor = NonogramColor.BLACK;
+        
+        this._history = [this._history[0]];
+        this._historyIdx = 0;
+        this._validHistoryIdx = 0;
+
+        this._lineHandler.clearLine();
+        this._cursor = undefined;
+
+        this._solverMsg = "";
+
+        this.notifyListeners(StateChangeType.BOARD_STATE);
+        this.notifyListeners(StateChangeType.CHOSEN_COLOR);
+        this.notifyListeners(StateChangeType.CURSOR);
+        this.notifyListeners(StateChangeType.LINE_PREVIEW);
+        this.notifyListeners(StateChangeType.SOLVER_MSG);
     }
 
     get errorLines(){

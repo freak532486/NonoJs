@@ -92,11 +92,18 @@ export default class NonogramPage implements UIComponent
         const btnSolve = this.view.querySelector("#btn-solve") as HTMLButtonElement;
         btnSolve.onclick = () => solverButtonHandler.solve();
 
+        /* Reset buttons */
+        const btnResetToValid = this.view.querySelector("#btn-reset-to-valid") as HTMLButtonElement;
+        btnResetToValid.onclick = () => state.historyIdx = state.lastValidHistoryIdx;
+
+        const btnReset = this.view.querySelector("#btn-reset") as HTMLButtonElement;
+        btnReset.onclick = () => state.reset();
+
         /* State Listeners */
         const viewUpdater = new NonogramViewUpdater(state, board, solverMsg);
         state.listeners.push(viewUpdater);
 
-        const buttonsUpdater = new NonogramButtonsListener(state, btnUndo, btnRedo, btnBlack, btnWhite);
+        const buttonsUpdater = new NonogramButtonsListener(state, btnUndo, btnRedo, btnBlack, btnWhite, btnResetToValid);
         state.listeners.push(buttonsUpdater);
 
         /* Create keyboard listener */

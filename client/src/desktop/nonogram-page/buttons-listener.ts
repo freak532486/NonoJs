@@ -7,8 +7,12 @@ export default class NonogramColorButtonsListener implements NonogramComponentSt
         private readonly btnUndo: HTMLButtonElement,
         private readonly btnRedo: HTMLButtonElement,
         private readonly btnBlack: HTMLButtonElement,
-        private readonly btnWhite: HTMLButtonElement
-    ) {}
+        private readonly btnWhite: HTMLButtonElement,
+        private readonly btnResetToLastValidState: HTMLButtonElement
+    ) {
+        this.onColorChange();
+        this.onStateChange();
+    }
 
     onChange(type: StateChangeType): void {
         if (type == StateChangeType.CHOSEN_COLOR) {
@@ -33,6 +37,7 @@ export default class NonogramColorButtonsListener implements NonogramComponentSt
     private onStateChange() {
         this.btnUndo.disabled = this.state.historyIdx == 0;
         this.btnRedo.disabled = this.state.historyIdx == this.state.history.length - 1;
+        this.btnResetToLastValidState.disabled = this.state.errorLines.length == 0;
     }
     
 }

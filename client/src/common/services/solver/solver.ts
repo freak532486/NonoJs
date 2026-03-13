@@ -22,6 +22,29 @@ export function isSolved(state: NonogramState): boolean {
 }
 
 /**
+ * Returns true iff the given board states are compatible, i.e. there is no cell that is definitely white in a and
+ * definitely black in b.
+ */
+export function statesAreCompatible(a: NonogramState, b: NonogramState): boolean
+{
+    if (a.width !== b.width || a.height !== b.height) {
+        return false;
+    }
+
+    for (let i = 0; i < a.cells.length; i++) {
+        if (a.cells[i] == CellKnowledge.DEFINITELY_BLACK && b.cells[i] == CellKnowledge.DEFINITELY_WHITE) {
+            return false;
+        }
+
+        if (a.cells[i] == CellKnowledge.DEFINITELY_WHITE && b.cells[i] == CellKnowledge.DEFINITELY_BLACK) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
  * Returns true if the given line is solved in the given state.
  */
 function isLineSolved(state: NonogramState, lineId: LineId): boolean {
