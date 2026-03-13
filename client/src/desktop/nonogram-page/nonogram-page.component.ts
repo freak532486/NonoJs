@@ -10,13 +10,12 @@ import { NonogramBoardComponent } from "../../common/components/nonogram-board/n
 import BoxComponent from "../../common/components/box/box.component";
 import Color from "../../common/types/color";
 import NonogramKeyboardListener from "./key-listener";
-import NonogramController from "./controller";
 import { NonogramColor, NonogramComponentState } from "./state";
 import NonogramViewUpdater from "./view-update";
 import NonogramButtonsListener from "./buttons-listener";
-import { CellKnowledge, NonogramState } from "../../common/types/nonogram-types";
 import NonogramMouseControlsHandler from "./mouse-controls";
 import SolverButtonHandler from "./solver-button-handler";
+import SolvedListener from "./solved-listener";
 
 export default class NonogramPage implements UIComponent
 {
@@ -113,6 +112,9 @@ export default class NonogramPage implements UIComponent
 
         const buttonsUpdater = new NonogramButtonsListener(state, btnUndo, btnRedo, btnBlack, btnWhite, btnResetToValid);
         state.listeners.push(buttonsUpdater);
+
+        const solvedListener = new SolvedListener(state);
+        state.listeners.push(solvedListener);
 
         /* Create keyboard listener */
         const keyboardListener = new NonogramKeyboardListener(state);

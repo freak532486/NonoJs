@@ -42,7 +42,9 @@ export class NonogramComponentState
     private _cursor?: Point;
     private _solverMsg: string = "";
     private _elapsed: number = 0;
+    private _timerRunning: boolean = true;
     private _lastElapsedAnimTs: number = 0;
+    private _solvedBySolver: boolean = false;
 
     /**
      * List of listeners. Will be notified on any state change.
@@ -72,6 +74,11 @@ export class NonogramComponentState
         this._solution = deduceAll(initialState.state).newState;
 
         const timerAnim = (ts: number) => {
+            if (!this._timerRunning) {
+                requestAnimationFrame(timerAnim);
+                return;
+            }
+
             if (this._lastElapsedAnimTs == 0) {
                 this._lastElapsedAnimTs = ts;
                 requestAnimationFrame(timerAnim);
@@ -303,17 +310,20 @@ export class NonogramComponentState
         this._history = [this._history[0]];
         this._historyIdx = 0;
         this._validHistoryIdx = 0;
-
         this._lineHandler.clearLine();
         this._cursor = undefined;
-
         this._solverMsg = "";
+        this._timerRunning = true;
+        this._elapsed = 0;
+        this._lastElapsedAnimTs = 0;
+        this._solvedBySolver = false;
 
         this.notifyListeners(StateChangeType.BOARD_STATE);
         this.notifyListeners(StateChangeType.CHOSEN_COLOR);
         this.notifyListeners(StateChangeType.CURSOR);
         this.notifyListeners(StateChangeType.LINE_PREVIEW);
         this.notifyListeners(StateChangeType.SOLVER_MSG);
+        this.notifyListeners(StateChangeType.TIMER);
     }
 
     get errorLines(){
@@ -331,6 +341,22 @@ export class NonogramComponentState
     set solverMsg(msg: string) {
         this._solverMsg = msg;
         this.notifyListeners(StateChangeType.SOLVER_MSG);
+    }
+
+    get timerRunning(): boolean {
+        return this._timerRunning;
+    }
+
+    set timerRunning(val: boolean) {
+        this._timerRunning = val;
+    }
+
+    get solvedBySolver(): boolean {
+        return this._solvedBySolver;
+    }
+
+    set solvedBySolver(val: boolean) {
+        this._solvedBySolver = val;
     }
 
     private notifyListeners(type: StateChangeType) {

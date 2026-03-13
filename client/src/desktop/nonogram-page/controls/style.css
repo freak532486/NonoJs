@@ -1,8 +1,0 @@
-#nonogram-controls {
-    width: fit-content;
-    justify-self: end;
-    display: grid;
-    grid-template-columns: auto;
-    gap: 5px;
-    padding: 5px;
-}
