@@ -25,7 +25,8 @@ export enum NonogramColor {
 
 export interface HistoryEntry {
     state: NonogramState,
-    errorLines: Array<LineId>
+    errorLines: Array<LineId>,
+    crossedOutHints: Map<LineId, Array<number>>
 }
 
 export class NonogramComponentState
@@ -48,10 +49,21 @@ export class NonogramComponentState
         public readonly colHints: Array<Array<number>>
     )
     {
-        this._history = [{
+        const initialState: HistoryEntry = {
             state: NonogramState.empty(rowHints, colHints),
-            errorLines: []
-        }];
+            errorLines: [],
+            crossedOutHints: new Map()
+        };
+
+        for (let x = 0; x < this.nonogramWidth; x++) {
+            initialState.crossedOutHints.set(LineId.column(x), []);
+        }
+
+        for (let y = 0; y < this.nonogramHeight; y++) {
+            initialState.crossedOutHints.set(LineId.row(y), []);
+        }
+
+        this._history = [initialState];
     }
 
     get nonogramWidth(): number {
@@ -126,15 +138,19 @@ export class NonogramComponentState
             this._history.pop();
         }
 
-        const errLines = this.applyHintDeduction(state);
+        const hintDeduction = this.performHintDeduction(state);
+        const errLines = hintDeduction.errorLines;
+        const crossedOutHints = mergeMaps(hintDeduction.newFinishedHints, this.crossedOutHints);
 
-        this._history.push({ state: state, errorLines: errLines });
+        this._history.push({ state: state, errorLines: errLines, crossedOutHints: crossedOutHints });
         this._historyIdx = this._history.length - 1;
         this.notifyListeners(StateChangeType.BOARD_STATE);
     }
 
-    private applyHintDeduction(newState: NonogramState): Array<LineId> {
+    private performHintDeduction(newState: NonogramState): HintDeductionResult {
         const errLines: Array<LineId> = [];
+        const crossedOutHints: Map<LineId, Array<number>> = new Map();
+
         /* Deduce over changed lines over and over again */
         const queue = calcChangedLines(this.activeState, newState).asArray();
 
@@ -155,6 +171,7 @@ export class NonogramComponentState
             }
 
             /* Update deduced state, push changed orthogonal lines into queue */
+            crossedOutHints.set(line, deduction.finishedHints);
             for (let i = 0; i < lineLength; i++) {
                 const oldCell = lineKnowledge.cells[i];
                 const newCell = deduction.newKnowledge.cells[i];
@@ -178,7 +195,10 @@ export class NonogramComponentState
             newState.cells[i] = deducedState.cells[i];
         }
 
-        return errLines;
+        return {
+            errorLines: errLines,
+            newFinishedHints: crossedOutHints
+        };
     }
 
     get lineStarted(): boolean {
@@ -242,12 +262,21 @@ export class NonogramComponentState
         return this._history[this._historyIdx].errorLines;
     }
 
+    get crossedOutHints() {
+        return this._history[this._historyIdx].crossedOutHints;
+    }
+
     private notifyListeners(type: StateChangeType) {
         for (const listener of this.listeners) {
             listener.onChange(type);
         }
     }
 }
+
+interface HintDeductionResult {
+    errorLines: Array<LineId>,
+    newFinishedHints: Map<LineId, Array<number>>
+};
 
 
 /**
@@ -269,5 +298,16 @@ function calcChangedLines(
         }
     }
 
+    return ret;
+}
+
+/**
+ * Merges the two given maps. On conflict, a wins.
+ */
+function mergeMaps<K, V>(a: Map<K, V>, b: Map<K, V>) {
+    const ret = new Map(b);
+    for (const entry of a) {
+        ret.set(entry[0], entry[1]);
+    }
     return ret;
 }

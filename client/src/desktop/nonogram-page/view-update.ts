@@ -23,6 +23,10 @@ export default class NonogramViewUpdater implements NonogramComponentStateListen
             for (const line of this.state.errorLines) {
                 this.board.markError(line, true);
             }
+
+            for (const entry of this.state.crossedOutHints) {
+                this.board.updateFinishedHints(entry[0], entry[1]);
+            }
         }
     }
 
