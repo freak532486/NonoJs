@@ -12,6 +12,8 @@ export default class NonogramKeyboardListener
     ) {}
 
     onKeyDown(ev: KeyboardEvent) {
+        ev.preventDefault();
+        
         let curPos = this.state.cursorPos;
         if (curPos == undefined) {
             curPos = new Point(0, 0);
