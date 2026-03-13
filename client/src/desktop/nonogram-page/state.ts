@@ -52,12 +52,17 @@ export class NonogramComponentState
     public readonly listeners: Array<NonogramComponentStateListener> = [];
 
     constructor(
+        public readonly nonogramId: string,
         public readonly rowHints: Array<Array<number>>,
-        public readonly colHints: Array<Array<number>>
+        public readonly colHints: Array<Array<number>>,
+        cells: Array<CellKnowledge>,
+        elapsed: number
     )
     {
+        this._elapsed = elapsed;
+
         const initialState: HistoryEntry = {
-            state: NonogramState.empty(rowHints, colHints),
+            state: new NonogramState(rowHints, colHints, cells),
             errorLines: [],
             crossedOutHints: new Map()
         };
@@ -307,7 +312,11 @@ export class NonogramComponentState
     reset() {
         this._chosenColor = NonogramColor.BLACK;
         
-        this._history = [this._history[0]];
+        this._history = [{
+            state: NonogramState.empty(this.rowHints, this.colHints),
+            crossedOutHints: new Map(),
+            errorLines: []
+        }];
         this._historyIdx = 0;
         this._validHistoryIdx = 0;
         this._lineHandler.clearLine();

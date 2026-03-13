@@ -1,4 +1,4 @@
-import { NonogramColor, NonogramComponentState, NonogramComponentStateListener, StateChangeType } from "./state";
+import { NonogramColor, NonogramComponentState, NonogramComponentStateListener, StateChangeType } from "../state";
 
 export default class NonogramColorButtonsListener implements NonogramComponentStateListener
 {

@@ -11,11 +11,14 @@ import BoxComponent from "../../common/components/box/box.component";
 import Color from "../../common/types/color";
 import NonogramKeyboardListener from "./key-listener";
 import { NonogramColor, NonogramComponentState } from "./state";
-import NonogramViewUpdater from "./view-update";
-import NonogramButtonsListener from "./buttons-listener";
+import NonogramViewUpdater from "./listeners/view-update";
+import NonogramButtonsListener from "./listeners/buttons-listener";
 import NonogramMouseControlsHandler from "./mouse-controls";
 import SolverButtonHandler from "./solver-button-handler";
-import SolvedListener from "./solved-listener";
+import SolvedListener from "./listeners/solved-listener";
+import SaveListener from "./listeners/save-listener";
+import { getSavestateForNonogram } from "../../common/services/savefile/savefile-utils";
+import { CellKnowledge } from "../../common/types/nonogram-types";
 
 export default class NonogramPage implements UIComponent
 {
@@ -53,7 +56,15 @@ export default class NonogramPage implements UIComponent
             throw new Error("Nonogram with id " + this.nonogramId + "doesn't exist.");
         }
 
-        const state = new NonogramComponentState(nonogram.rowHints, nonogram.colHints);
+        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savestate = getSavestateForNonogram(savefile, this.nonogramId);
+        const state = new NonogramComponentState(
+            this.nonogramId,
+            nonogram.rowHints,
+            nonogram.colHints,
+            savestate?.cells || Array(nonogram.rowHints.length * nonogram.colHints.length).fill(CellKnowledge.UNKNOWN),
+            savestate?.elapsed || 0
+        );
         const board = new NonogramBoardComponent(nonogram.rowHints, nonogram.colHints);
         board.create(nonogramBox.content);
         parent.appendChild(this.view);
@@ -116,12 +127,13 @@ export default class NonogramPage implements UIComponent
         const solvedListener = new SolvedListener(state);
         state.listeners.push(solvedListener);
 
+        const saveListener = new SaveListener(state, this.savefileAccess);
+        state.listeners.push(saveListener);
+
         /* Create keyboard listener */
         const keyboardListener = new NonogramKeyboardListener(state);
         window.addEventListener("keyup", ev => keyboardListener.onKeyUp(ev));
         window.addEventListener("keydown", ev => keyboardListener.onKeyDown(ev));
-
-        
 
         /* Add padding so that board is perfectly in the middle */
         const paddingLeft = Math.max(0, rightCol.clientWidth - leftCol.clientWidth);

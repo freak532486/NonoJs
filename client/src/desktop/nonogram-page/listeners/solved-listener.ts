@@ -1,6 +1,6 @@
-import { getTimeString } from "../../common/services/playfield/timer-formatting";
-import { isSolved } from "../../common/services/solver/solver";
-import { NonogramComponentState, NonogramComponentStateListener, StateChangeType } from "./state";
+import { getTimeString } from "../../../common/services/playfield/timer-formatting";
+import { isSolved } from "../../../common/services/solver/solver";
+import { NonogramComponentState, NonogramComponentStateListener, StateChangeType } from "../state";
 
 export default class SolvedListener implements NonogramComponentStateListener
 {

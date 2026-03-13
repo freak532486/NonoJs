@@ -1,7 +1,6 @@
-import { Component, Context, SaveFile } from "nonojs-common";
+import { SaveFile } from "nonojs-common";
 import { ACTIVE_VERSION_KEY } from "./savefile-migrator";
 import * as api from "../api/api-client"
-import tokens from "../../tokens";
 import AuthService from "../auth/auth-service";
 
 const STORAGE_KEY = "storage";

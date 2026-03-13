@@ -1,6 +1,6 @@
-import { BoardComponentFullState, NonogramBoardComponent } from "../../common/components/nonogram-board/nonogram-board.component";
-import { getTimeString } from "../../common/services/playfield/timer-formatting";
-import { NonogramComponentState, NonogramComponentStateListener, StateChangeType } from "./state"
+import { BoardComponentFullState, NonogramBoardComponent } from "../../../common/components/nonogram-board/nonogram-board.component";
+import { getTimeString } from "../../../common/services/playfield/timer-formatting";
+import { NonogramComponentState, NonogramComponentStateListener, StateChangeType } from "../state"
 
 export default class NonogramViewUpdater implements NonogramComponentStateListener {
 
@@ -9,7 +9,14 @@ export default class NonogramViewUpdater implements NonogramComponentStateListen
         private readonly board: NonogramBoardComponent,
         private readonly solverMsgSpan: HTMLElement,
         private readonly timerSpan: HTMLElement
-    ) {}
+    ) {
+        this.onChange(StateChangeType.BOARD_STATE);
+        this.onChange(StateChangeType.CHOSEN_COLOR);
+        this.onChange(StateChangeType.CURSOR);
+        this.onChange(StateChangeType.LINE_PREVIEW);
+        this.onChange(StateChangeType.SOLVER_MSG);
+        this.onChange(StateChangeType.TIMER);
+    }
 
     onChange(type: StateChangeType): void {
         if (type == StateChangeType.LINE_PREVIEW) {
