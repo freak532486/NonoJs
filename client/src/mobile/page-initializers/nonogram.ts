@@ -8,6 +8,7 @@ import { DeductionStatus, NonogramState } from "../../common/types/nonogram-type
 import { navigateTo } from "../../common/services/navigate-to";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
 import SavefileSyncService from "../../common/services/savefile/savefile-sync-service";
+import { PLAYFIELD_TITLE } from "../../common/titles";
 
 export default class NonogramPageInitializer extends Component
 {
@@ -111,7 +112,7 @@ export default class NonogramPageInitializer extends Component
         updateResetToValidButtonVisibility();
     
         /* Finish */
-        document.title = "Playing " + nonogram.colHints.length + "x" + nonogram.rowHints.length + " Nonogram"
+        document.title = PLAYFIELD_TITLE(nonogram.colHints.length, nonogram.rowHints.length);
         activeComponentManager.setActiveComponent(playfield);
     }
 

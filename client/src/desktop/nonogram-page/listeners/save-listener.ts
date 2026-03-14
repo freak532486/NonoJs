@@ -31,6 +31,11 @@ export default class SaveListener implements NonogramComponentStateListener
 
         savestate.cells = this.state.activeState.cells;
         savestate.elapsed = this.state.elapsed;
+        if (!this.state.isSolved) {
+            savefile.lastPlayedNonogramId = this.state.nonogramId;
+        } else if (savefile.lastPlayedNonogramId == this.state.nonogramId) {
+            savefile.lastPlayedNonogramId = undefined;
+        }
 
         await this.savefileAccess.writeLocalSavefile(savefile);
         this.syncService.queueSync();

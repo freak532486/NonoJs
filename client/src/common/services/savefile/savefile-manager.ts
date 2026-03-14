@@ -22,9 +22,9 @@ export default class SavefileManager
      */
     async initializeLocalSavefile()
     {
-        const serverSavefile = await this.savefileAccess.fetchServerSavefile();
-        const localSavefile = await this.savefileAccess.fetchLocalSavefile();
         const username = await this.authService.getCurrentUsername();
+        const serverSavefile = username ? await this.savefileAccess.fetchServerSavefile() : undefined;
+        const localSavefile = await this.savefileAccess.fetchLocalSavefile();
 
         /* When loading savefiles, the server savefile wins */
         const merged = this.merger.getMergedSavefileForUser(

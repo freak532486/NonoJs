@@ -42,9 +42,8 @@ export class NonogramComponentState
     private _cursor?: Point;
     private _solverMsg: string = "";
     private _elapsed: number = 0;
-    private _timerRunning: boolean = true;
     private _lastElapsedAnimTs: number = 0;
-    private _solvedBySolver: boolean = false;
+    private _isSolved: boolean = false;
 
     /**
      * List of listeners. Will be notified on any state change.
@@ -79,7 +78,7 @@ export class NonogramComponentState
         this._solution = deduceAll(initialState.state).newState;
 
         const timerAnim = (ts: number) => {
-            if (!this._timerRunning) {
+            if (this._isSolved) {
                 requestAnimationFrame(timerAnim);
                 return;
             }
@@ -322,10 +321,9 @@ export class NonogramComponentState
         this._lineHandler.clearLine();
         this._cursor = undefined;
         this._solverMsg = "";
-        this._timerRunning = true;
         this._elapsed = 0;
         this._lastElapsedAnimTs = 0;
-        this._solvedBySolver = false;
+        this._isSolved = false;
 
         this.notifyListeners(StateChangeType.BOARD_STATE);
         this.notifyListeners(StateChangeType.CHOSEN_COLOR);
@@ -352,20 +350,12 @@ export class NonogramComponentState
         this.notifyListeners(StateChangeType.SOLVER_MSG);
     }
 
-    get timerRunning(): boolean {
-        return this._timerRunning;
+    get isSolved(): boolean {
+        return this._isSolved;
     }
 
-    set timerRunning(val: boolean) {
-        this._timerRunning = val;
-    }
-
-    get solvedBySolver(): boolean {
-        return this._solvedBySolver;
-    }
-
-    set solvedBySolver(val: boolean) {
-        this._solvedBySolver = val;
+    set isSolved(val: boolean) {
+        this._isSolved = val;
     }
 
     private notifyListeners(type: StateChangeType) {

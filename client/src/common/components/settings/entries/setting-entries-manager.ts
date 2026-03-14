@@ -11,9 +11,7 @@ export default class SettingEntriesManager
     constructor(
         private readonly settings: Settings,
         private readonly savefileAccess: SavefileAccess,
-        private readonly authService: AuthService,
-        private readonly mergeLocalSavefileWithAccount: () => void,
-        private readonly deleteActiveAccount: () => void
+        private readonly authService: AuthService
     ) {}
 
     async createSettingsEntries()
@@ -27,13 +25,13 @@ export default class SettingEntriesManager
         const localSavefile = this.savefileAccess.fetchLocalSavefileForUser(undefined);
 
         if (username && localSavefile) {
-            const mergeEntry = new SavefileMergeEntry(username, this.mergeLocalSavefileWithAccount);
+            const mergeEntry = new SavefileMergeEntry(this.savefileAccess, username);
             this.settings.addEntry(mergeEntry.view);
         }
 
         /* Entry for deleting active account */
         if (username) {
-            const deleteAccountEntry = new DeleteAccountEntry(username, this.deleteActiveAccount);
+            const deleteAccountEntry = new DeleteAccountEntry(this.authService, username);
             this.settings.addEntry(deleteAccountEntry.view);
         }
     }

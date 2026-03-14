@@ -1,6 +1,6 @@
+import { htmlToElement } from "../../../../services/html-to-element";
+import SavefileAccess from "../../../../services/savefile/savefile-access";
 import template from "./export-import-entry.html"
-import { htmlToElement } from "../../../../common/services/html-to-element";
-import SavefileAccess from "../../../../common/services/savefile/savefile-access";
 import { SaveFile } from "nonojs-common";
 
 export default class ExportImportEntry

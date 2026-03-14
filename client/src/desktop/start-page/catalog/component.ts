@@ -78,11 +78,11 @@ export default class DesktopCatalogComponent implements UIComponent
 
         /* Sort by size */
         matchingNonograms.sort((a, b) => {
-            if (a.colHints.length <= b.colHints.length) {
+            if (a.colHints.length < b.colHints.length) {
                 return -1;
             }
 
-            if (a.rowHints.length <= b.rowHints.length) {
+            if (a.colHints.length == b.colHints.length && a.rowHints.length < b.rowHints.length) {
                 return -1;
             }
 

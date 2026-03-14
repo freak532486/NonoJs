@@ -4,6 +4,7 @@
 }
 
 #nonogram-board {
+    position: relative;
     display: grid;
     width: fit-content;
 

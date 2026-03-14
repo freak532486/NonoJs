@@ -1,14 +1,16 @@
 import template from "./delete-account-entry.html"
 import "./delete-account-entry.css"
-import { htmlToElement } from "../../../../common/services/html-to-element";
+import AuthService from "../../../../services/auth/auth-service";
+import { htmlToElement } from "../../../../services/html-to-element";
+import { navigateTo } from "../../../../services/navigate-to";
 
 export default class DeleteAccountEntry
 {
     #view: HTMLElement;
 
     constructor(
-        username: string,
-        deleteActiveAccount: () => void
+        authService: AuthService,
+        username: string
     ) {
         this.#view = htmlToElement(template.replace("$username", username));
         const button = this.#view.querySelector("#btn-delete-account") as HTMLButtonElement;
@@ -19,7 +21,10 @@ export default class DeleteAccountEntry
             button.disabled = textField.value !== username;
         }
 
-        button.onclick = () => deleteActiveAccount();
+        button.onclick = async () => {
+            await authService.deleteActiveUser();
+            navigateTo("/");
+        }
     }
 
     get view() {

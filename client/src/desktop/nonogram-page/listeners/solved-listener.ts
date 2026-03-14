@@ -14,11 +14,11 @@ export default class SolvedListener implements NonogramComponentStateListener
         }
 
         if (isSolved(this.state.activeState)) {
-            if (!this.state.solvedBySolver) {
+            if (!this.state.isSolved) {
                 window.alert("Congratulations! You solved the puzzle in " + getTimeString(this.state.elapsed) + ".");
             }
 
-            this.state.timerRunning = false;
+            this.state.isSolved = true;
         }
 
     }

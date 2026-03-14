@@ -1,10 +1,10 @@
 import template from "./settings.html"
 import "./settings.css"
-import { htmlToElement } from "../../../common/services/html-to-element";
 import SettingEntriesManager from "../entries/setting-entries-manager";
-import SavefileAccess from "../../../common/services/savefile/savefile-access";
-import UIComponent from "../../../common/types/ui-component";
-import AuthService from "../../../common/services/auth/auth-service";
+import UIComponent from "../../../types/ui-component";
+import SavefileAccess from "../../../services/savefile/savefile-access";
+import AuthService from "../../../services/auth/auth-service";
+import { htmlToElement } from "../../../services/html-to-element";
 
 export default class Settings implements UIComponent
 {
@@ -13,18 +13,14 @@ export default class Settings implements UIComponent
 
     constructor(
         savefileAccess: SavefileAccess,
-        authService: AuthService,
-        mergeLocalSavefileWithAccount: () => void,
-        deleteActiveAccount: () => void
+        authService: AuthService
     )
     {
         this.#view = htmlToElement(template);
         this.#entriesManager = new SettingEntriesManager(
             this,
             savefileAccess,
-            authService,
-            mergeLocalSavefileWithAccount,
-            deleteActiveAccount
+            authService
         );
     }
 

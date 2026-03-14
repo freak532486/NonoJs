@@ -15,6 +15,8 @@ import ContinuePlaying from "./continue-playing/continue-playing.component";
 import DesktopCatalogComponent from "./catalog/component";
 import DesktopAboutComponent from "./about/component";
 import DesktopQuickplayComponent from "./quickplay/component";
+import DesktopStartpageSettingsHandler from "./settings/settings-handler";
+import DesktopRoot from "../root-component/desktop-root";
 
 export default class StartPage implements UIComponent
 {
@@ -23,6 +25,7 @@ export default class StartPage implements UIComponent
     private nonogramSelector: StartPageNonogramSelector;
 
     constructor(
+        private readonly root: DesktopRoot,
         private readonly authService: AuthService,
         private readonly catalogAccess: CatalogAccess,
         private readonly savefileAccess: SavefileAccess,
@@ -92,8 +95,9 @@ export default class StartPage implements UIComponent
         catalogBox.create(leftCol);
 
         /* Links box */
+        const settingsHandler = new DesktopStartpageSettingsHandler(this.savefileAccess, this.authService, this.root);
         const navigationBox = new BoxComponent("Other", Color.GREEN);
-        new LinkCollection().create(navigationBox.content);
+        new LinkCollection(this.catalogAccess, this.onNonogramSelected, settingsHandler).create(navigationBox.content);
         navigationBox.create(leftCol);
 
         /* About box */

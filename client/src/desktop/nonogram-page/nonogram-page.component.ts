@@ -19,6 +19,7 @@ import SolvedListener from "./listeners/solved-listener";
 import SaveListener from "./listeners/save-listener";
 import { getSavestateForNonogram } from "../../common/services/savefile/savefile-utils";
 import { CellKnowledge } from "../../common/types/nonogram-types";
+import { PLAYFIELD_TITLE } from "../../common/titles";
 
 export default class NonogramPage implements UIComponent
 {
@@ -55,6 +56,8 @@ export default class NonogramPage implements UIComponent
         if (!nonogram) {
             throw new Error("Nonogram with id " + this.nonogramId + "doesn't exist.");
         }
+
+        document.title = PLAYFIELD_TITLE(nonogram.colHints.length, nonogram.rowHints.length);
 
         const savefile = await this.savefileAccess.fetchLocalSavefile();
         const savestate = getSavestateForNonogram(savefile, this.nonogramId);

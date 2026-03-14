@@ -3,10 +3,12 @@ import { CatalogAccess } from "../common/services/catalog/catalog-access";
 import { navigateTo } from "../common/services/navigate-to";
 import SavefileAccess from "../common/services/savefile/savefile-access";
 import SavefileManager from "../common/services/savefile/savefile-manager";
+import { DEFAULT_TITLE, NOT_FOUND_TITLE } from "../common/titles";
 import NonojsClient from "../common/types/nonojs-client";
 import DesktopConfirmRegistrationPage from "./confirm-registration/component";
 import Header from "./header/header.component";
 import NonogramPage from "./nonogram-page/nonogram-page.component";
+import DesktopNotFoundPage from "./not-found/component";
 import DesktopRoot from "./root-component/desktop-root";
 import StartPage from "./start-page/start-page.component";
 
@@ -36,7 +38,9 @@ export default class DesktopClient implements NonojsClient
     }
 
     async openStartPage(): Promise<void> {
+        document.title = DEFAULT_TITLE;
         const startPage = new StartPage(
+            this.root,
             this.authService,
             this.catalogAccess,
             this.savefileAccess,
@@ -59,7 +63,7 @@ export default class DesktopClient implements NonojsClient
     }
 
     openSettings(): Promise<void> {
-        throw new Error("Method not implemented.");
+        return this.openStartPage();
     }
 
     openLogin(): Promise<void> {
@@ -67,12 +71,14 @@ export default class DesktopClient implements NonojsClient
     }
 
     async confirmRegistration(token: string): Promise<void> {
+        document.title = DEFAULT_TITLE;
         const confirmRegistrationPage = new DesktopConfirmRegistrationPage(token);
         await confirmRegistrationPage.create(this.root.mainContainer);
     }
 
-    openNotFoundPage(): Promise<void> {
-        throw new Error("Method not implemented.");
+    async openNotFoundPage(): Promise<void> {
+        document.title = NOT_FOUND_TITLE;
+        new DesktopNotFoundPage().create(this.root.mainContainer);
     }
     
 }

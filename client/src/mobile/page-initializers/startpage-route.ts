@@ -4,6 +4,7 @@ import { Component } from "nonojs-common";
 import tokens from "../../common/tokens";
 import { navigateTo } from "../../common/services/navigate-to";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
+import { DEFAULT_TITLE } from "../../common/titles";
 
 export default class StartpageRoute extends Component
 {
@@ -28,7 +29,7 @@ export default class StartpageRoute extends Component
         startPage.setLoggedInUsername(await authService.getCurrentUsername());
 
         activeComponentManager.setActiveComponent(startPage);
-        document.title = "NonoJs · Free Nonogram Platform";
+        document.title = DEFAULT_TITLE;
     }
     
 }
