@@ -36,29 +36,4 @@ export default class SavefileManager
 
         this.savefileAccess.writeLocalSavefile(merged);
     }
-
-    /**
-     * Writes the state of the local savefile to the server.
-     */
-    async writeLocalSavefileToServer()
-    {
-        const serverSavefile = await this.savefileAccess.fetchServerSavefile();
-        const localSavefile = await this.savefileAccess.fetchLocalSavefile();
-        const username = await this.authService.getCurrentUsername();
-
-        /* Nothing to do if not logged in */
-        if (!username) {
-            return;
-        }
-
-        /* When writing savefiles, the local savefile wins */
-        const merged = this.merger.getMergedSavefileForUser(
-            serverSavefile,
-            localSavefile,
-            username,
-            MergeStrategy.LOCAL_WINS
-        );
-
-        await this.savefileAccess.writeServerSavefile(merged);
-    }
 }

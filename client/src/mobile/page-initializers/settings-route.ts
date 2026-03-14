@@ -24,8 +24,15 @@ export default class SettingsRoute extends Component
             this.savefileAccess,
             authService,
             async () => {
-                await savefileMerger.mergeLocalSavefileWithAccount();
-                navigateTo("/");
+                const result = await savefileMerger.mergeLocalSavefileWithAccount();
+
+                if (result == "ok") {
+                    navigateTo("/");
+                } else if (result == "error") {
+                    alert("Error merging your savefile with the server.");
+                } else if (result == "not_logged_in") {
+                    throw new Error("User was not logged in.");
+                }
             },
             async () => {
                 await auth.deleteUser();

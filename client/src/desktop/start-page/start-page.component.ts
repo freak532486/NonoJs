@@ -40,8 +40,8 @@ export default class StartPage implements UIComponent
 
         /* Login box */
         this.authService.getCurrentUsername().then(activeUsername => {
-            const loginBox = new LoginBox(activeUsername, () => {}, () => {});
-            loginBox.create(leftCol);
+            const loginBox = new LoginBox(activeUsername, this.authService, () => {});
+            loginBox.create(rightCol);
         });
 
         /* Quickplay box */

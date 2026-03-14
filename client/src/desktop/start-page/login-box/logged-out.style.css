@@ -12,8 +12,20 @@
 {
     display: grid;
     grid-template-columns: auto 1fr;
+    grid-auto-rows: 20px;
     align-items: center;
-    gap: 5px 25px;
+    gap: 5px;
+}
+
+.logged-out-root .input-group span {
+    justify-self: left;
+    white-space: nowrap;
+    max-width: 100px;
+    overflow: hidden;
+}
+
+.logged-out-root .input-group input {
+    justify-self: right;
 }
 
 .logged-out-root fieldset {

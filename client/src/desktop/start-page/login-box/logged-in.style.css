@@ -5,7 +5,6 @@
 
     display: grid;
     grid-template-rows: 1fr auto;
-    justify-content: center;
     gap: 5px;
 }
 

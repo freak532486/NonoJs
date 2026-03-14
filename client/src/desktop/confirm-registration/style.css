@@ -1,0 +1,8 @@
+#registration-confirmation {
+    padding: 20px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    justify-self: left;
+}

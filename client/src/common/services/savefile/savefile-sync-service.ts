@@ -45,6 +45,7 @@ export default class SavefileSyncService
         const merged = this.merger.mergeSavefiles(serverSavefile, localSavefile);
         await this.savefileAccess.writeServerSavefile(merged);
 
+        /* Failed syncs are ignored, in case you are sitting in the train and have no internet or something. */
         this.#syncQueued = false;
         this.#lastSyncTs = Date.now();
     }

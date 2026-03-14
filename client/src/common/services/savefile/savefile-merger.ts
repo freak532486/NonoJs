@@ -67,7 +67,7 @@ export default class SavefileMerger extends Component
      * Merges the local user-less savefile to the local savefile of the active user. The result is written to local
      * storage and to the server. The userless savefile is deleted.
      */
-    async mergeLocalSavefileWithAccount()
+    async mergeLocalSavefileWithAccount(): Promise<"ok" | "not_logged_in" | "error">
     {
         const authService = this.ctx.getComponent(tokens.authService);
 
@@ -77,7 +77,7 @@ export default class SavefileMerger extends Component
 
         /* No sense merging if not logged in or no free savefile exists */
         if (!freeSavefile || !username) {
-            return;
+            return "ok";
         }
 
         /* Merge, userless savefile wins */
@@ -85,10 +85,14 @@ export default class SavefileMerger extends Component
 
         /* Write savefile */
         this.savefileAccess.writeLocalSavefile(merged);
-        await this.savefileAccess.writeServerSavefile(merged);
+        const result = await this.savefileAccess.writeServerSavefile(merged);
 
         /* Delete userless savefile */
-        this.savefileAccess.deleteLocalSavefileForUser(undefined);
+        if (result == "ok") {
+            this.savefileAccess.deleteLocalSavefileForUser(undefined);
+        }
+
+        return result;
     }
 
     /**

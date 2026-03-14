@@ -4,6 +4,7 @@ import { navigateTo } from "../common/services/navigate-to";
 import SavefileAccess from "../common/services/savefile/savefile-access";
 import SavefileManager from "../common/services/savefile/savefile-manager";
 import NonojsClient from "../common/types/nonojs-client";
+import DesktopConfirmRegistrationPage from "./confirm-registration/component";
 import Header from "./header/header.component";
 import NonogramPage from "./nonogram-page/nonogram-page.component";
 import DesktopRoot from "./root-component/desktop-root";
@@ -65,8 +66,9 @@ export default class DesktopClient implements NonojsClient
         return this.openStartPage();
     }
 
-    confirmRegistration(token: string): Promise<void> {
-        throw new Error("Method not implemented.");
+    async confirmRegistration(token: string): Promise<void> {
+        const confirmRegistrationPage = new DesktopConfirmRegistrationPage(token);
+        await confirmRegistrationPage.create(this.root.mainContainer);
     }
 
     openNotFoundPage(): Promise<void> {

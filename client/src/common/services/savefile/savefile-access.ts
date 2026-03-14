@@ -73,7 +73,7 @@ export default class SavefileAccess
     /**
      * Writes the given savefile to the server (based on the currently logged-in user)
      */
-    async writeServerSavefile(savefile: SaveFile)
+    async writeServerSavefile(savefile: SaveFile): Promise<"ok" | "not_logged_in" | "error">
     {
         const serialized = JSON.stringify(savefile);
         const request = new Request("/api/savefile", {
@@ -86,10 +86,12 @@ export default class SavefileAccess
         const response = await api.performRequestWithSessionToken(request);
 
         if (response.status == "unauthorized") {
-            alert("Unable to write savefile to server - You are not logged in.");
+            return "not_logged_in";
         } else if (response.status == "bad_response" || response.status == "error") {
-            alert("An error occured when trying to write savefile to server.");
+            return "error";
         }
+
+        return "ok";
     }
 
 }

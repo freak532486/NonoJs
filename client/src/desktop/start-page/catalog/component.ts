@@ -49,13 +49,17 @@ export default class DesktopCatalogComponent implements UIComponent
         const maxWidthFilter = this.view.querySelector("#catalog-filter-max-width") as HTMLInputElement;
         const maxHeightFilter = this.view.querySelector("#catalog-filter-max-height") as HTMLInputElement;
 
+        let idPrefix = idFilter.value;
+        if (idPrefix.startsWith("#")) {
+            idPrefix = idPrefix.substring(1);
+        }
         const minWidth = minWidthFilter.value == "" ? Number.NaN : Number(minWidthFilter.value);
         const maxWidth = maxWidthFilter.value == "" ? Number.NaN : Number(maxWidthFilter.value);
         const minHeight = minHeightFilter.value == "" ? Number.NaN :  Number(minHeightFilter.value);
         const maxHeight = maxHeightFilter.value == "" ? Number.NaN :  Number(maxHeightFilter.value);
 
         const predicate = (nono: SerializedNonogram) => {
-            const idFilterMatch = nono.id.startsWith(idFilter.value);
+            const idFilterMatch = nono.id.startsWith(idPrefix);
             const minWidthFilterMatch = Number.isNaN(minWidth) ? true : nono.colHints.length >= minWidth;
             const maxWidthFilterMatch = Number.isNaN(maxWidth) ? true : nono.colHints.length <= maxWidth;
             const minHeightFilterMatch = Number.isNaN(minHeight) ? true : nono.rowHints.length >= minHeight;

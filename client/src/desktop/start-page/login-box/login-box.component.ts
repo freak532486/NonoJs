@@ -6,6 +6,10 @@ import loggedInTemplate from "./logged-in.template.html";
 import loggedOutTemplate from "./logged-out.template.html";
 import "./logged-in.style.css"
 import "./logged-out.style.css"
+import DesktopLoginAction from "./actions/login";
+import AuthService from "../../../common/services/auth/auth-service";
+import DesktopLogoutAction from "./actions/logout";
+import DesktopRegisterAction from "./actions/register";
 
 export default class LoginBox implements UIComponent
 {
@@ -14,50 +18,42 @@ export default class LoginBox implements UIComponent
 
     constructor(
         activeUsername: string | undefined,
-        onLogin: (username: string, password: string) => void,
+        authService: AuthService,
         onRegister: (username: string, password: string, emailAddress: string) => void
     )
     {
         this.box = new BoxComponent("Log in", new Color(0, 128, 255));
 
+        /* Logged out version. */
         if (activeUsername !== undefined) {
             const templateElement = htmlToElement(loggedInTemplate);
             const usernameSpans = templateElement.querySelectorAll(".username");
             usernameSpans.forEach(x => x.textContent = activeUsername);
             this.box.content.appendChild(templateElement);
+
+            const logoutAction = new DesktopLogoutAction(authService);
+            const btnLogout = templateElement.querySelector("#btn-logout") as HTMLButtonElement;
+            btnLogout.onclick = () => logoutAction.run();
+
             return;
         }
 
+        /* Logged in version */
         const templateElement = htmlToElement(loggedOutTemplate);
         this.box.content.appendChild(templateElement);
-        
-        const spanMsg = templateElement.querySelector(".msg") as HTMLElement;
+
+        const loginAction = new DesktopLoginAction(authService, templateElement);
         const loginForm = templateElement.querySelector("#form-login") as HTMLFormElement;
         loginForm.onsubmit = ev => {
             ev.preventDefault();
-
-            const inputUsername = loginForm.querySelector(".username") as HTMLInputElement;
-            const inputPassword = loginForm.querySelector(".password") as HTMLInputElement;
-            onLogin(inputUsername.value, inputPassword.value);
+            loginAction.run();
         }
 
+        const registerAction = new DesktopRegisterAction(authService, templateElement);
         const registerForm = templateElement.querySelector("#form-register") as HTMLFormElement;
         registerForm.onsubmit = ev => {
             ev.preventDefault();
-
-            const inputUsername = registerForm.querySelector(".username") as HTMLInputElement;
-            const inputEmail = registerForm.querySelector(".email") as HTMLInputElement;
-            const inputPassword = registerForm.querySelector(".password") as HTMLInputElement;
-            const inputConfirmPassword = registerForm.querySelector(".password-confirm") as HTMLInputElement;
-
-            if (inputPassword.value !== inputConfirmPassword.value) {
-                spanMsg.classList.remove("success");
-                spanMsg.classList.add("error");
-                spanMsg.textContent = "Passwords are not equal.";
-                return;
-            }
-
-            onRegister(inputUsername.value, inputPassword.value, inputEmail.value);
+            registerAction.run();
         }
     }
 
