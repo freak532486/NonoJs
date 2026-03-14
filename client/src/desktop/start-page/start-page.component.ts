@@ -13,6 +13,7 @@ import SavefileAccess from "../../common/services/savefile/savefile-access";
 import AuthService from "../../common/services/auth/auth-service";
 import ContinuePlaying from "./continue-playing/continue-playing.component";
 import DesktopCatalogComponent from "./catalog/component";
+import DesktopAboutComponent from "./about/component";
 
 export default class StartPage implements UIComponent
 {
@@ -85,6 +86,11 @@ export default class StartPage implements UIComponent
         const navigationBox = new BoxComponent("Other", Color.GREEN);
         new LinkCollection().create(navigationBox.content);
         navigationBox.create(leftCol);
+
+        /* About box */
+        const aboutBox = new BoxComponent("About", new Color(0, 255, 255));
+        new DesktopAboutComponent().create(aboutBox.content);
+        aboutBox.create(rightCol);
 
         parent.appendChild(this.view);
         return this.view;
