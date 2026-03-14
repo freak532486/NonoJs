@@ -12,6 +12,7 @@ import LinkCollection from "./navigation/navigation.component";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
 import AuthService from "../../common/services/auth/auth-service";
 import ContinuePlaying from "./continue-playing/continue-playing.component";
+import DesktopCatalogComponent from "./catalog/component";
 
 export default class StartPage implements UIComponent
 {
@@ -35,11 +36,13 @@ export default class StartPage implements UIComponent
         const centerCol = this.view.querySelector(".center") as HTMLDivElement;
         const rightCol = this.view.querySelector(".right") as HTMLDivElement;
 
+        /* Login box */
         this.authService.getCurrentUsername().then(activeUsername => {
             const loginBox = new LoginBox(activeUsername, () => {}, () => {});
             loginBox.create(leftCol);
         });
 
+        /* Last played nonogram box */
         const lastPlayedNonogramId = (await this.savefileAccess.fetchLocalSavefile()).lastPlayedNonogramId;
         if (lastPlayedNonogramId !== undefined) {
             const continueBox = new BoxComponent("Continue playing", Color.RED);
@@ -56,6 +59,7 @@ export default class StartPage implements UIComponent
             await continuePlaying.create(continueBox.content);
         }
 
+        /* Nonogram of the day box */
         const nonogramsOfTheDayBox = new BoxComponent("Nonograms of the day", Color.YELLOW);
         nonogramsOfTheDayBox.view.classList.add("notd-box");
         nonogramsOfTheDayBox.create(centerCol);
@@ -68,9 +72,19 @@ export default class StartPage implements UIComponent
         );
         nonogramsOfTheDay.create(nonogramsOfTheDayBox.content);
 
+        /* Catalog box */
+        const catalogBox = new BoxComponent("Catalog", Color.BLUE);
+        await new DesktopCatalogComponent(
+            this.catalogAccess,
+            this.savefileAccess,
+            nonogramId => this.onNonogramSelected(nonogramId)
+        ).create(catalogBox.content);
+        catalogBox.create(leftCol);
+
+        /* Links box */
         const navigationBox = new BoxComponent("Other", Color.GREEN);
         new LinkCollection().create(navigationBox.content);
-        navigationBox.create(centerCol);
+        navigationBox.create(leftCol);
 
         parent.appendChild(this.view);
         return this.view;
