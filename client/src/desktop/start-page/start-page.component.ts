@@ -14,6 +14,7 @@ import AuthService from "../../common/services/auth/auth-service";
 import ContinuePlaying from "./continue-playing/continue-playing.component";
 import DesktopCatalogComponent from "./catalog/component";
 import DesktopAboutComponent from "./about/component";
+import DesktopQuickplayComponent from "./quickplay/component";
 
 export default class StartPage implements UIComponent
 {
@@ -42,6 +43,14 @@ export default class StartPage implements UIComponent
             const loginBox = new LoginBox(activeUsername, () => {}, () => {});
             loginBox.create(leftCol);
         });
+
+        /* Quickplay box */
+        const quickplayBox = new BoxComponent("Quickplay", Color.fromHex("#ff5e00"));
+        new DesktopQuickplayComponent(
+            this.catalogAccess,
+            this.onNonogramSelected)
+        .create(quickplayBox.content);
+        quickplayBox.create(centerCol);
 
         /* Last played nonogram box */
         const lastPlayedNonogramId = (await this.savefileAccess.fetchLocalSavefile()).lastPlayedNonogramId;
@@ -88,7 +97,7 @@ export default class StartPage implements UIComponent
         navigationBox.create(leftCol);
 
         /* About box */
-        const aboutBox = new BoxComponent("About", new Color(0, 255, 255));
+        const aboutBox = new BoxComponent("About", Color.fromHex("#ff00ff"));
         new DesktopAboutComponent().create(aboutBox.content);
         aboutBox.create(rightCol);
 

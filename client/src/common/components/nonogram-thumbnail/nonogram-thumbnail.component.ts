@@ -8,7 +8,8 @@ export interface NonogramThumbnailColors
     weakLine: Color;
     strongLine: Color;
     hint: Color;
-    cell: Color;
+    cellBlack: Color;
+    cellWhite: Color;
 }
 
 const DEFAULT_COLORS: NonogramThumbnailColors = {
@@ -16,7 +17,8 @@ const DEFAULT_COLORS: NonogramThumbnailColors = {
     weakLine: Color.fromHex("#CCCCCC"),
     strongLine: Color.fromHex("#000000"),
     hint: Color.fromHex("#00000080"),
-    cell: Color.fromHex("#000000")
+    cellBlack: Color.fromHex("#000000"),
+    cellWhite: Color.fromHex("#FFFFFF80")
 };
 
 export default class NonogramThumbnail implements UIComponent
@@ -232,15 +234,19 @@ function fillSquares(
     }
 
     /* Cells */
-    ctx.fillStyle = colors.cell.cssString;
     const cellsLeft = (cellSize + 1) * maxNumRowhints + 2;
     const cellsTop = (cellSize + 1) * maxNumColhints + 2;
 
     for (let y = 0; y < nonogram.height; y++) {
         for (let x = 0; x < nonogram.width; x++) {
-            if (nonogram.getCell(x, y) !== CellKnowledge.DEFINITELY_BLACK) {
+            const cell = nonogram.getCell(x, y);
+            if (cell == CellKnowledge.UNKNOWN) {
                 continue;
             }
+
+            ctx.fillStyle = cell == CellKnowledge.DEFINITELY_BLACK ?
+                colors.cellBlack.cssString :
+                colors.cellWhite.cssString;
 
             ctx.fillRect(
                 cellsLeft + (cellSize + 1) * x - 1,
