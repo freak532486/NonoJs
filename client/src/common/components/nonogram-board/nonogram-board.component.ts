@@ -271,8 +271,8 @@ export class NonogramBoardComponent implements UIComponent {
 
         this.#selectionDiv.remove();
         cellDiv.appendChild(this.#selectionDiv);
-        this.#selectionDiv.style.left = borderLeft + "px";
-        this.#selectionDiv.style.top = borderTop + "px";
+        this.#selectionDiv.style.left = p.x == 0 ? "0px" : borderLeft + "px";
+        this.#selectionDiv.style.top = p.y == 0 ? "0px" : borderTop + "px";
         
         /* Highlight hints */
         this.#updateHintDivDisplay();
@@ -310,18 +310,23 @@ export class NonogramBoardComponent implements UIComponent {
         this.#state[x + y * this.#width] = state;
         
         const div = this.#getCellDiv(x, y);
+        div.querySelectorAll(".cell-state").forEach(x => x.remove());
 
         switch (state) {
             case CellKnowledge.UNKNOWN:
-                div.replaceChildren();
+                
                 break;
 
             case CellKnowledge.DEFINITELY_WHITE:
-                div.replaceChildren(this.#cellWhiteTemplate.cloneNode(true));
+                const whiteCell = this.#cellWhiteTemplate.cloneNode(true) as HTMLElement;
+                whiteCell.classList.add("cell-state");
+                div.appendChild(whiteCell);
                 break;
 
             case CellKnowledge.DEFINITELY_BLACK:
-                div.replaceChildren(this.#cellBlackTemplate.cloneNode(true));
+                const blackCell = this.#cellBlackTemplate.cloneNode(true) as HTMLElement;
+                blackCell.classList.add("cell-state");
+                div.appendChild(blackCell);
                 break;
         }
     }
@@ -446,8 +451,8 @@ export class NonogramBoardComponent implements UIComponent {
         
         const div = document.createElement("div");
         div.style.position = "absolute";
-        div.style.left = borderLeft + "px";
-        div.style.top = borderTop + "px";
+        div.style.left = x == 0 ? "0px" : borderLeft + "px";
+        div.style.top = y == 0 ? "0px" : borderTop + "px";
         
         const template = color == CellKnowledge.DEFINITELY_BLACK ?
             this.#cellBlackTemplate :
