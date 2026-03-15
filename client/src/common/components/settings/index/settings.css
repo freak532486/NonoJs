@@ -1,0 +1,12 @@
+#settings {
+    overflow: hidden visible;
+    padding: 10px;
+    min-height: 100%;
+    box-sizing: border-box;
+}
+
+#settings .settings-entry {
+    padding: 10px;
+    padding-bottom: 30px;
+    border-bottom: 2px groove white;
+}

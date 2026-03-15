@@ -1,0 +1,55 @@
+.logged-out-root {
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    gap: 20px;
+    padding: 5px;
+
+    min-width: 200px;
+}
+
+.logged-out-root .input-group
+{
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-auto-rows: 20px;
+    align-items: center;
+    gap: 5px;
+}
+
+.logged-out-root .input-group span {
+    justify-self: left;
+    white-space: nowrap;
+    max-width: 100px;
+    overflow: hidden;
+}
+
+.logged-out-root .input-group input {
+    justify-self: right;
+}
+
+.logged-out-root fieldset {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: stretch;
+    padding: 10px;
+}
+
+.logged-out-root .submit {
+    align-self: end;
+    min-width: 100px;
+    margin-top: 5px;
+}
+
+.logged-out-root .msg {
+    align-self: end;
+}
+
+.logged-out-root .msg.success {
+    color: green;
+}
+
+.logged-out-root .msg.error {
+    color: red;
+}

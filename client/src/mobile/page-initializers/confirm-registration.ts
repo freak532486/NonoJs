@@ -1,0 +1,62 @@
+import * as apiClient from "../../common/services/api/api-client"
+import UIComponent from "../../common/types/ui-component";
+import RegistrationConfirmationComponent from "../../common/services/auth/components/registration-confirmation/registration-confirmation.component";
+import { navigateTo } from "../../common/services/navigate-to";
+import ActiveComponentManager from "../active-component-manager";
+
+export default class ConfirmRegistrationPageInitializer 
+{
+
+    constructor(
+        private readonly activeComponentManager: ActiveComponentManager
+    ) {}
+
+    async run(token: string) {
+        if (!token) {
+            navigateTo("/");
+            return;
+        }
+
+        const component = await this.#buildConfirmationPage(token);
+        this.activeComponentManager.setActiveComponent(component);
+    }
+
+    async #buildConfirmationPage(token: string): Promise<UIComponent>
+    {
+        /* Create display component */
+        const component = new RegistrationConfirmationComponent();
+
+        /* Send confirmation request to server */
+        const request = new Request("/api/auth/confirm-registration?token=" + token, {
+            method: "GET",
+        });
+        const response = await apiClient.performRequest(request);
+
+        switch (response.status) {
+            case "ok":
+                component.setTitle("Success");
+                component.setMessage("Confirmation successful. You can now log in with your new username.");
+                break;
+
+            case "bad_response":
+                component.setTitle("Error");
+                if (response.data.status == 404) {
+                    component.setMessage("Unknown registration token.");
+                } else if (response.data.status == 409) {
+                    component.setMessage("Someone has registered your username while your confirmation was pending. Please choose a different username.");
+                } else {
+                    component.setMessage("An unknown error occured.");
+                }
+                break;
+
+            case "unauthorized":
+            case "error":
+                component.setTitle("Error");
+                component.setMessage("An error occured");
+                break;
+        }
+
+        return component;
+    }
+    
+}
