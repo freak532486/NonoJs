@@ -2,21 +2,21 @@ import { Component, SaveFile, SaveFileEntry, SaveState } from "nonojs-common";
 import { ACTIVE_VERSION_KEY } from "./savefile-migrator";
 import tokens from "../../tokens";
 import SavefileAccess from "./savefile-access";
+import AuthService from "../auth/auth-service";
 
 export enum MergeStrategy {
     LOCAL_WINS,
     SERVER_WINS
 };
 
-export default class SavefileMerger extends Component
+export default class SavefileMerger
 {
 
     constructor(
+        private readonly authService: AuthService,
         private readonly savefileAccess: SavefileAccess
     )
-    {
-        super();
-    }
+    {}
 
     /**
      * Merges the given local savefile and server savefile. Savefiles not belonging to the given username are filtered.
@@ -69,9 +69,7 @@ export default class SavefileMerger extends Component
      */
     async mergeLocalSavefileWithAccount(): Promise<"ok" | "not_logged_in" | "error">
     {
-        const authService = this.ctx.getComponent(tokens.authService);
-
-        const username = authService.getCurrentUsername();
+        const username = this.authService.getCurrentUsername();
         const freeSavefile = this.savefileAccess.fetchLocalSavefileForUser(undefined);
         const accountSavefile = await this.savefileAccess.fetchLocalSavefile();
 

@@ -14,7 +14,7 @@ export default class SavefileManager
         private readonly savefileAccess: SavefileAccess
     )
     {
-        this.merger = new SavefileMerger(savefileAccess);
+        this.merger = new SavefileMerger(authService, savefileAccess);
     }
 
     /**

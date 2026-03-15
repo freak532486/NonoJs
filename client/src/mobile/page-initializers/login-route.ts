@@ -3,6 +3,7 @@ import LoginComponent from "../../common/services/auth/components/login/login.co
 import { Component } from "nonojs-common";
 import tokens from "../../common/tokens";
 import { navigateTo } from "../../common/services/navigate-to";
+import { LOGIN_TITLE } from "../../common/titles";
 
 export default class LoginPageInitializer extends Component
 {
@@ -61,7 +62,7 @@ export default class LoginPageInitializer extends Component
         );
 
         activeComponentManager.setActiveComponent(loginPage);
-        document.title = "Log in to NonoJs";
+        document.title = LOGIN_TITLE;
     }
     
 }

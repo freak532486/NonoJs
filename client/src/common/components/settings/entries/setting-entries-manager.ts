@@ -1,5 +1,5 @@
-import AuthService from "../../../common/services/auth/auth-service";
-import SavefileAccess from "../../../common/services/savefile/savefile-access";
+import AuthService from "../../../services/auth/auth-service";
+import SavefileAccess from "../../../services/savefile/savefile-access";
 import Settings from "../index/settings.component";
 import DeleteAccountEntry from "./delete-account-entry/delete-account-entry.component";
 import ExportImportEntry from "./export-import-entry/export-import-entry.component";
@@ -25,7 +25,7 @@ export default class SettingEntriesManager
         const localSavefile = this.savefileAccess.fetchLocalSavefileForUser(undefined);
 
         if (username && localSavefile) {
-            const mergeEntry = new SavefileMergeEntry(this.savefileAccess, username);
+            const mergeEntry = new SavefileMergeEntry(this.authService, this.savefileAccess, username);
             this.settings.addEntry(mergeEntry.view);
         }
 
