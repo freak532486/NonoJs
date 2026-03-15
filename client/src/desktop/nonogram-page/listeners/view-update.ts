@@ -1,6 +1,7 @@
 import { BoardComponentFullState, NonogramBoardComponent } from "../../../common/components/nonogram-board/nonogram-board.component";
 import { getTimeString } from "../../../common/services/playfield/timer-formatting";
-import { NonogramComponentState, NonogramComponentStateListener, StateChangeType } from "../state"
+import { CellKnowledge } from "../../../common/types/nonogram-types";
+import { NonogramColor, NonogramComponentState, NonogramComponentStateListener, StateChangeType } from "../state"
 
 export default class NonogramViewUpdater implements NonogramComponentStateListener {
 
@@ -25,6 +26,12 @@ export default class NonogramViewUpdater implements NonogramComponentStateListen
 
         if (type == StateChangeType.CURSOR) {
             this.board.selection = this.state.cursorPos;
+        }
+
+        if (type == StateChangeType.CHOSEN_COLOR) {
+            this.board.lineColorPreview = this.state.chosenColor == NonogramColor.BLACK ?
+                CellKnowledge.DEFINITELY_BLACK :
+                CellKnowledge.DEFINITELY_WHITE;
         }
 
         if (type == StateChangeType.BOARD_STATE) {

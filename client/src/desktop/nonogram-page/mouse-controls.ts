@@ -1,6 +1,5 @@
 import { NonogramBoardComponent } from "../../common/components/nonogram-board/nonogram-board.component";
 import { CellKnowledge, NonogramState } from "../../common/types/nonogram-types";
-import { Point } from "../../common/types/point";
 import { NonogramColor, NonogramComponentState } from "./state";
 
 export default class NonogramMouseControlsHandler {
@@ -13,6 +12,7 @@ export default class NonogramMouseControlsHandler {
         board.view.onmousedown = ev => this.onMouseDown(ev);
         board.view.onmousemove = ev => this.onMouseMove(ev);
         board.view.onmouseup = ev => this.onMouseUp(ev);
+        board.view.onwheel = ev => this.onMouseWheel(ev);
     }
 
     private onMouseDown(ev: MouseEvent)
@@ -89,6 +89,13 @@ export default class NonogramMouseControlsHandler {
         }
 
         this.state.cursorPos = p;
+    }
+
+    private onMouseWheel(ev: MouseEvent) {
+        ev.preventDefault();
+        this.state.chosenColor = this.state.chosenColor == NonogramColor.BLACK ?
+            NonogramColor.WHITE :
+            NonogramColor.BLACK;
     }
 
 }

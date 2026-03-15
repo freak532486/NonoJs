@@ -64,6 +64,8 @@ export class NonogramBoardComponent implements UIComponent {
     #state: Array<CellKnowledge>;
     #errorLines: Array<LineId> = [];
 
+    private previewColor: CellKnowledge = CellKnowledge.UNKNOWN;
+
     #clickListener: (ev: MouseEvent, p: Point) => void = () => {};
 
     constructor (
@@ -236,10 +238,18 @@ export class NonogramBoardComponent implements UIComponent {
     }
 
     set selection(p: Point | undefined) {
+        /* Nothing to do if nothing changes */
+        if (p?.x == this.#selection?.x && p?.y == this.#selection?.y) {
+            return;
+        }
+
+        /* Remove all cell color previews */
+        this.view.querySelectorAll(".cell-color-preview").forEach(x => x.remove());
+
         if (p == undefined) {
             this.#selection = undefined;
             this.#selectionDiv.style.visibility = "hidden";
-            this.#updateHintDivDisplay();
+            this.#updateHintDivDisplay(false);
             return;
         }
 
@@ -248,14 +258,21 @@ export class NonogramBoardComponent implements UIComponent {
         p.y = Math.max(0, Math.min(this.#height - 1, p.y));
         this.#selection = p;
 
+        if (this.previewColor !== CellKnowledge.UNKNOWN) {
+            const previewDiv = this.previewCellColor(p.x, p.y, this.previewColor);
+            previewDiv.classList.add("cell-color-preview");
+        }
+
         const cellDiv = this.#getCellDiv(p.x, p.y);
 
         const style = getComputedStyle(cellDiv);
         const borderLeft = parseFloat(style.borderLeftWidth) || 0;
         const borderTop = parseFloat(style.borderTopWidth) || 0;
 
-        this.#selectionDiv.style.left = (cellDiv.offsetLeft + borderLeft) + "px";
-        this.#selectionDiv.style.top = (cellDiv.offsetTop + borderTop) + "px";
+        this.#selectionDiv.remove();
+        cellDiv.appendChild(this.#selectionDiv);
+        this.#selectionDiv.style.left = borderLeft + "px";
+        this.#selectionDiv.style.top = borderTop + "px";
         
         /* Highlight hints */
         this.#updateHintDivDisplay();
@@ -407,31 +424,39 @@ export class NonogramBoardComponent implements UIComponent {
             return;
         }
 
-        const template = (lineType == CellKnowledge.DEFINITELY_BLACK) ? this.#cellBlackTemplate : 
-            this.#cellWhiteTemplate;
-
         /* Remove previous preview */
         this.clearLinePreview();
 
         for (const p of line) {
-            const cellDiv = this.#getCellDiv(p.x, p.y);
-
-            /* Compute border width */
-            const style = getComputedStyle(cellDiv);
-            const borderLeft = parseFloat(style.borderLeftWidth) || 0;
-            const borderTop = parseFloat(style.borderTopWidth) || 0;
-
-            const div = document.createElement("div");
-            div.classList.add("line-preview");
-            div.style.position = "absolute";
-            div.style.left = (cellDiv.offsetLeft + borderLeft) + "px";
-            div.style.top = (cellDiv.offsetTop + borderTop) + "px";
-
-            const child = template.cloneNode(true) as HTMLElement;
-            child.style.opacity = "0.5";
-            div.replaceChildren(child);
-            this.view.appendChild(div);
+            const previewDiv = this.previewCellColor(p.x, p.y, lineType);
+            previewDiv.classList.add("line-preview");
         }
+    }
+
+    previewCellColor(
+        x: number, y: number,
+        color: CellKnowledge.DEFINITELY_BLACK | CellKnowledge.DEFINITELY_WHITE
+    ): HTMLElement
+    {
+        const cellDiv = this.#getCellDiv(x, y);
+        const cellDivStyle = getComputedStyle(cellDiv);
+        const borderLeft = parseFloat(cellDivStyle.borderLeftWidth) || 0;
+        const borderTop = parseFloat(cellDivStyle.borderTopWidth) || 0;
+
+        
+        const div = document.createElement("div");
+        div.style.position = "absolute";
+        div.style.left = borderLeft + "px";
+        div.style.top = borderTop + "px";
+        
+        const template = color == CellKnowledge.DEFINITELY_BLACK ?
+            this.#cellBlackTemplate :
+            this.#cellWhiteTemplate;
+        const child = template.cloneNode(true) as HTMLElement;
+        div.replaceChildren(child);
+        cellDiv.appendChild(div);
+
+        return div;
     }
 
     /**
@@ -472,7 +497,7 @@ export class NonogramBoardComponent implements UIComponent {
             this.#errorLines.push(lineId);
         }
 
-        this.#updateHintDivDisplay();
+        this.#updateHintDivDisplay(false);
     }
 
     clearLineErrors() {
@@ -488,9 +513,9 @@ export class NonogramBoardComponent implements UIComponent {
     /**
      * Marks error lines red, the selected line blue, and all other lines white. Crosses out finished hints.
      */
-    #updateHintDivDisplay() {
+    #updateHintDivDisplay(updateCrossedOutHints: boolean = true) {
         /* Rows */
-        const errRows = /** @type {Set<number>} */ (new Set());
+        const errRows: Set<number> = new Set();
         this.#errorLines.filter(x => x.lineType == LineType.ROW).forEach(x => errRows.add(x.index));
 
         for (let y = 0; y < this.#height; y++) {
@@ -506,11 +531,14 @@ export class NonogramBoardComponent implements UIComponent {
             }
 
             /* Cross out finished hints */
-            for (let i = 0; i < div.children.length; i++) {
-                const child = /** @type {HTMLElement} */ (div.children[i]);
-                child.classList.remove("crossed-out");
+            if (updateCrossedOutHints) {
+                for (let i = 0; i < div.children.length; i++) {
+                    const child = div.children[i] as HTMLElement;
+                    child.classList.remove("crossed-out");
+                }
 
-                if (this.#finishedRowHints[y].some(k => k == i)) {
+                for (const hintIdx of this.#finishedRowHints[y]) {
+                    const child = div.children[hintIdx] as HTMLElement;
                     child.classList.add("crossed-out");
                 }
             }
@@ -533,11 +561,14 @@ export class NonogramBoardComponent implements UIComponent {
             }
 
             /* Cross out finished hints */
-            for (let i = 0; i < div.children.length; i++) {
-                const child = /** @type {HTMLElement} */ (div.children[i]);
-                child.classList.remove("crossed-out");
+            if (updateCrossedOutHints) {
+                for (let i = 0; i < div.children.length; i++) {
+                    const child = div.children[i] as HTMLElement;
+                    child.classList.remove("crossed-out");
+                }
 
-                if (this.#finishedColHints[x].some(k => k == i)) {
+                for (const hintIdx of this.#finishedColHints[x]) {
+                    const child = div.children[hintIdx] as HTMLElement;
                     child.classList.add("crossed-out");
                 }
             }
@@ -606,6 +637,20 @@ export class NonogramBoardComponent implements UIComponent {
 
     get errorLines() {
         return this.#errorLines;
+    }
+
+    set lineColorPreview(color: CellKnowledge) {
+        if (color == this.previewColor) {
+            return;
+        }
+
+        this.previewColor = color;
+        this.view.querySelectorAll(".cell-color-preview").forEach(x => x.remove());
+        if (this.selection !== undefined && color !== CellKnowledge.UNKNOWN) {
+            const previewDiv = this.previewCellColor(this.selection.x, this.selection.y, color);
+            previewDiv.classList.add("cell-color-preview");
+        }
+
     }
 
 };
