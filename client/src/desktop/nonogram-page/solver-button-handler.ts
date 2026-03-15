@@ -34,7 +34,7 @@ export default class SolverButtonHandler
     solve() {
         const deduction = deduceAll(this.state.activeState);
         if (deduction.status == DeductionStatus.WAS_SOLVED) {
-            this.state.solvedBySolver = true;
+            this.state.isSolved = true;
         }
         
         this.state.putNextState(deduction.newState);

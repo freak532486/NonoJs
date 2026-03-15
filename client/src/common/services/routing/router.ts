@@ -1,4 +1,3 @@
-import tokens from "../../tokens";
 import NonojsClient from "../../types/nonojs-client";
 import Route from "./route";
 import CatalogRoute from "./routes/catalog-route";

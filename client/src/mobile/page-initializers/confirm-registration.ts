@@ -1,22 +1,24 @@
 import * as apiClient from "../../common/services/api/api-client"
 import UIComponent from "../../common/types/ui-component";
 import RegistrationConfirmationComponent from "../../common/services/auth/components/registration-confirmation/registration-confirmation.component";
-import { Component } from "nonojs-common";
-import tokens from "../../common/tokens";
 import { navigateTo } from "../../common/services/navigate-to";
+import ActiveComponentManager from "../active-component-manager";
 
-export default class ConfirmRegistrationPageInitializer extends Component
+export default class ConfirmRegistrationPageInitializer 
 {
 
+    constructor(
+        private readonly activeComponentManager: ActiveComponentManager
+    ) {}
+
     async run(token: string) {
-        const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
         if (!token) {
             navigateTo("/");
             return;
         }
 
         const component = await this.#buildConfirmationPage(token);
-        activeComponentManager.setActiveComponent(component);
+        this.activeComponentManager.setActiveComponent(component);
     }
 
     async #buildConfirmationPage(token: string): Promise<UIComponent>

@@ -1,16 +1,17 @@
 import * as auth from "../../common/services/auth"
 import LoginComponent from "../../common/services/auth/components/login/login.component";
-import { Component } from "nonojs-common";
-import tokens from "../../common/tokens";
 import { navigateTo } from "../../common/services/navigate-to";
 import { LOGIN_TITLE } from "../../common/titles";
+import ActiveComponentManager from "../active-component-manager";
 
-export default class LoginPageInitializer extends Component
+export default class LoginPageInitializer 
 {
 
-    run() {
-        const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
+    constructor(
+        private readonly activeComponentManager: ActiveComponentManager
+    ) {}
 
+    run() {
         /* Create login page */
         let loginPage = new LoginComponent(
             async (username, password) => {
@@ -61,7 +62,7 @@ export default class LoginPageInitializer extends Component
             }
         );
 
-        activeComponentManager.setActiveComponent(loginPage);
+        this.activeComponentManager.setActiveComponent(loginPage);
         document.title = LOGIN_TITLE;
     }
     

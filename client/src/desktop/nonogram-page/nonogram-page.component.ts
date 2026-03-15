@@ -20,6 +20,7 @@ import SaveListener from "./listeners/save-listener";
 import { getSavestateForNonogram } from "../../common/services/savefile/savefile-utils";
 import { CellKnowledge } from "../../common/types/nonogram-types";
 import { PLAYFIELD_TITLE } from "../../common/titles";
+import AuthService from "../../common/services/auth/auth-service";
 
 export default class NonogramPage implements UIComponent
 {
@@ -29,7 +30,8 @@ export default class NonogramPage implements UIComponent
     constructor(
         private readonly nonogramId: string,
         private readonly catalogAccess: CatalogAccess,
-        private readonly savefileAccess: SavefileAccess
+        private readonly savefileAccess: SavefileAccess,
+        private readonly authService: AuthService
     )
     {
         this.view = htmlToElement(template);
@@ -130,7 +132,7 @@ export default class NonogramPage implements UIComponent
         const solvedListener = new SolvedListener(state);
         state.listeners.push(solvedListener);
 
-        const saveListener = new SaveListener(state, this.savefileAccess);
+        const saveListener = new SaveListener(state, this.authService, this.savefileAccess);
         state.listeners.push(saveListener);
 
         /* Create keyboard listener */

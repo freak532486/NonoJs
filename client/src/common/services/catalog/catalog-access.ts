@@ -1,11 +1,10 @@
-import { Component, Context } from "nonojs-common";
 import { SerializedNonogram } from "../../types/storage-types";
 
 class JoinedFiletype {
     nonograms: Array<SerializedNonogram> = [];
 }
 
-export class CatalogAccess extends Component {
+export class CatalogAccess {
     #cache?: Map<string, SerializedNonogram>;
 
     async getAllNonograms() {

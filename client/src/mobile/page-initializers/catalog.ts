@@ -1,27 +1,23 @@
 import { Catalog } from "../catalog/catalog.component";
-import { Component } from "nonojs-common";
-import tokens from "../../common/tokens";
 import { navigateTo } from "../../common/services/navigate-to";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
 import { CATALOG_TITLE } from "../../common/titles";
+import ActiveComponentManager from "../active-component-manager";
+import { CatalogAccess } from "../../common/services/catalog/catalog-access";
 
-export default class CatalogPageInitializer extends Component
+export default class CatalogPageInitializer
 {
 
     constructor(
-        private readonly savefileAccess: SavefileAccess
-    )
-    {
-        super();
-    }
+        private readonly savefileAccess: SavefileAccess,
+        private readonly catalogAccess: CatalogAccess,
+        private readonly activeComponentManager: ActiveComponentManager
+    ) {}
 
     run() {
-        const catalogAccess = this.ctx.getComponent(tokens.catalogAccess);
-        const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
-
-        const catalog = new Catalog(catalogAccess, this.savefileAccess);
+        const catalog = new Catalog(this.catalogAccess, this.savefileAccess);
         catalog.onNonogramSelected = nonogramId => navigateTo("/n/" + nonogramId);
-        activeComponentManager.setActiveComponent(catalog);
+        this.activeComponentManager.setActiveComponent(catalog);
         document.title = CATALOG_TITLE;
     }
     

@@ -1,11 +1,10 @@
-import { Component, Context } from "nonojs-common";
 import deleteUser from "./impl/delete-user";
 import getCurrentUsername from "./impl/get-current-username";
 import login from "./impl/login";
 import logout from "./impl/logout";
 import registerUser from "./impl/register-user";
 
-export default class AuthService extends Component
+export default class AuthService
 {
 
     #currentUsername: string | undefined;

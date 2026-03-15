@@ -1,34 +1,30 @@
-import Route from "../../common/services/routing/route";
 import { StartPage } from "../start-page/component/start-page.component";
-import { Component } from "nonojs-common";
-import tokens from "../../common/tokens";
 import { navigateTo } from "../../common/services/navigate-to";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
 import { DEFAULT_TITLE } from "../../common/titles";
+import AuthService from "../../common/services/auth/auth-service";
+import { CatalogAccess } from "../../common/services/catalog/catalog-access";
+import ActiveComponentManager from "../active-component-manager";
 
-export default class StartpageRoute extends Component
+export default class StartpageRoute
 {
 
     constructor(
-        private readonly savefileAccess: SavefileAccess
-    )
-    {
-        super();
-    }
+        private readonly savefileAccess: SavefileAccess,
+        private readonly authService: AuthService,
+        private readonly catalogAccess: CatalogAccess,
+        private readonly activeComponentManager: ActiveComponentManager
+    ) {}
 
     async run() {
-        const catalogAccess = this.ctx.getComponent(tokens.catalogAccess);
-        const authService = this.ctx.getComponent(tokens.authService);
-        const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
-
-        let startPage = new StartPage(catalogAccess, this.savefileAccess);
+        let startPage = new StartPage(this.catalogAccess, this.savefileAccess);
         startPage.onNonogramSelected = nonogramId => navigateTo("/n/" + nonogramId);
         startPage.onLogin = () => navigateTo("/login");
         startPage.onOpenCatalog = () => navigateTo("/catalog");
         startPage.onOpenSettings = () => navigateTo("/settings");
-        startPage.setLoggedInUsername(await authService.getCurrentUsername());
+        startPage.setLoggedInUsername(await this.authService.getCurrentUsername());
 
-        activeComponentManager.setActiveComponent(startPage);
+        this.activeComponentManager.setActiveComponent(startPage);
         document.title = DEFAULT_TITLE;
     }
     

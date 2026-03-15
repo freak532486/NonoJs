@@ -1,3 +1,4 @@
+import AuthService from "../../../common/services/auth/auth-service";
 import SavefileAccess from "../../../common/services/savefile/savefile-access";
 import SavefileSyncService from "../../../common/services/savefile/savefile-sync-service";
 import { getSavestateForNonogram } from "../../../common/services/savefile/savefile-utils";
@@ -10,10 +11,11 @@ export default class SaveListener implements NonogramComponentStateListener
 
     constructor (
         private readonly state: NonogramComponentState,
+        private readonly authService: AuthService,
         private readonly savefileAccess: SavefileAccess
     )
     {
-        this.syncService = new SavefileSyncService(savefileAccess);
+        this.syncService = new SavefileSyncService(authService, savefileAccess);
     }
 
     async onChange(type: StateChangeType): Promise<void> {

@@ -21,6 +21,10 @@ export default class NonogramController
     toggleLine()
     {
         const pos = this.board.selection;
+        if (pos == undefined) {
+            this.lineHandler.clearLine();
+            return;
+        }
 
         if (this.lineHandler.lineStarted()) {
             const line = this.lineHandler.getCurrentLine();

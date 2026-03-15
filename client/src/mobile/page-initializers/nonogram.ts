@@ -1,37 +1,39 @@
 import { getSavestateForNonogram, putSavestate } from "../../common/services/savefile/savefile-utils";
 import { PlayfieldComponent } from "../playfield/playfield.component";
 import PlayfieldMenuButtonManager from "../menu/button-managers/playfield-menu-button-manager";
-import { Component } from "nonojs-common";
-import tokens from "../../common/tokens";
 import { deduceAll } from "../../common/services/solver/solver";
 import { DeductionStatus, NonogramState } from "../../common/types/nonogram-types";
 import { navigateTo } from "../../common/services/navigate-to";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
 import SavefileSyncService from "../../common/services/savefile/savefile-sync-service";
 import { PLAYFIELD_TITLE } from "../../common/titles";
+import { CatalogAccess } from "../../common/services/catalog/catalog-access";
+import AuthService from "../../common/services/auth/auth-service";
+import NotFoundPageInitializer from "./not-found-route";
+import ActiveComponentManager from "../active-component-manager";
+import { Menu } from "../menu/menu.component";
 
-export default class NonogramPageInitializer extends Component
+export default class NonogramPageInitializer 
 {
 
     private readonly savefileSyncService: SavefileSyncService;
 
     constructor(
+        private readonly activeComponentManager: ActiveComponentManager,
         private readonly savefileAccess: SavefileAccess,
+        private readonly catalogAccess: CatalogAccess,
+        private readonly authService: AuthService,
+        private readonly menu: Menu
     )
     {
-        super();
-        this.savefileSyncService = new SavefileSyncService(savefileAccess);
+        this.savefileSyncService = new SavefileSyncService(authService, savefileAccess);
     }
 
     async run(nonogramId: string): Promise<void> {
-        const catalogAccess = this.ctx.getComponent(tokens.catalogAccess);
-        const authService = this.ctx.getComponent(tokens.authService);
-        const notFoundRoute = this.ctx.getComponent(tokens.notFoundRoute);
-        const menu = this.ctx.getComponent(tokens.menu);
-        const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
+        const notFoundRoute = new NotFoundPageInitializer(this.activeComponentManager);
     
         /* Load requested nonogram */
-        const nonogram = (await catalogAccess.getAllNonograms()).find(x => x.id == nonogramId);
+        const nonogram = (await this.catalogAccess.getAllNonograms()).find(x => x.id == nonogramId);
         if (!nonogram) {
             notFoundRoute.run();
             return;
@@ -60,7 +62,7 @@ export default class NonogramPageInitializer extends Component
     
         /* Create playfield menu buttons */
         const playfieldButtonManager = new PlayfieldMenuButtonManager(
-            menu,
+            this.menu,
             () => playfield.solverService.hint(),
             () => playfield.solverService.solveNext(),
             () => playfield.solverService.solveFull(),
@@ -91,7 +93,7 @@ export default class NonogramPageInitializer extends Component
                 await this.savefileAccess.writeLocalSavefile(saveFile);
         
                 /* Queue sync */
-                const activeUsername = await authService.getCurrentUsername();
+                const activeUsername = await this.authService.getCurrentUsername();
                 if (activeUsername) {
                     this.savefileSyncService.queueSync();
                 }
@@ -113,7 +115,7 @@ export default class NonogramPageInitializer extends Component
     
         /* Finish */
         document.title = PLAYFIELD_TITLE(nonogram.colHints.length, nonogram.rowHints.length);
-        activeComponentManager.setActiveComponent(playfield);
+        this.activeComponentManager.setActiveComponent(playfield);
     }
 
     /**

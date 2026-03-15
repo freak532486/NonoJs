@@ -1,5 +1,4 @@
-import { Component } from "nonojs-common";
-import tokens from "../../tokens";
+import AuthService from "../auth/auth-service";
 import SavefileAccess from "./savefile-access";
 import SavefileMerger from "./savefile-merger";
 
@@ -13,10 +12,11 @@ export default class SavefileSyncService
     private merger: SavefileMerger;
 
     constructor(
+        private readonly authService: AuthService,
         private readonly savefileAccess: SavefileAccess
     )
     {
-        this.merger = new SavefileMerger(savefileAccess);
+        this.merger = new SavefileMerger(authService, savefileAccess);
     }
 
     /**

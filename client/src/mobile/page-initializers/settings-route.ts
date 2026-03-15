@@ -1,32 +1,31 @@
-import * as auth from "../../common/services/auth"
 import Settings from "../../common/components/settings/index/settings.component"
-import { Component } from "nonojs-common";
-import tokens from "../../common/tokens";
-import { navigateTo } from "../../common/services/navigate-to";
+import AuthService from "../../common/services/auth/auth-service";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
+import SavefileMerger from "../../common/services/savefile/savefile-merger";
 import { SETTINGS_TITLE } from "../../common/titles";
+import ActiveComponentManager from "../active-component-manager";
 
-export default class SettingsRoute extends Component
+export default class SettingsRoute 
 {
 
+    private savefileMerger: SavefileMerger;
+
     constructor(
-        private readonly savefileAccess: SavefileAccess
+        private readonly activeComponentManager: ActiveComponentManager,
+        private readonly savefileAccess: SavefileAccess,
+        private readonly authService: AuthService
     )
     {
-        super();
+        this.savefileMerger = new SavefileMerger(authService, savefileAccess);
     }
 
     async run() {
-        const authService = this.ctx.getComponent(tokens.authService);
-        const savefileMerger = this.ctx.getComponent(tokens.savefileMerger);
-        const activeComponentManager = this.ctx.getComponent(tokens.activeComponentManager);
-
         let settings = new Settings(
             this.savefileAccess,
-            authService
+            this.authService
         );
         
-        activeComponentManager.setActiveComponent(settings);
+        this.activeComponentManager.setActiveComponent(settings);
         document.title = SETTINGS_TITLE;
     }
     

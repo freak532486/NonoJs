@@ -53,7 +53,8 @@ export default class DesktopClient implements NonojsClient
         const nonogramPage = new NonogramPage(
             nonogramId,
             this.catalogAccess,
-            this.savefileAccess
+            this.savefileAccess,
+            this.authService
         );
         await nonogramPage.create(this.root.mainContainer);
     }

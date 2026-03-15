@@ -1,5 +1,3 @@
-import { Context } from "nonojs-common";
-
 export default interface UIComponent
 {
 

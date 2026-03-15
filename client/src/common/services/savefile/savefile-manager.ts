@@ -1,6 +1,4 @@
 import SavefileMerger, { MergeStrategy } from "./savefile-merger";
-import { Component } from "nonojs-common";
-import tokens from "../../tokens";
 import SavefileAccess from "./savefile-access";
 import AuthService from "../auth/auth-service";
 

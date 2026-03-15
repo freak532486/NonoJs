@@ -1,17 +1,14 @@
-import { Component, Context } from "nonojs-common";
 import UIComponent from "../common/types/ui-component";
 import MobileRootComponent from "./root-component/mobile-root";
 
-export default class ActiveComponentManager extends Component
+export default class ActiveComponentManager 
 {
     #activeComponent?: UIComponent;
     #activeView?: HTMLElement;
 
     constructor(
         private readonly rootComponent: MobileRootComponent
-    ) {
-        super();
-    }
+    ) {}
 
     /**
      * Replaces the current active component with the given component.

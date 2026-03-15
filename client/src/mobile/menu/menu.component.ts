@@ -2,18 +2,21 @@ import { htmlToElement } from "../../common/services/html-to-element";
 import menu from "./menu.html"
 import "./menu.css"
 import UIComponent from "../../common/types/ui-component.js";
-import { Component } from "nonojs-common";
 
-export class Menu extends Component implements UIComponent {
+export class Menu implements UIComponent {
     
-    #view?: HTMLElement;
+    public readonly view: HTMLElement;
+
+    constructor()
+    {
+        this.view = htmlToElement(menu);
+    }
     
     /**
      * Initializes and attaches this component.
      */
     create(parent: HTMLElement): HTMLElement {
-        this.#view = htmlToElement(menu);
-        parent.appendChild(this.#view);
+        parent.appendChild(this.view);
 
         /* Hide by default */
         this.view.style.visibility = "hidden";
@@ -26,19 +29,11 @@ export class Menu extends Component implements UIComponent {
             }
         }
 
-        return this.#view;
+        return this.view;
     }
 
     cleanup(): void {
         // Nothing to do
-    }
-
-    get view() {
-        if (!this.#view) {
-            throw new Error("init() was not called");
-        }
-
-        return this.#view;
     }
 
     /** Shows or hides the menu */

@@ -10,6 +10,10 @@
     gap: 5px;
 }
 
+#start-page .box-content {
+    padding: 5px;
+}
+
 #start-page ul {
     margin: 0px;
 }

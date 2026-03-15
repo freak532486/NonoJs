@@ -10,7 +10,6 @@ import { NonogramPreview } from "../../../common/components/nonogram-preview/non
 import { CellKnowledge, NonogramState } from "../../../common/types/nonogram-types";
 import SavefileAccess from "../../../common/services/savefile/savefile-access"
 import { getSavestateForNonogram } from "../../../common/services/savefile/savefile-utils"
-import { Context } from "nonojs-common"
 import UIComponent from "../../../common/types/ui-component"
 
 export class StartPage implements UIComponent {

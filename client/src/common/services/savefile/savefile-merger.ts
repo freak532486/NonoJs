@@ -1,6 +1,5 @@
-import { Component, SaveFile, SaveFileEntry, SaveState } from "nonojs-common";
+import { SaveFile, SaveFileEntry, SaveState } from "nonojs-common";
 import { ACTIVE_VERSION_KEY } from "./savefile-migrator";
-import tokens from "../../tokens";
 import SavefileAccess from "./savefile-access";
 import AuthService from "../auth/auth-service";
 
