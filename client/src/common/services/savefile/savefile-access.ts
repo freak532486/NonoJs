@@ -1,0 +1,107 @@
+import { SaveFile } from "nonojs-common";
+import { ACTIVE_VERSION_KEY } from "./savefile-migrator";
+import * as api from "../api/api-client"
+import AuthService from "../auth/auth-service";
+
+const STORAGE_KEY = "storage";
+
+export default class SavefileAccess
+{
+
+    constructor(
+        private readonly authService: AuthService
+    ) {}
+
+     /**
+     * Fetches the savefile from local browser storage.
+     */
+    async fetchLocalSavefile(): Promise<SaveFile> {
+        const username = await this.authService.getCurrentUsername();
+        return this.fetchLocalSavefileForUser(username) || createEmptySavefile(username);
+    }
+
+    /**
+     * Returns the locally stored save file for the given user. If the username is undefined, this represents the
+     * savefile that was made while not logged in. 
+     */
+    fetchLocalSavefileForUser(username: string | undefined): SaveFile | undefined
+    {
+        const key = STORAGE_KEY + (username ? "_" + username : "");
+        const serialized = window.localStorage.getItem(key);
+        if (!serialized) {
+            return undefined;
+        }
+
+        return JSON.parse(serialized);
+    }
+
+    /**
+     * Removes the local savefile for the given user.
+     */
+    deleteLocalSavefileForUser(username: string | undefined)
+    {
+        const key = STORAGE_KEY + (username ? "_" + username : "");
+        window.localStorage.removeItem(key);
+    }
+
+    /**
+     * Fetches the savefile for the currently logged-in user from the server.
+     */
+    async fetchServerSavefile(): Promise<SaveFile>
+    {
+        const username = await this.authService.getCurrentUsername();
+        const request = new Request("/api/savefile", { "method": "GET" });
+        const response = await api.performRequestWithSessionToken(request);
+        if (response.status !== "ok") {
+            return createEmptySavefile(username);
+        }
+
+        return await response.data.json() as SaveFile;
+    }
+
+    /**
+     * Writes the given savefile to local browser storage.
+     */
+    async writeLocalSavefile(savefile: SaveFile)
+    {
+        const activeUsername = await this.authService.getCurrentUsername();
+        const key = STORAGE_KEY + (activeUsername ? "_" + activeUsername : "");
+        const serialized = JSON.stringify(savefile);
+        window.localStorage.setItem(key, serialized);
+    }
+
+    /**
+     * Writes the given savefile to the server (based on the currently logged-in user)
+     */
+    async writeServerSavefile(savefile: SaveFile): Promise<"ok" | "not_logged_in" | "error">
+    {
+        const serialized = JSON.stringify(savefile);
+        const request = new Request("/api/savefile", {
+            "method": "PUT",
+            "body": serialized,
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        });
+        const response = await api.performRequestWithSessionToken(request);
+
+        if (response.status == "unauthorized") {
+            return "not_logged_in";
+        } else if (response.status == "bad_response" || response.status == "error") {
+            return "error";
+        }
+
+        return "ok";
+    }
+
+}
+
+function createEmptySavefile(username: string | undefined): SaveFile
+{
+    return {
+        versionKey: ACTIVE_VERSION_KEY,
+        username: username,
+        lastPlayedNonogramId: undefined,
+        entries: []
+    };
+}

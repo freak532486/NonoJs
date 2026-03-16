@@ -1,0 +1,14 @@
+* {
+    --bg1: rgb(255, 255, 255);
+    --bg2: rgb(247, 247, 247);
+    --fg1: rgb(88, 120, 142);
+    --fg2: rgb(209, 97, 21);
+    --border-color: rgb(162, 162, 162);
+    --border-color-dark: #00000080;
+    --header-gradient-color: color-mix(in srgb, var(--bg1) 90%, black 10%);
+    --header-size: 50px;
+}
+
+body {
+    margin: 0px;
+}

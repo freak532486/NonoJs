@@ -1,0 +1,29 @@
+#header-root {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    height: 100%;
+}
+
+#desktop-header {
+    height: 100%;
+    width: 100%;
+    /* box-shadow: 0px 0px 5px #00000080; */
+    /* border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg2); */
+
+    padding: 5px;
+    box-sizing: border-box;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#desktop-header .logo {
+    height: 80%;
+}
+
+#desktop-header .logo-img {
+    height: 100%;
+}

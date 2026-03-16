@@ -1,0 +1,15 @@
+#notd-root {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+
+    align-items: stretch;
+    justify-content: space-evenly;
+
+    padding: 20px;
+}
+
+#notd-root .box-header {
+    font-size: 9pt;
+    padding: 2px;
+}

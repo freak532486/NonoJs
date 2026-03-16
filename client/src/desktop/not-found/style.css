@@ -1,0 +1,26 @@
+#desktop-not-found {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+
+    font-family: Arial;   
+}
+
+#desktop-not-found hr {
+    width: 100%;
+    height: 1px;
+    border: none;
+    background-color: var(--border-color);
+}
+
+#desktop-not-found .big {
+    font-size: 40pt;
+    font-weight: bold;
+    color: var(--fg1);
+}
+
+#desktop-not-found .small {
+    font-size: 14pt;
+    color: var(--fg1);
+}

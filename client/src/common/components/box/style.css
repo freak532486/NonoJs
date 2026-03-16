@@ -1,0 +1,36 @@
+.box {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    box-shadow: 0px 2px 3px #00000050;
+    border-radius: 5px;
+
+    min-width: min-content;
+    min-height: min-content;
+}
+
+.box-header {
+    border: 1px solid var(--border-color);
+    border-radius: 5px 5px 0px 0px;
+    padding: 4px;
+
+    box-sizing: border-box;
+    width: 100%;
+
+    display: flex;
+    justify-content: center;
+
+    font-weight: bold;
+}
+
+.box-content {
+    border: 1px solid var(--border-color);
+    border-radius: 0px 0px 5px 5px;
+    border-top: none;
+    background-color: var(--bg2);
+
+    width: 100%;
+    box-sizing: border-box;
+
+    align-self: stretch;
+    justify-self: stretch;
+}
