@@ -14,7 +14,7 @@ import AuthService from "../../common/services/auth/auth-service";
 import ContinuePlaying from "./continue-playing/continue-playing.component";
 import DesktopCatalogComponent from "./catalog/component";
 import DesktopAboutComponent from "./about/component";
-import DesktopQuickplayComponent from "./quickplay/component";
+import QuickplayComponent from "../../common/components/quickplay/component";
 import DesktopStartpageSettingsHandler from "./settings/settings-handler";
 import DesktopRoot from "../root-component/desktop-root";
 
@@ -49,7 +49,7 @@ export default class StartPage implements UIComponent
 
         /* Quickplay box */
         const quickplayBox = new BoxComponent("Quickplay", Color.fromHex("#ff5e00"));
-        new DesktopQuickplayComponent(
+        new QuickplayComponent(
             this.catalogAccess,
             this.onNonogramSelected)
         .create(quickplayBox.content);

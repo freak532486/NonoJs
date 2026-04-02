@@ -8,18 +8,23 @@
 #quickplay .buttons {
     width: 100%;
     display: grid;
+    
+}
+
+.desktop #quickplay .buttons {
     grid-template-columns: 1fr 1fr 1fr;
     gap: 10px;
+}
+
+.mobile #quickplay .buttons {
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
 }
 
 #quickplay button {
     display: flex;
     flex-direction: column;
     align-items: center;
-
-    font-size: 24pt;
-    font-family: serif;
-    padding: 15px;
 
     background: linear-gradient(180deg, #FFFFFF 0%, #EEEEEE 100%);
     color: #333333;
@@ -29,8 +34,24 @@
     cursor: pointer;
 }
 
-#quickplay button .play {
+.desktop #quickplay button {
+    font-size: 24pt;
+    font-family: serif;
+    padding: 15px;
+}
+
+.mobile #quickplay button {
+    font-size: 16pt;
+    font-family: serif;
+    padding: 10px;
+}
+
+.desktop #quickplay button .play {
     font-size: 13pt;
+}
+
+.mobile #quickplay button .play {
+    font-size: 9pt;
 }
 
 #quickplay button .symbol {
