@@ -11,6 +11,9 @@ import { CellKnowledge, NonogramState } from "../../../common/types/nonogram-typ
 import SavefileAccess from "../../../common/services/savefile/savefile-access"
 import { getSavestateForNonogram } from "../../../common/services/savefile/savefile-utils"
 import UIComponent from "../../../common/types/ui-component"
+import BoxComponent from "../../../common/components/box/box.component";
+import Color from "../../../common/types/color";
+import QuickplayComponent from "../../../common/components/quickplay/component";
 
 export class StartPage implements UIComponent {
     #view: HTMLElement;
@@ -44,7 +47,6 @@ export class StartPage implements UIComponent {
         /* Append to parent */
         parent.appendChild(this.#view);
 
-        /* Register listeners */
         /* Continue */
         const continueRoot = this.#view.querySelector("#continue-root") as HTMLElement;
         const lastPlayedId = await this.#nonogramSelector.getLastPlayedNonogramId();
@@ -56,6 +58,16 @@ export class StartPage implements UIComponent {
             const btnContinue = continueBox.querySelector("#button-continue")  as HTMLElement;
             btnContinue.onclick = () => this.#onNonogramSelected(lastPlayedId);
         }
+
+        /* Quickplay (should go after continue) */
+        const quickplayBox = new BoxComponent("Quickplay", Color.fromHex("#ff5e00"));
+        quickplayBox.create(this.#view);
+
+        quickplayBox.view.remove();
+        continueRoot.before(quickplayBox.view);
+
+        const quickplayComp = new QuickplayComponent(this.catalogAccess, this.#onNonogramSelected);
+        quickplayComp.create(quickplayBox.content);
 
         /* Nonograms of the day */
         const notdContainer = this.#view.querySelector(".box.notd>.box-content")  as HTMLElement;

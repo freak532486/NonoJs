@@ -1,10 +1,10 @@
 import template from "./template.html"
 import "./style.css"
-import UIComponent from "../../../common/types/ui-component";
-import { htmlToElement } from "../../../common/services/html-to-element";
-import { CatalogAccess } from "../../../common/services/catalog/catalog-access";
+import UIComponent from "../../types/ui-component";
+import { htmlToElement } from "../../services/html-to-element";
+import { CatalogAccess } from "../../services/catalog/catalog-access";
 
-export default class DesktopQuickplayComponent implements UIComponent
+export default class QuickplayComponentt implements UIComponent
 {
     private view: HTMLElement;
 
