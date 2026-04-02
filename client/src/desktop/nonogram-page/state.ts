@@ -27,7 +27,7 @@ export enum NonogramColor {
 
 export interface HistoryEntry {
     state: NonogramState,
-    errorLines: Array<LineId>,
+    errorLines: LineIdSet,
     crossedOutHints: Map<LineId, Array<number>>
 }
 
@@ -44,6 +44,7 @@ export class NonogramComponentState
     private _elapsed: number = 0;
     private _lastElapsedAnimTs: number = 0;
     private _isSolved: boolean = false;
+    private _allLineIds?: LineIdSet;
 
     /**
      * List of listeners. Will be notified on any state change.
@@ -60,22 +61,16 @@ export class NonogramComponentState
     {
         this._elapsed = elapsed;
 
-        const initialState: HistoryEntry = {
+        const initialState = new NonogramState(rowHints, colHints, cells);
+        const hintDeduction = this.performHintDeduction(initialState, this.allLineIds);
+        const intitialEntry: HistoryEntry = {
             state: new NonogramState(rowHints, colHints, cells),
-            errorLines: [],
-            crossedOutHints: new Map()
+            errorLines: hintDeduction.errorLines,
+            crossedOutHints: hintDeduction.newFinishedHints
         };
 
-        for (let x = 0; x < this.nonogramWidth; x++) {
-            initialState.crossedOutHints.set(LineId.column(x), []);
-        }
-
-        for (let y = 0; y < this.nonogramHeight; y++) {
-            initialState.crossedOutHints.set(LineId.row(y), []);
-        }
-
-        this._history = [initialState];
-        this._solution = deduceAll(initialState.state).newState;
+        this._history = [intitialEntry];
+        this._solution = deduceAll(initialState).newState;
 
         const timerAnim = (ts: number) => {
             if (this._isSolved) {
@@ -185,8 +180,18 @@ export class NonogramComponentState
             this._history.pop();
         }
 
-        const hintDeduction = this.performHintDeduction(state);
+        const changedLines = calcChangedLines(this.activeState, state);
+        const hintDeduction = this.performHintDeduction(state, changedLines);
+
+        /* Hint deduction will not re-discover error lines in unchanged lines, so they have to be re-added */
+        const oldErrLines = this.errorLines;
         const errLines = hintDeduction.errorLines;
+        for (const line of oldErrLines) {
+            if (!hintDeduction.changedLines.has(line)) {
+                errLines.add(line);
+            }
+        }
+
         const crossedOutHints = mergeMaps(hintDeduction.newFinishedHints, this.crossedOutHints);
         const isCorrect = statesAreCompatible(state, this._solution);
 
@@ -197,12 +202,16 @@ export class NonogramComponentState
         this.notifyListeners(StateChangeType.BOARD_STATE);
     }
 
-    private performHintDeduction(newState: NonogramState): HintDeductionResult {
-        const errLines: Array<LineId> = [];
+    private performHintDeduction(
+        newState: NonogramState,
+        changedLines: LineIdSet
+    ): HintDeductionResult {
+        const errLines = new LineIdSet();
         const crossedOutHints: Map<LineId, Array<number>> = new Map();
 
         /* Deduce over changed lines over and over again */
-        const queue = calcChangedLines(this.activeState, newState).asArray();
+        const allChangedLines = changedLines.clone();
+        const queue = allChangedLines.asArray();
 
         const deducedState = new NonogramState(newState.rowHints, newState.colHints, [...newState.cells]);
         while (queue.length > 0) {
@@ -216,7 +225,7 @@ export class NonogramComponentState
             /* Perform deduction */
             const deduction = checkHints(lineKnowledge, hints);
             if (deduction == undefined) {
-                errLines.push(line);
+                errLines.add(line);
                 continue;
             }
 
@@ -230,6 +239,7 @@ export class NonogramComponentState
                     continue;
                 }
 
+                allChangedLines.add(line);
                 if (line.lineType == LineType.ROW) {
                     queue.push(LineId.column(i));
                     deducedState.updateCell(i, line.index, newCell);
@@ -246,6 +256,7 @@ export class NonogramComponentState
         }
 
         return {
+            changedLines: allChangedLines,
             errorLines: errLines,
             newFinishedHints: crossedOutHints
         };
@@ -314,7 +325,7 @@ export class NonogramComponentState
         this._history = [{
             state: NonogramState.empty(this.rowHints, this.colHints),
             crossedOutHints: new Map(),
-            errorLines: []
+            errorLines: new LineIdSet()
         }];
         this._historyIdx = 0;
         this._validHistoryIdx = 0;
@@ -358,6 +369,26 @@ export class NonogramComponentState
         this._isSolved = val;
     }
 
+    get allLineIds(): LineIdSet
+    {
+        if (this._allLineIds !== undefined) {
+            return this._allLineIds;
+        }
+
+        const allLines = new LineIdSet();
+
+        for (let x = 0; x < this.nonogramWidth; x++) {
+            allLines.add(LineId.column(x));
+        }
+
+        for (let y = 0; y < this.nonogramWidth; y++) {
+            allLines.add(LineId.row(y));
+        }
+
+        this._allLineIds = allLines;
+        return allLines;
+    }
+
     private notifyListeners(type: StateChangeType) {
         for (const listener of this.listeners) {
             listener.onChange(type);
@@ -366,7 +397,8 @@ export class NonogramComponentState
 }
 
 interface HintDeductionResult {
-    errorLines: Array<LineId>,
+    changedLines: LineIdSet,
+    errorLines: LineIdSet,
     newFinishedHints: Map<LineId, Array<number>>
 };
 

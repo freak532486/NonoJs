@@ -45,4 +45,29 @@ export default class LineIdSet
     get size(): number {
         return this.#rows.size + this.#cols.size;
     }
+
+    /**
+     * Clones this set.
+     */
+    clone()
+    {
+        const ret = new LineIdSet();
+        for (const line of this) {
+            ret.add(line);
+        }
+        return ret;
+    }
+
+    /**
+     * Generator function for enabling a for-each loop over this collection.
+     */
+    *[Symbol.iterator](): Iterator<LineId> {
+        for (const x of this.#cols) {
+            yield LineId.column(x);
+        }
+
+        for (const y of this.#rows) {
+            yield LineId.row(y);
+        }
+    }
 }

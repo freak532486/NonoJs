@@ -385,7 +385,7 @@ export class PlayfieldComponent implements UIComponent {
                 return;
             }
 
-            for (const line of changed.asArray()) {
+            for (const line of changed) {
                 const lineKnowledge = this.getLineKnowledge(line);
                 const hints = this.getHints(line);
                 this.#applyHintCheckDeduction(line, checkHints(lineKnowledge, hints));
