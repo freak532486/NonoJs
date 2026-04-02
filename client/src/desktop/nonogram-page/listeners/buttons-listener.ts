@@ -37,7 +37,7 @@ export default class NonogramColorButtonsListener implements NonogramComponentSt
     private onStateChange() {
         this.btnUndo.disabled = this.state.historyIdx == 0;
         this.btnRedo.disabled = this.state.historyIdx == this.state.history.length - 1;
-        this.btnResetToLastValidState.disabled = this.state.errorLines.length == 0;
+        this.btnResetToLastValidState.disabled = this.state.errorLines.size == 0;
     }
     
 }
