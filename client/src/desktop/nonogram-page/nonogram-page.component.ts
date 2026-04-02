@@ -21,6 +21,8 @@ import { getSavestateForNonogram } from "../../common/services/savefile/savefile
 import { CellKnowledge } from "../../common/types/nonogram-types";
 import { PLAYFIELD_TITLE } from "../../common/titles";
 import AuthService from "../../common/services/auth/auth-service";
+import KeyboardControlsExplainer from "./keyboard-controls-explainer/keyboard-controls-explainer";
+import DesktopRoot from "../root-component/desktop-root";
 
 export default class NonogramPage implements UIComponent
 {
@@ -31,7 +33,8 @@ export default class NonogramPage implements UIComponent
         private readonly nonogramId: string,
         private readonly catalogAccess: CatalogAccess,
         private readonly savefileAccess: SavefileAccess,
-        private readonly authService: AuthService
+        private readonly authService: AuthService,
+        private readonly root: DesktopRoot
     )
     {
         this.view = htmlToElement(template);
@@ -49,6 +52,16 @@ export default class NonogramPage implements UIComponent
         controlsBox.create(leftCol);
         controlsBox.view.classList.add("controls-box");
         controlsBox.content.appendChild(controlsDiv);
+
+        /* Create link for keyboard control explanation */
+        const explainer = new KeyboardControlsExplainer(this.root);
+        const controlsExplanationLink = document.createElement("a");
+        controlsExplanationLink.href = "#";
+        controlsExplanationLink.onclick = () => explainer.run();
+        controlsExplanationLink.textContent = "Explain keyboard controls...";
+        controlsExplanationLink.style.fontSize = "10pt";
+        leftCol.appendChild(controlsExplanationLink);
+
 
         /* Create nonogram board */
         const nonogramBox = new BoxComponent("Nonogram View", Color.RED);

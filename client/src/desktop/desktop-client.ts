@@ -54,7 +54,8 @@ export default class DesktopClient implements NonojsClient
             nonogramId,
             this.catalogAccess,
             this.savefileAccess,
-            this.authService
+            this.authService,
+            this.root
         );
         await nonogramPage.create(this.root.mainContainer);
     }
