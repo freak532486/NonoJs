@@ -47,6 +47,18 @@ export default class LineIdSet
     }
 
     /**
+     * Clones this set.
+     */
+    clone()
+    {
+        const ret = new LineIdSet();
+        for (const line of this) {
+            ret.add(line);
+        }
+        return ret;
+    }
+
+    /**
      * Generator function for enabling a for-each loop over this collection.
      */
     *[Symbol.iterator](): Iterator<LineId> {
