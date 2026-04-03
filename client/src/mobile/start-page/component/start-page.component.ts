@@ -6,7 +6,6 @@ import "./start-page.css"
 import { htmlToElement } from "../../../common/services/html-to-element";
 import { StartPageNonogramSelector } from "../../../common/services/start-page/start-page-nonogram-selector";
 import { CatalogAccess } from "../../../common/services/catalog/catalog-access";
-import { SerializedNonogram } from "../../../common/types/storage-types";
 import { NonogramPreview } from "../../../common/components/nonogram-preview/nonogram-preview.component";
 import { CellKnowledge, NonogramState } from "../../../common/types/nonogram-types";
 import SavefileAccess from "../../../common/services/savefile/savefile-access"
@@ -15,6 +14,7 @@ import UIComponent from "../../../common/types/ui-component"
 import BoxComponent from "../../../common/components/box/box.component";
 import Color from "../../../common/types/color";
 import QuickplayComponent from "../../../common/components/quickplay/component";
+import { Nonogram } from "nonojs-common"
 
 export class StartPage implements UIComponent {
     #view: HTMLElement;
@@ -151,7 +151,7 @@ export class StartPage implements UIComponent {
     /**
      * Creates a nonogram-of-the-day button.
      */
-    async #createNonogramOfTheDayButton(nonogram: SerializedNonogram): Promise<HTMLElement> {
+    async #createNonogramOfTheDayButton(nonogram: Nonogram): Promise<HTMLElement> {
         const ret = htmlToElement(notdLinkTemplate);
 
         /* Fill body with a preview */

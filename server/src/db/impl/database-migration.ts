@@ -3,6 +3,7 @@ import * as dbAccess from "./sql-functions"
 import authTableCreation from "../internal/migrations/0001-auth-table-creation";
 import createSavestateTable from "../internal/migrations/0002-create-savestate-table";
 import database from "../database";
+import createNonogramTable from "../internal/migrations/0003-create-nonogram-table";
 
 /**
  * Performs all necessary database migrations.
@@ -14,7 +15,8 @@ export async function performDatabaseMigrations(fastify: FastifyInstance): Promi
     /* Create list of all migrations */
     const migrations: Array<DatabaseMigration> = [
         { "identifier": "AuthTableCreation", "run": authTableCreation },
-        { "identifier": "CreateSavestateTable", "run": createSavestateTable }
+        { "identifier": "CreateSavestateTable", "run": createSavestateTable },
+        { "identifier": "CreateNonogramTable", "run": createNonogramTable }
     ];
 
     /* Fetch list of ran migrations */

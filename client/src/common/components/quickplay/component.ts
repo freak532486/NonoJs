@@ -4,10 +4,9 @@ import UIComponent from "../../types/ui-component";
 import { htmlToElement } from "../../services/html-to-element";
 import { CatalogAccess } from "../../services/catalog/catalog-access";
 import SavefileAccess from "../../services/savefile/savefile-access";
-import { SaveFile } from "nonojs-common";
+import { Nonogram, SaveFile } from "nonojs-common";
 import { getSavestateForNonogram, removeSavestate } from "../../services/savefile/savefile-utils";
 import { CellKnowledge } from "../../types/nonogram-types";
-import { SerializedNonogram } from "../../types/storage-types";
 
 type NonogramStatus = "blank" | "started" | "solved";
 
@@ -60,7 +59,7 @@ export default class QuickplayComponent implements UIComponent
         }
 
         /* Partition by blank, started and solved */
-        const partitionedNonograms = new Map<NonogramStatus, Array<SerializedNonogram>>();
+        const partitionedNonograms = new Map<NonogramStatus, Array<Nonogram>>();
         partitionedNonograms.set("blank", []);
         partitionedNonograms.set("started", []);
         partitionedNonograms.set("solved", []);

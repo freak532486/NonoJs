@@ -3,10 +3,9 @@ import "./style.css"
 import UIComponent from "../../../common/types/ui-component";
 import { htmlToElement } from "../../../common/services/html-to-element";
 import { CatalogAccess } from "../../../common/services/catalog/catalog-access";
-import { SerializedNonogram } from "../../../common/types/storage-types";
 import SavefileAccess from "../../../common/services/savefile/savefile-access";
 import { getSavestateForNonogram } from "../../../common/services/savefile/savefile-utils";
-import { SaveState } from "nonojs-common";
+import { Nonogram, SaveState } from "nonojs-common";
 import { CellKnowledge } from "../../../common/types/nonogram-types";
 
 export default class DesktopCatalogComponent implements UIComponent
@@ -58,7 +57,7 @@ export default class DesktopCatalogComponent implements UIComponent
         const minHeight = minHeightFilter.value == "" ? Number.NaN :  Number(minHeightFilter.value);
         const maxHeight = maxHeightFilter.value == "" ? Number.NaN :  Number(maxHeightFilter.value);
 
-        const predicate = (nono: SerializedNonogram) => {
+        const predicate = (nono: Nonogram) => {
             const idFilterMatch = nono.id.startsWith(idPrefix);
             const minWidthFilterMatch = Number.isNaN(minWidth) ? true : nono.colHints.length >= minWidth;
             const maxWidthFilterMatch = Number.isNaN(maxWidth) ? true : nono.colHints.length <= maxWidth;

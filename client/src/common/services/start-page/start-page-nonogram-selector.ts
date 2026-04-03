@@ -1,5 +1,5 @@
+import { Nonogram } from "nonojs-common";
 import { CatalogAccess } from "../catalog/catalog-access";
-import { SerializedNonogram } from "../../types/storage-types";
 import SavefileAccess from "../savefile/savefile-access";
 
 export class StartPageNonogramSelector {
@@ -23,7 +23,7 @@ export class StartPageNonogramSelector {
     async getNonogramIdsOfTheDay(): Promise<Array<string>> {
         const allNonograms = await this.catalogAccess.getAllNonograms();
 
-        const nonoSize = (nonogram: SerializedNonogram) => Math.max(nonogram.rowHints.length, nonogram.colHints.length);
+        const nonoSize = (nonogram: Nonogram) => Math.max(nonogram.rowHints.length, nonogram.colHints.length);
 
         /* Sort nonograms into small, medium and large */
         const smallNonograms = allNonograms.filter(x => nonoSize(x) >= 0 && nonoSize(x) < 20);

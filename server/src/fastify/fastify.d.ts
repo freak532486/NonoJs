@@ -5,6 +5,7 @@ import TokenStore from "../auth/types/token-store";
 import { AuthService } from "../auth/auth";
 import Mailjet from "node-mailjet";
 import SavefileCache from "../savefile/impl/savefile-cache";
+import Ajv from "ajv";
 
 declare module "fastify" {
     interface FastifyInstance {
@@ -14,6 +15,9 @@ declare module "fastify" {
             tokenStore: TokenStore;
             savefileCache: SavefileCache;
             mailjet: Mailjet;
+            validators: {
+                checkNonogramSchema: (any) => boolean
+            }
         };
     }
 }
