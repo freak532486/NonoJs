@@ -14,7 +14,7 @@
 #continue-playing .container {
     display: flex;
     flex-direction: row;
-    gap: 10px;
+    gap: 20px;
     padding: 20px;
     justify-content: flex-start;
     flex-shrink: 0;
