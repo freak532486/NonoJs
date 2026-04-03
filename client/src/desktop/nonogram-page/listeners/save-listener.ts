@@ -1,4 +1,5 @@
 import AuthService from "../../../common/services/auth/auth-service";
+import { ListUtils } from "../../../common/services/list-utils";
 import SavefileAccess from "../../../common/services/savefile/savefile-access";
 import SavefileSyncService from "../../../common/services/savefile/savefile-sync-service";
 import { getSavestateForNonogram } from "../../../common/services/savefile/savefile-utils";
@@ -34,9 +35,9 @@ export default class SaveListener implements NonogramComponentStateListener
         savestate.cells = this.state.activeState.cells;
         savestate.elapsed = this.state.elapsed;
         if (!this.state.isSolved) {
-            savefile.lastPlayedNonogramId = this.state.nonogramId;
-        } else if (savefile.lastPlayedNonogramId == this.state.nonogramId) {
-            savefile.lastPlayedNonogramId = undefined;
+            ListUtils.addIfNotExists(savefile.activeNonogramIds, this.state.nonogramId);
+        } else {
+            ListUtils.remove(savefile.activeNonogramIds, this.state.nonogramId);
         }
 
         await this.savefileAccess.writeLocalSavefile(savefile);

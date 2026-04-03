@@ -1,9 +1,30 @@
 #continue-playing {
     display: flex;
-    flex-direction: row;
+    max-width: 600px;
+    overflow: auto hidden;
+}
+
+#continue-playing .inner {
+    display: flex;
+    min-width: 100%;
+    flex-shrink: 0;
     justify-content: center;
-    gap: 10px;
+}
+
+#continue-playing .container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
     padding: 20px;
+    justify-content: flex-start;
+    flex-shrink: 0;
+
+    width: max-content;
+    box-sizing: border-box;
+}
+
+#continue-playing .container .nonogram-button {
+    flex-shrink: 0;
 }
 
 #continue-playing .box-header {

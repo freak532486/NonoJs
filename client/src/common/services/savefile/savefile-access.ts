@@ -101,7 +101,7 @@ function createEmptySavefile(username: string | undefined): SaveFile
     return {
         versionKey: ACTIVE_VERSION_KEY,
         username: username,
-        lastPlayedNonogramId: undefined,
+        activeNonogramIds: [],
         entries: []
     };
 }

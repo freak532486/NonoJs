@@ -381,7 +381,7 @@ export class NonogramComponentState
             allLines.add(LineId.column(x));
         }
 
-        for (let y = 0; y < this.nonogramWidth; y++) {
+        for (let y = 0; y < this.nonogramHeight; y++) {
             allLines.add(LineId.row(y));
         }
 
