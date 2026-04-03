@@ -73,7 +73,11 @@ export class StartPage implements UIComponent {
         quickplayBox.view.remove();
         continueRoot.before(quickplayBox.view);
 
-        const quickplayComp = new QuickplayComponent(this.catalogAccess, this.#onNonogramSelected);
+        const quickplayComp = new QuickplayComponent(
+            this.savefileAccess,
+            this.catalogAccess,
+            this.#onNonogramSelected
+        );
         quickplayComp.create(quickplayBox.content);
 
         /* Nonograms of the day */

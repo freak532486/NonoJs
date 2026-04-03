@@ -3,12 +3,20 @@ import "./style.css"
 import UIComponent from "../../types/ui-component";
 import { htmlToElement } from "../../services/html-to-element";
 import { CatalogAccess } from "../../services/catalog/catalog-access";
+import SavefileAccess from "../../services/savefile/savefile-access";
+import { SaveFile } from "nonojs-common";
+import { getSavestateForNonogram } from "../../services/savefile/savefile-utils";
+import { CellKnowledge } from "../../types/nonogram-types";
+import { SerializedNonogram } from "../../types/storage-types";
 
-export default class QuickplayComponentt implements UIComponent
+type NonogramStatus = "blank" | "started" | "solved";
+
+export default class QuickplayComponent implements UIComponent
 {
     private view: HTMLElement;
 
     constructor(
+        private readonly savefileAccess: SavefileAccess,
         private readonly catalogAccess: CatalogAccess,
         private readonly onNonogramSelected: (nonogramId: string) => void
     )
@@ -37,6 +45,8 @@ export default class QuickplayComponentt implements UIComponent
     }
 
     private async selectRandomNonogram(minWidth: number, minHeight: number, maxWidth: number, maxHeight: number) {
+        const savefile = await this.savefileAccess.fetchLocalSavefile();
+
         const possibleNonograms = (await this.catalogAccess.getAllNonograms())
             .filter(nonogram => 
                 nonogram.colHints.length > minWidth &&
@@ -49,11 +59,45 @@ export default class QuickplayComponentt implements UIComponent
             throw new Error("No nonogram available for quickplay.");
         }
 
-        const r = Math.floor(Math.random() * possibleNonograms.length);
-        this.onNonogramSelected(possibleNonograms[r].id);
+        /* Partition by blank, started and solved */
+        const partitionedNonograms = new Map<NonogramStatus, Array<SerializedNonogram>>();
+        partitionedNonograms.set("blank", []);
+        partitionedNonograms.set("started", []);
+        partitionedNonograms.set("solved", []);
+
+        for (const nonogram of possibleNonograms) {
+            partitionedNonograms.get(getNonogramStatus(savefile, nonogram.id))!.push(nonogram);
+        }
+
+        /* Prefer blank nonograms, then started nonograms, and only then solved nonograms */
+        const listToChooseFrom = partitionedNonograms.get("blank")!.length > 0 ?
+            partitionedNonograms.get("blank")! :
+            partitionedNonograms.get("started")!.length > 0 ?
+                partitionedNonograms.get("started")! :
+                partitionedNonograms.get("solved")!;
+
+        const r = Math.floor(Math.random() * listToChooseFrom.length);
+        this.onNonogramSelected(listToChooseFrom[r].id);
     }
 
     cleanup(): void {
         // Nothing to do
     }
+}
+
+
+
+function getNonogramStatus(savefile: SaveFile, nonogramId: string): NonogramStatus
+{
+    const savestate = getSavestateForNonogram(savefile, nonogramId);
+    if (savestate == undefined) {
+        return "blank";
+    }
+
+    const numFilledCells = savestate.cells
+        .map(x => x == CellKnowledge.UNKNOWN ? 0 : 1)
+        .map(x => x as number)
+        .reduce((a, b) => a + b, 0);
+
+    return numFilledCells == savestate.cells.length ? "solved" : "started";
 }
