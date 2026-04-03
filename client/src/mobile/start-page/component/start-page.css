@@ -77,8 +77,26 @@
 }
 
 #start-page .continue .box-content {
+    overflow: auto hidden;
+}
+
+#start-page .continue .inner {
+    display: flex;
     justify-content: center;
-    align-items: center;
+
+    min-width: 100%;
+    width: max-content;
+    flex-shrink: 0;
+}
+
+#start-page .continue .container {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    padding: 20px;
+
+    width: max-content;
+    flex-shrink: 0;
 }
 
 #start-page .preview-root {

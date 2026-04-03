@@ -7,6 +7,7 @@ import { htmlToElement } from "../../../common/services/html-to-element";
 import { getSavestateForNonogram } from "../../../common/services/savefile/savefile-utils";
 import { NonogramState } from "../../../common/types/nonogram-types";
 import NonogramButton from "../nonogram-button/nonogram-button.component";
+import { SaveFile } from "nonojs-common";
 
 export default class ContinuePlaying implements UIComponent
 {
@@ -16,31 +17,38 @@ export default class ContinuePlaying implements UIComponent
     constructor(
         private readonly catalogAccess: CatalogAccess,
         private readonly savefileAccess: SavefileAccess,
-        private readonly lastPlayedNonogramId: string,
-        private readonly onNonogramSelected: () => void
+        private readonly onNonogramSelected: (nonogramId: string) => void
     )
     {
         this.view = htmlToElement(template);
     }
 
     async create(parent: HTMLElement): Promise<HTMLElement> {
-        const loadedNonogram = await this.catalogAccess.getNonogram(this.lastPlayedNonogramId);
-        if (loadedNonogram == undefined) {
-            throw new Error("Nonogram with ID " + this.lastPlayedNonogramId + " doesn't exist.");
+        const savefile = await this.savefileAccess.fetchLocalSavefile();
+
+        for (const nonogramId of savefile.activeNonogramIds) {
+            await this.createButton(savefile, nonogramId);
         }
 
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
-        const savestate = getSavestateForNonogram(savefile, this.lastPlayedNonogramId);
+        parent.appendChild(this.view);
+        return this.view;
+    }
 
+    private async createButton(savefile: SaveFile, nonogramId: string)
+    {
+        const container = this.view.querySelector(".container") as HTMLElement;
+        const loadedNonogram = await this.catalogAccess.getNonogram(nonogramId);
+        if (loadedNonogram == undefined) {
+            return;
+        }
+
+        const savestate = getSavestateForNonogram(savefile, nonogramId);
         const state = savestate ? 
             new NonogramState(loadedNonogram.rowHints, loadedNonogram.colHints, savestate.cells) :
             NonogramState.empty(loadedNonogram.rowHints, loadedNonogram.colHints);
 
-        const button = NonogramButton.withMaximumSize(state, 200, 200, this.onNonogramSelected);
-        button.create(this.view);
-
-        parent.appendChild(this.view);
-        return this.view;
+        const button = NonogramButton.withMaximumSize(state, 200, 200, () => this.onNonogramSelected(nonogramId));
+        button.create(container);
     }
 
     cleanup(): void {

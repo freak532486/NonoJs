@@ -1,6 +1,7 @@
 import startPage from "./start-page.html"
 import notdLinkTemplate from "./notd-link-template.html"
 import continuePlayingTemplate from "./continue-playing-template.html"
+import innerContinuePlayingTemplate from "./continue-playing-template-inner.html"
 import "./start-page.css"
 import { htmlToElement } from "../../../common/services/html-to-element";
 import { StartPageNonogramSelector } from "../../../common/services/start-page/start-page-nonogram-selector";
@@ -48,15 +49,21 @@ export class StartPage implements UIComponent {
         parent.appendChild(this.#view);
 
         /* Continue */
-        const continueRoot = this.#view.querySelector("#continue-root") as HTMLElement;
-        const lastPlayedId = await this.#nonogramSelector.getLastPlayedNonogramId();
-        const lastPlayed = lastPlayedId && await this.catalogAccess.getNonogram(lastPlayedId);
-        if (lastPlayed) {
-            const continueBox = await this.#createContinueButton(lastPlayed);
-            continueRoot.appendChild(continueBox);
+        const savefile = await this.savefileAccess.fetchLocalSavefile();
 
-            const btnContinue = continueBox.querySelector("#button-continue")  as HTMLElement;
-            btnContinue.onclick = () => this.#onNonogramSelected(lastPlayedId);
+        const continueRoot = this.#view.querySelector("#continue-root") as HTMLElement;
+        const continueContainer = continueRoot.querySelector(".container") as HTMLElement;
+        if (savefile.activeNonogramIds.length > 0) {
+            for (const nonogramId of savefile.activeNonogramIds) {
+                const continueBox = await this.#createContinueButton(nonogramId);
+                if (continueBox == undefined) {
+                    continue;
+                }
+
+                continueContainer.appendChild(continueBox);
+            }
+        } else {
+            continueRoot.style.display = "none";
         }
 
         /* Quickplay (should go after continue) */
@@ -169,10 +176,15 @@ export class StartPage implements UIComponent {
     /**
      * Creates the "continue playing"-box.
      */
-    async #createContinueButton(nonogram: SerializedNonogram): Promise<HTMLElement> {
-        const ret = htmlToElement(continuePlayingTemplate);
+    async #createContinueButton(nonogramId: string): Promise<HTMLElement | undefined> {
+        const ret = htmlToElement(innerContinuePlayingTemplate);
 
         /* Create preview */
+        const nonogram = await this.catalogAccess.getNonogram(nonogramId);
+        if (nonogram == undefined) {
+            return undefined;
+        }
+
         const content = ret.querySelector(".preview-container") as HTMLElement;
         const savefile = await this.savefileAccess.fetchLocalSavefile();
         const saveState = getSavestateForNonogram(savefile, nonogram.id);
@@ -183,6 +195,8 @@ export class StartPage implements UIComponent {
         const preview = new NonogramPreview(nonogramState);
         preview.create(content);
         limitCanvasSize(preview.view, 120, 120);
+
+        content.onclick = () => this.#onNonogramSelected(nonogramId);
 
         /* Set preview text */
         const previewTextSpan = ret.querySelector(".preview-text") as HTMLElement;

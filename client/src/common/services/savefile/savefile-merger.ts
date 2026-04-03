@@ -2,6 +2,7 @@ import { SaveFile, SaveFileEntry, SaveState } from "nonojs-common";
 import { ACTIVE_VERSION_KEY } from "./savefile-migrator";
 import SavefileAccess from "./savefile-access";
 import AuthService from "../auth/auth-service";
+import { CellKnowledge } from "../../types/nonogram-types";
 
 export enum MergeStrategy {
     LOCAL_WINS,
@@ -42,7 +43,7 @@ export default class SavefileMerger
             return {
                 versionKey: ACTIVE_VERSION_KEY,
                 username: username,
-                lastPlayedNonogramId: undefined,
+                activeNonogramIds: [],
                 entries: []
             };
         }
@@ -101,7 +102,7 @@ export default class SavefileMerger
     ): SaveFile
     {
         /* Assumption: Server has more recent state. */
-        const lastPlayedNonogramId = winningSavefile.lastPlayedNonogramId;
+        const activeNonogramIds = [];
         
         /* Merge entries: Overwrite based on merge strategy, but keep all entries from both sources */
         const entryMap = new Map<string, SaveState>();
@@ -116,16 +117,32 @@ export default class SavefileMerger
 
         const mergedEntries: Array<SaveFileEntry> = [];
         for (const entry of entryMap.entries()) {
-            mergedEntries.push({ nonogramId: entry[0], state: entry[1] });
+            const nonogramId = entry[0];
+            const savestate = entry[1];
+
+            mergedEntries.push({ nonogramId: nonogramId, state: savestate });
+            if (isActiveNonogram(savestate)) {
+                activeNonogramIds.push(nonogramId);
+            }
         }
 
         /* Done */
         return {
             versionKey: ACTIVE_VERSION_KEY,
             username: winningSavefile.username || losingSavefile.username,
-            lastPlayedNonogramId: lastPlayedNonogramId,
+            activeNonogramIds: activeNonogramIds,
             entries: mergedEntries
         };
     }
 
 };
+
+function isActiveNonogram(saveState: SaveState)
+{
+    const numFilled = saveState.cells
+        .map(x => x == CellKnowledge.UNKNOWN ? 0 : 1)
+        .map(x => x as number)
+        .reduce((a, b) => a + b, 0);
+
+    return numFilled > 0 && numFilled < saveState.cells.length;
+}

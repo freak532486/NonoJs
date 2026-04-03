@@ -1,7 +1,7 @@
 import { SaveFile } from "nonojs-common";
 import SavefileAccess from "./savefile-access.js";
 
-export const ACTIVE_VERSION_KEY = 3;
+export const ACTIVE_VERSION_KEY = 4;
 
 export default class SavefileMigrator {
 
@@ -19,6 +19,7 @@ export default class SavefileMigrator {
         await MIGR001_addVersionKey(val);
         await MIGR002_addSolvedFlag(val);
         await MIGR003_addUsername(val);
+        await MIGR004_addActiveNonogramList(val);
 
         this.savefileAccess.writeLocalSavefile(val);
     }
@@ -68,4 +69,25 @@ async function MIGR003_addUsername(val: SaveFile) {
 
     /* Updater */
     val.username = undefined;
+}
+
+/**
+ * MIGR004: Instead of having a single 'lastPlayedNonogramId', we now keep a list of active nonograms, so that you can
+ *          continue more than just one nonogram.
+ */
+async function MIGR004_addActiveNonogramList(val: SaveFile) {
+    /* Version key check */
+    const VERSION_KEY = 4;
+    if (val.versionKey >= VERSION_KEY) {
+        return;
+    }
+    val.versionKey = VERSION_KEY;
+
+    /* Update list */
+    const lastPlayedNonogramId: string | undefined = (val as any).lastPlayedNonogramId;
+    if (lastPlayedNonogramId !== undefined) {
+        val.activeNonogramIds = [ lastPlayedNonogramId ];
+    } else {
+        val.activeNonogramIds = [];
+    }
 }

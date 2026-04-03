@@ -56,8 +56,8 @@ export default class StartPage implements UIComponent
         quickplayBox.create(centerCol);
 
         /* Last played nonogram box */
-        const lastPlayedNonogramId = (await this.savefileAccess.fetchLocalSavefile()).lastPlayedNonogramId;
-        if (lastPlayedNonogramId !== undefined) {
+        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        if (savefile.activeNonogramIds.length !== 0) {
             const continueBox = new BoxComponent("Continue playing", Color.RED);
             continueBox.view.classList.add("continue-box");
             continueBox.create(centerCol);
@@ -65,8 +65,7 @@ export default class StartPage implements UIComponent
             const continuePlaying = new ContinuePlaying(
                 this.catalogAccess,
                 this.savefileAccess,
-                lastPlayedNonogramId,
-                () => this.onNonogramSelected(lastPlayedNonogramId)
+                nonogramId => this.onNonogramSelected(nonogramId)
             );
 
             await continuePlaying.create(continueBox.content);

@@ -12,6 +12,7 @@ import AuthService from "../../common/services/auth/auth-service";
 import NotFoundPageInitializer from "./not-found-route";
 import ActiveComponentManager from "../active-component-manager";
 import { Menu } from "../menu/menu.component";
+import { ListUtils } from "../../common/services/list-utils";
 
 export default class NonogramPageInitializer 
 {
@@ -85,9 +86,9 @@ export default class NonogramPageInitializer
                 const saveFile = await this.savefileAccess.fetchLocalSavefile();
         
                 if (!playfield.hasWon) {
-                    saveFile.lastPlayedNonogramId = playfield.nonogramId;
+                    ListUtils.addIfNotExists(saveFile.activeNonogramIds, playfield.nonogramId);
                 } else {
-                    saveFile.lastPlayedNonogramId = undefined;
+                    ListUtils.remove(saveFile.activeNonogramIds, playfield.nonogramId);
                 }
         
                 await this.savefileAccess.writeLocalSavefile(saveFile);
