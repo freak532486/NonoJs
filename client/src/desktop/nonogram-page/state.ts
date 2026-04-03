@@ -1,3 +1,4 @@
+import { ListUtils } from "../../common/services/list-utils";
 import { PlayfieldLineHandler } from "../../common/services/playfield/playfield-line-handler";
 import { checkHints, deduceAll, statesAreCompatible } from "../../common/services/solver/solver";
 import LineIdSet from "../../common/types/line-id-set";
@@ -71,6 +72,8 @@ export class NonogramComponentState
 
         this._history = [intitialEntry];
         this._solution = deduceAll(initialState).newState;
+
+        this._isSolved = ListUtils.shallowEquals(this._solution.cells, initialState.cells);
 
         const timerAnim = (ts: number) => {
             if (this._isSolved) {

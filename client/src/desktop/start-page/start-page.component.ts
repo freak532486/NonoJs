@@ -50,6 +50,7 @@ export default class StartPage implements UIComponent
         /* Quickplay box */
         const quickplayBox = new BoxComponent("Quickplay", Color.fromHex("#ff5e00"));
         new QuickplayComponent(
+            this.savefileAccess,
             this.catalogAccess,
             this.onNonogramSelected)
         .create(quickplayBox.content);
