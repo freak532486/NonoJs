@@ -7,6 +7,8 @@ import Mailjet from "node-mailjet";
 import TokenStore from "../../auth/types/token-store";
 import SavefileCache from "../../savefile/impl/savefile-cache";
 import { CONFIG_PATH } from "../constants";
+import Ajv from "ajv";
+import { NonogramSchema } from "nonojs-common";
 
 const CONFIG_KEY_DATABASE_PATH = "database_path";
 
@@ -16,6 +18,9 @@ export interface AppState {
     tokenStore: TokenStore;
     savefileCache: SavefileCache;
     mailjet: Mailjet;
+    validators: {
+        checkNonogramSchema: (x: any) => boolean
+    }
 }
 
 export default fp(async (fastify) => {
@@ -53,4 +58,9 @@ export default fp(async (fastify) => {
 
     /* Savefile cache: Savefiles are only periodically persisted into the database. */
     fastify.state.savefileCache = new SavefileCache(fastify);
+
+    const ajv = new Ajv();
+    fastify.state.validators = {
+        checkNonogramSchema: ajv.compile(NonogramSchema)
+    };
 });
