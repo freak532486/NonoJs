@@ -1,4 +1,5 @@
 import { SaveFile, SaveState } from "nonojs-common";
+import { ListUtils } from "../list-utils";
 
 /**
  * Returns the savestate for the given nonogram in the savefile.
@@ -31,4 +32,12 @@ export function putSavestate(savefile: SaveFile, nonogramId: string, state: Save
             state: state
         });
     }
+}
+
+/**
+ * Removes the savestate for the given nonogram id, if such a savestate exists.
+ */
+export function removeSavestate(savefile: SaveFile, nonogramId: string)
+{
+    ListUtils.removeIf(savefile.entries, entry => entry.nonogramId == nonogramId);
 }

@@ -5,7 +5,7 @@ import { htmlToElement } from "../../services/html-to-element";
 import { CatalogAccess } from "../../services/catalog/catalog-access";
 import SavefileAccess from "../../services/savefile/savefile-access";
 import { SaveFile } from "nonojs-common";
-import { getSavestateForNonogram } from "../../services/savefile/savefile-utils";
+import { getSavestateForNonogram, removeSavestate } from "../../services/savefile/savefile-utils";
 import { CellKnowledge } from "../../types/nonogram-types";
 import { SerializedNonogram } from "../../types/storage-types";
 
@@ -70,14 +70,24 @@ export default class QuickplayComponent implements UIComponent
         }
 
         /* Prefer blank nonograms, then started nonograms, and only then solved nonograms */
-        const listToChooseFrom = partitionedNonograms.get("blank")!.length > 0 ?
-            partitionedNonograms.get("blank")! :
-            partitionedNonograms.get("started")!.length > 0 ?
-                partitionedNonograms.get("started")! :
-                partitionedNonograms.get("solved")!;
+        const listKeyToChooseFrom: NonogramStatus = partitionedNonograms.get("blank")!.length > 0 ?
+            "blank" :
+            partitionedNonograms.get("started")!.length > 0 ? 
+                "started" :
+                "solved";
+        const listToChooseFrom = partitionedNonograms.get(listKeyToChooseFrom)!;
 
         const r = Math.floor(Math.random() * listToChooseFrom.length);
-        this.onNonogramSelected(listToChooseFrom[r].id);
+
+        /* If the chosen nonogram was a solved nonogram, then the savestate should be cleared */
+        const chosenNonogramId = listToChooseFrom[r].id;
+        if (listKeyToChooseFrom == "solved") {
+            removeSavestate(savefile, chosenNonogramId);
+            await this.savefileAccess.writeLocalSavefile(savefile);
+            await this.savefileAccess.writeServerSavefile(savefile);
+        }
+
+        this.onNonogramSelected(chosenNonogramId);
     }
 
     cleanup(): void {

@@ -24,4 +24,21 @@ export namespace ListUtils {
         return true;
     }
 
+    /**
+     * Removes all elements in the array that fulfill the given predicate. Returns the number of removed elements.
+     */
+    export function removeIf<T>(arr: Array<T>, pred: (t: T) => boolean): number
+    {
+        let removed = 0;
+
+        for (let i = arr.length - 1; i >= 0; i--) {
+            if (pred(arr[i])) {
+                arr.splice(i, 1);
+                removed++;
+            }
+        }
+
+        return removed;
+    }
+
 }
