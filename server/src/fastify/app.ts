@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import AutoLoad, { AutoloadPluginOptions } from '@fastify/autoload'
 import { FastifyPluginAsync, FastifyServerOptions } from 'fastify'
 import database from "../db/database";
-import TMP_migrateNonogramJson from "../nonograms/tmp-migration";
 
 export interface AppOptions extends FastifyServerOptions, Partial<AutoloadPluginOptions> {
 
@@ -30,9 +29,6 @@ const app: FastifyPluginAsync<AppOptions> = async (
 
     /* Run database migrations */
     await database.performDatabaseMigrations(fastify);
-
-    /* Remove this after migration */
-    await TMP_migrateNonogramJson(fastify);
 }
 
 export default app
