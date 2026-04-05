@@ -43,8 +43,6 @@ export default class NonogramPageInitializer
         /* Load current state */
         const savefile = await this.savefileAccess.fetchLocalSavefile();
         var stored = savefile ? SavefileUtils.getSavestateForNonogram(savefile, nonogramId) : undefined;
-        const cells = stored == undefined ? undefined :
-            SavefileUtils.calculateActiveState(nonogram.colHints.length, nonogram.rowHints.length, stored.history);
 
         /* Presolve the nonogram */
         const solution = deduceAll(NonogramState.empty(nonogram.rowHints, nonogram.colHints));
@@ -59,7 +57,11 @@ export default class NonogramPageInitializer
             nonogramId,
             nonogram.rowHints, nonogram.colHints,
             solution.newState,
-            cells,
+            stored == undefined ? undefined : SavefileUtils.calculateAllStates(
+                nonogram.colHints.length,
+                nonogram.rowHints.length,
+                stored.history
+            ).map(x => new NonogramState(nonogram.rowHints, nonogram.colHints, x)),
             stored?.elapsed
         );
     

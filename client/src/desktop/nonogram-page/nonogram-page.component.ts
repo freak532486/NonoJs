@@ -18,7 +18,7 @@ import SolverButtonHandler from "./solver-button-handler";
 import SolvedListener from "./listeners/solved-listener";
 import SaveListener from "./listeners/save-listener";
 import { SavefileUtils } from "../../common/services/savefile/savefile-utils";
-import { CellKnowledge } from "../../common/types/nonogram-types";
+import { CellKnowledge, NonogramState } from "../../common/types/nonogram-types";
 import { PLAYFIELD_TITLE } from "../../common/titles";
 import AuthService from "../../common/services/auth/auth-service";
 import KeyboardControlsExplainer from "./keyboard-controls-explainer/keyboard-controls-explainer";
@@ -76,15 +76,15 @@ export default class NonogramPage implements UIComponent
 
         const savefile = await this.savefileAccess.fetchLocalSavefile();
         const savestate = SavefileUtils.getSavestateForNonogram(savefile, this.nonogramId);
-        const cells = savestate == undefined ?
-            Array(nonogram.rowHints.length * nonogram.colHints.length).fill(CellKnowledge.UNKNOWN) :
-            SavefileUtils.calculateActiveState(nonogram.colHints.length, nonogram.rowHints.length, savestate.history);
+        const history = savestate == undefined ? undefined :
+            SavefileUtils.calculateAllStates(nonogram.colHints.length, nonogram.rowHints.length, savestate.history)
+                .map(x => new NonogramState(nonogram.rowHints, nonogram.colHints, x));
         
-            const state = new NonogramComponentState(
+        const state = new NonogramComponentState(
             this.nonogramId,
             nonogram.rowHints,
             nonogram.colHints,
-            cells,
+            history,
             savestate?.elapsed || 0
         );
         const board = new NonogramBoardComponent(nonogram.rowHints, nonogram.colHints);

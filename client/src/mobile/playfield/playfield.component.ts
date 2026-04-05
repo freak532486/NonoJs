@@ -44,7 +44,7 @@ export class PlayfieldComponent implements UIComponent {
         public readonly rowHints: Array<Array<number>>,
         public readonly colHints: Array<Array<number>>,
         public readonly solution: NonogramState,
-        initialState: Array<number> | undefined,
+        initialHistory: Array<NonogramState> | undefined,
         initialElapsedTime: number | undefined,
     )
     {
@@ -52,22 +52,21 @@ export class PlayfieldComponent implements UIComponent {
         this.#nonogramBoard.setClickListener((ev, p) => this.#nonogramBoard.selection = p);
         this.#solverService = new PlayfieldSolverService(this);
 
-        /* Apply stored state if exists */
-        if (initialState) {
-            this.#nonogramBoard.applyState(new BoardComponentFullState(
-                initialState,
-                Array(this.#nonogramBoard.height).fill(null).map(() => []),
-                Array(this.#nonogramBoard.width).fill(null).map(() => []),
-                []
-            ));
-        }
-
         if (initialElapsedTime) {
             this.#timer.elapsed = initialElapsedTime;
         }
 
         /* Prepare history */
-        this.#stateHistory.push(this.#nonogramBoard.getFullState());
+        if (initialHistory == undefined) {
+            this.#stateHistory.push(fullStateAnalysis(NonogramState.empty(rowHints, colHints)));
+        } else {
+            this.#stateHistory = initialHistory.map(x => fullStateAnalysis(x));
+        }
+
+        this.#activeStateIdx = this.#stateHistory.length - 1;
+
+        /* Apply latest history state */
+        this.#nonogramBoard.applyState(this.#stateHistory[this.#stateHistory.length - 1]);
 
         /* Recheck hints */
         const emptyState = Array(this.#nonogramBoard.width * this.#nonogramBoard.height).fill(CellKnowledge.UNKNOWN);
@@ -149,8 +148,8 @@ export class PlayfieldComponent implements UIComponent {
         const undoButton = controlPad.getButton(ControlPadButton.UNDO);
         const redoButton = controlPad.getButton(ControlPadButton.REDO);
 
-        undoButton.style.visibility = "hidden";
-        redoButton.style.visibility = "hidden";
+        undoButton.style.visibility = this.#activeStateIdx == 0 ? "hidden" : "visible";
+        redoButton.style.visibility = this.#activeStateIdx == this.#stateHistory.length - 1 ? "hidden" : "visible";
 
         /* Create message box */
         await this.#messageBox.init(zoomWindow.view);
@@ -607,4 +606,33 @@ function stateHasError(
     }
 
     return false;
+}
+
+function fullStateAnalysis(state: NonogramState): BoardComponentFullState
+{
+    const errLines: Array<LineId> = [];
+    const finishedRowHints: Array<Array<number>> = [];
+    const finishedColHints: Array<Array<number>> = [];
+
+    for (let x = 0; x < state.width; x++) {
+        const deduction = checkHints(state.getLineKnowledge(LineId.column(x)), state.colHints[x]);
+        if (deduction == undefined) {
+            errLines.push(LineId.column(x));
+            continue;
+        }
+
+        finishedColHints.push(deduction.finishedHints);
+    }
+
+    for (let y = 0; y < state.width; y++) {
+        const deduction = checkHints(state.getLineKnowledge(LineId.row(y)), state.rowHints[y]);
+        if (deduction == undefined) {
+            errLines.push(LineId.row(y));
+            continue;
+        }
+
+        finishedRowHints.push(deduction.finishedHints);
+    }
+
+    return new BoardComponentFullState(state.cells, finishedRowHints, finishedColHints, errLines);
 }

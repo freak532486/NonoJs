@@ -80,6 +80,8 @@ export namespace SavefileUtils {
             applyHistoryDelta(cur, entry);
         }
 
+        ret.push([...cur]);
+
         return ret;
     }
 
