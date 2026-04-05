@@ -3,7 +3,7 @@ import { CatalogAccess } from "../common/services/catalog/catalog-access";
 import { navigateTo } from "../common/services/navigate-to";
 import SavefileAccess from "../common/services/savefile/savefile-access";
 import SavefileManager from "../common/services/savefile/savefile-manager";
-import SavefileMigrator from "../common/services/savefile/savefile-migrator";
+import ClientSavefileMigrator from "../common/services/savefile/savefile-migrator";
 import { DEFAULT_TITLE, NOT_FOUND_TITLE } from "../common/titles";
 import NonojsClient from "../common/types/nonojs-client";
 import DesktopConfirmRegistrationPage from "./confirm-registration/component";
@@ -36,7 +36,7 @@ export default class DesktopClient implements NonojsClient
 
     async init(): Promise<void> {
         await new SavefileManager(this.authService, this.savefileAccess, this.catalogAccess).initializeLocalSavefile();
-        await new SavefileMigrator(this.savefileAccess).performStorageMigration();
+        await new ClientSavefileMigrator(this.savefileAccess).performStorageMigration();
     }
 
     async openStartPage(): Promise<void> {
