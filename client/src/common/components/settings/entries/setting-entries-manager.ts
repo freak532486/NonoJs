@@ -1,4 +1,5 @@
 import AuthService from "../../../services/auth/auth-service";
+import { CatalogAccess } from "../../../services/catalog/catalog-access";
 import SavefileAccess from "../../../services/savefile/savefile-access";
 import Settings from "../index/settings.component";
 import DeleteAccountEntry from "./delete-account-entry/delete-account-entry.component";
@@ -11,7 +12,8 @@ export default class SettingEntriesManager
     constructor(
         private readonly settings: Settings,
         private readonly savefileAccess: SavefileAccess,
-        private readonly authService: AuthService
+        private readonly authService: AuthService,
+        private readonly catalogAccess: CatalogAccess
     ) {}
 
     async createSettingsEntries()
@@ -25,7 +27,7 @@ export default class SettingEntriesManager
         const localSavefile = this.savefileAccess.fetchLocalSavefileForUser(undefined);
 
         if (username && localSavefile) {
-            const mergeEntry = new SavefileMergeEntry(this.authService, this.savefileAccess, username);
+            const mergeEntry = new SavefileMergeEntry(this.authService, this.savefileAccess, this.catalogAccess, username);
             this.settings.addEntry(mergeEntry.view);
         }
 

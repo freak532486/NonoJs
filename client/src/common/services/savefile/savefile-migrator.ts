@@ -1,7 +1,8 @@
 import { SaveFile } from "nonojs-common";
 import SavefileAccess from "./savefile-access.js";
+import { CellKnowledge } from "../../types/nonogram-types.js";
 
-export const ACTIVE_VERSION_KEY = 4;
+export const ACTIVE_VERSION_KEY = 5;
 
 export default class SavefileMigrator {
 
@@ -20,6 +21,7 @@ export default class SavefileMigrator {
         await MIGR002_addSolvedFlag(val);
         await MIGR003_addUsername(val);
         await MIGR004_addActiveNonogramList(val);
+        await MIGR005_stateToHistory(val);
 
         this.savefileAccess.writeLocalSavefile(val);
     }
@@ -90,4 +92,45 @@ async function MIGR004_addActiveNonogramList(val: SaveFile) {
     } else {
         val.activeNonogramIds = [];
     }
+}
+
+/**
+ * MIGR005: The full history of a nonogram is stored now, as deltas.
+ */
+async function MIGR005_stateToHistory(val: SaveFile)
+{
+    const VERSION_KEY = 5;
+    if (val.versionKey >= VERSION_KEY) {
+        return;
+    }
+    val.versionKey = VERSION_KEY;
+
+    for (const entry of val.entries) {
+        const savestate = entry.state;
+
+        const cells = (savestate as any).cells as Array<CellKnowledge> | undefined;
+        if (cells == undefined) {
+            continue;
+        }
+
+        savestate.history = [{
+            changes: cellsToHistoryDelta(cells)
+        }];
+        (savestate as any).cells = undefined;
+    }
+}
+
+function cellsToHistoryDelta(cells: Array<CellKnowledge>): Array<number>
+{
+    const ret = [];
+    for (let i = 0; i < cells.length; i++) {
+        if (cells[i] == CellKnowledge.UNKNOWN) {
+            continue;
+        }
+
+        ret.push(cells[i]);
+        ret.push(i);
+    }
+
+    return ret;
 }

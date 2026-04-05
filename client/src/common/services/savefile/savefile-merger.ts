@@ -1,8 +1,10 @@
-import { SaveFile, SaveFileEntry, SaveState } from "nonojs-common";
+import { Nonogram, SaveFile, SaveFileEntry, SaveState } from "nonojs-common";
 import { ACTIVE_VERSION_KEY } from "./savefile-migrator";
 import SavefileAccess from "./savefile-access";
 import AuthService from "../auth/auth-service";
 import { CellKnowledge } from "../../types/nonogram-types";
+import { CatalogAccess } from "../catalog/catalog-access";
+import { SavefileUtils } from "./savefile-utils";
 
 export enum MergeStrategy {
     LOCAL_WINS,
@@ -14,7 +16,8 @@ export default class SavefileMerger
 
     constructor(
         private readonly authService: AuthService,
-        private readonly savefileAccess: SavefileAccess
+        private readonly savefileAccess: SavefileAccess,
+        private readonly catalogAccess: CatalogAccess
     )
     {}
 
@@ -22,12 +25,12 @@ export default class SavefileMerger
      * Merges the given local savefile and server savefile. Savefiles not belonging to the given username are filtered.
      * Returns the merge result.
      */
-    getMergedSavefileForUser(
+    async getMergedSavefileForUser(
         serverSavefile: SaveFile | undefined,
         localSavefile: SaveFile | undefined,
         username: string | undefined,
         mergeStrategy: MergeStrategy
-    ): SaveFile
+    ): Promise<SaveFile>
     {
         /* Remove savefiles that do not match requested user */
         if (serverSavefile && serverSavefile.username !== username) {
@@ -79,7 +82,7 @@ export default class SavefileMerger
         }
 
         /* Merge, userless savefile wins */
-        const merged = this.mergeSavefiles(accountSavefile, freeSavefile);
+        const merged = await this.mergeSavefiles(accountSavefile, freeSavefile);
 
         /* Write savefile */
         this.savefileAccess.writeLocalSavefile(merged);
@@ -96,10 +99,10 @@ export default class SavefileMerger
     /**
      * Merges two savefiles. If there is a conflict on some data, then the winning savefile wins.
      */
-    mergeSavefiles(
+    async mergeSavefiles(
         losingSavefile: SaveFile,
         winningSavefile: SaveFile
-    ): SaveFile
+    ): Promise<SaveFile>
     {
         /* Assumption: Server has more recent state. */
         const activeNonogramIds = [];
@@ -118,10 +121,15 @@ export default class SavefileMerger
         const mergedEntries: Array<SaveFileEntry> = [];
         for (const entry of entryMap.entries()) {
             const nonogramId = entry[0];
+            const nonogram = await this.catalogAccess.getNonogram(nonogramId);
+            if (nonogram == undefined) {
+                continue;
+            }
+
             const savestate = entry[1];
 
             mergedEntries.push({ nonogramId: nonogramId, state: savestate });
-            if (isActiveNonogram(savestate)) {
+            if (isActiveNonogram(savestate, nonogram)) {
                 activeNonogramIds.push(nonogramId);
             }
         }
@@ -137,12 +145,18 @@ export default class SavefileMerger
 
 };
 
-function isActiveNonogram(saveState: SaveState)
+function isActiveNonogram(saveState: SaveState, nonogram: Nonogram)
 {
-    const numFilled = saveState.cells
+    const cells = SavefileUtils.calculateActiveState(
+        nonogram.colHints.length,
+        nonogram.rowHints.length,
+        saveState.history
+    );
+
+    const numFilled = cells
         .map(x => x == CellKnowledge.UNKNOWN ? 0 : 1)
         .map(x => x as number)
         .reduce((a, b) => a + b, 0);
 
-    return numFilled > 0 && numFilled < saveState.cells.length;
+    return numFilled > 0 && numFilled < cells.length;
 }

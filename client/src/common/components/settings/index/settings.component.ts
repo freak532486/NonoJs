@@ -5,6 +5,7 @@ import UIComponent from "../../../types/ui-component";
 import SavefileAccess from "../../../services/savefile/savefile-access";
 import AuthService from "../../../services/auth/auth-service";
 import { htmlToElement } from "../../../services/html-to-element";
+import { CatalogAccess } from "../../../services/catalog/catalog-access";
 
 export default class Settings implements UIComponent
 {
@@ -13,14 +14,16 @@ export default class Settings implements UIComponent
 
     constructor(
         savefileAccess: SavefileAccess,
-        authService: AuthService
+        authService: AuthService,
+        catalogAccess: CatalogAccess
     )
     {
         this.#view = htmlToElement(template);
         this.#entriesManager = new SettingEntriesManager(
             this,
             savefileAccess,
-            authService
+            authService,
+            catalogAccess
         );
     }
 

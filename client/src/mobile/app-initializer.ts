@@ -23,7 +23,7 @@ export default class AppInitializer
         private readonly menu: Menu,
         private readonly header: Header
     ) {
-        this.savefileManager = new SavefileManager(authService, savefileAccess);
+        this.savefileManager = new SavefileManager(authService, savefileAccess, catalogAccess);
         this.savefileMigrator = new SavefileMigrator(savefileAccess);
     }
 

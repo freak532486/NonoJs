@@ -17,7 +17,7 @@ import NonogramMouseControlsHandler from "./mouse-controls";
 import SolverButtonHandler from "./solver-button-handler";
 import SolvedListener from "./listeners/solved-listener";
 import SaveListener from "./listeners/save-listener";
-import { getSavestateForNonogram } from "../../common/services/savefile/savefile-utils";
+import { SavefileUtils } from "../../common/services/savefile/savefile-utils";
 import { CellKnowledge } from "../../common/types/nonogram-types";
 import { PLAYFIELD_TITLE } from "../../common/titles";
 import AuthService from "../../common/services/auth/auth-service";
@@ -75,12 +75,16 @@ export default class NonogramPage implements UIComponent
         document.title = PLAYFIELD_TITLE(nonogram.colHints.length, nonogram.rowHints.length);
 
         const savefile = await this.savefileAccess.fetchLocalSavefile();
-        const savestate = getSavestateForNonogram(savefile, this.nonogramId);
-        const state = new NonogramComponentState(
+        const savestate = SavefileUtils.getSavestateForNonogram(savefile, this.nonogramId);
+        const cells = savestate == undefined ?
+            Array(nonogram.rowHints.length * nonogram.colHints.length).fill(CellKnowledge.UNKNOWN) :
+            SavefileUtils.calculateActiveState(nonogram.colHints.length, nonogram.rowHints.length, savestate.history);
+        
+            const state = new NonogramComponentState(
             this.nonogramId,
             nonogram.rowHints,
             nonogram.colHints,
-            savestate?.cells || Array(nonogram.rowHints.length * nonogram.colHints.length).fill(CellKnowledge.UNKNOWN),
+            cells,
             savestate?.elapsed || 0
         );
         const board = new NonogramBoardComponent(nonogram.rowHints, nonogram.colHints);
@@ -145,7 +149,7 @@ export default class NonogramPage implements UIComponent
         const solvedListener = new SolvedListener(state);
         state.listeners.push(solvedListener);
 
-        const saveListener = new SaveListener(state, this.authService, this.savefileAccess);
+        const saveListener = new SaveListener(state, this.authService, this.savefileAccess, this.catalogAccess);
         state.listeners.push(saveListener);
 
         /* Create keyboard listener */

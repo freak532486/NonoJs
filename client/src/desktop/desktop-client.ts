@@ -35,7 +35,7 @@ export default class DesktopClient implements NonojsClient
     }
 
     async init(): Promise<void> {
-        await new SavefileManager(this.authService, this.savefileAccess).initializeLocalSavefile();
+        await new SavefileManager(this.authService, this.savefileAccess, this.catalogAccess).initializeLocalSavefile();
         await new SavefileMigrator(this.savefileAccess).performStorageMigration();
     }
 

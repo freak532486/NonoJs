@@ -554,6 +554,10 @@ export class PlayfieldComponent implements UIComponent {
         this.#listeners.forEach(x => x.onCellsChanged());
     }
 
+    get history() {
+        return this.#stateHistory;
+    }
+
 };
 
 /**

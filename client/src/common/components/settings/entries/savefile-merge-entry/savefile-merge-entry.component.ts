@@ -5,6 +5,7 @@ import SavefileMerger from "../../../../services/savefile/savefile-merger";
 import { htmlToElement } from "../../../../services/html-to-element";
 import { navigateTo } from "../../../../services/navigate-to";
 import AuthService from "../../../../services/auth/auth-service";
+import { CatalogAccess } from "../../../../services/catalog/catalog-access";
 
 export default class SavefileMergeEntry
 {
@@ -13,9 +14,10 @@ export default class SavefileMergeEntry
     constructor(
         authService: AuthService,
         savefileAccess: SavefileAccess,
+        catalogAccess: CatalogAccess,
         username: string
     ) {
-        const savefileMerger = new SavefileMerger(authService, savefileAccess);
+        const savefileMerger = new SavefileMerger(authService, savefileAccess, catalogAccess);
 
         this.#view = htmlToElement(template.replace("$username", username));
         const button = this.#view.querySelector("#btn-savefile-merge") as HTMLButtonElement;

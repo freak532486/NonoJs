@@ -5,7 +5,7 @@ import { htmlToElement } from "../../services/html-to-element";
 import { CatalogAccess } from "../../services/catalog/catalog-access";
 import SavefileAccess from "../../services/savefile/savefile-access";
 import { Nonogram, SaveFile } from "nonojs-common";
-import { getSavestateForNonogram, removeSavestate } from "../../services/savefile/savefile-utils";
+import { SavefileUtils } from "../../services/savefile/savefile-utils";
 import { CellKnowledge } from "../../types/nonogram-types";
 
 type NonogramStatus = "blank" | "started" | "solved";
@@ -65,7 +65,7 @@ export default class QuickplayComponent implements UIComponent
         partitionedNonograms.set("solved", []);
 
         for (const nonogram of possibleNonograms) {
-            partitionedNonograms.get(getNonogramStatus(savefile, nonogram.id))!.push(nonogram);
+            partitionedNonograms.get(getNonogramStatus(savefile, nonogram))!.push(nonogram);
         }
 
         /* Prefer blank nonograms, then started nonograms, and only then solved nonograms */
@@ -81,7 +81,7 @@ export default class QuickplayComponent implements UIComponent
         /* If the chosen nonogram was a solved nonogram, then the savestate should be cleared */
         const chosenNonogramId = listToChooseFrom[r].id;
         if (listKeyToChooseFrom == "solved") {
-            removeSavestate(savefile, chosenNonogramId);
+            SavefileUtils.removeSavestate(savefile, chosenNonogramId);
             await this.savefileAccess.writeLocalSavefile(savefile);
             await this.savefileAccess.writeServerSavefile(savefile);
         }
@@ -96,17 +96,23 @@ export default class QuickplayComponent implements UIComponent
 
 
 
-function getNonogramStatus(savefile: SaveFile, nonogramId: string): NonogramStatus
+function getNonogramStatus(savefile: SaveFile, nonogram: Nonogram): NonogramStatus
 {
-    const savestate = getSavestateForNonogram(savefile, nonogramId);
+    const savestate = SavefileUtils.getSavestateForNonogram(savefile, nonogram.id);
     if (savestate == undefined) {
         return "blank";
     }
 
-    const numFilledCells = savestate.cells
+    const cells = SavefileUtils.calculateActiveState(
+        nonogram.colHints.length,
+        nonogram.rowHints.length,
+        savestate.history
+    );
+
+    const numFilledCells = cells
         .map(x => x == CellKnowledge.UNKNOWN ? 0 : 1)
         .map(x => x as number)
         .reduce((a, b) => a + b, 0);
 
-    return numFilledCells == savestate.cells.length ? "solved" : "started";
+    return numFilledCells == cells.length ? "solved" : "started";
 }

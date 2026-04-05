@@ -39,7 +39,6 @@ export class LineId {
 
 /**
  * Current knowledge about a nonogram cell.
- * @enum {number}
  */
 export enum CellKnowledge {
     UNKNOWN, DEFINITELY_WHITE, DEFINITELY_BLACK

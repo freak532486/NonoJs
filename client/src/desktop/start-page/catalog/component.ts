@@ -4,7 +4,7 @@ import UIComponent from "../../../common/types/ui-component";
 import { htmlToElement } from "../../../common/services/html-to-element";
 import { CatalogAccess } from "../../../common/services/catalog/catalog-access";
 import SavefileAccess from "../../../common/services/savefile/savefile-access";
-import { getSavestateForNonogram } from "../../../common/services/savefile/savefile-utils";
+import { SavefileUtils } from "../../../common/services/savefile/savefile-utils";
 import { Nonogram, SaveState } from "nonojs-common";
 import { CellKnowledge } from "../../../common/types/nonogram-types";
 
@@ -91,8 +91,8 @@ export default class DesktopCatalogComponent implements UIComponent
         /* Create new entries from matching nonograms */
         const savefile = await this.savefileAccess.fetchLocalSavefile();
         for (const nono of matchingNonograms) {
-            const savestate = getSavestateForNonogram(savefile, nono.id);
-            const progress = savestate ? getProgress(savestate) : 0;
+            const savestate = SavefileUtils.getSavestateForNonogram(savefile, nono.id);
+            const progress = savestate ? getProgress(savestate, nono) : 0;
 
             const idVal = "#" + nono.id.substring(0, 6);
             const sizeVal = nono.colHints.length + "x" + nono.rowHints.length;
@@ -121,6 +121,11 @@ export default class DesktopCatalogComponent implements UIComponent
     
 }
 
-function getProgress(savestate: SaveState): number {
-    return savestate.cells.filter(x => x !== CellKnowledge.UNKNOWN).length / savestate.cells.length;
+function getProgress(savestate: SaveState, nonogram: Nonogram): number {
+    const cells = SavefileUtils.calculateActiveState(
+        nonogram.colHints.length,
+        nonogram.rowHints.length, 
+        savestate.history
+    );
+    return cells.filter(x => x !== CellKnowledge.UNKNOWN).length / cells.length;
 }

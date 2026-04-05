@@ -78,7 +78,12 @@ export default class MobileClient implements NonojsClient
     }
 
     openSettings(): Promise<void> {
-        return new SettingsRoute(this.activeComponentManager, this.savefileAccess, this.authService).run();
+        return new SettingsRoute(
+            this.activeComponentManager,
+            this.savefileAccess,
+            this.authService,
+            this.catalogAccess
+        ).run();
     }
 
     async openLogin(): Promise<void> {

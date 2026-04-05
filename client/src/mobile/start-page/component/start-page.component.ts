@@ -9,7 +9,7 @@ import { CatalogAccess } from "../../../common/services/catalog/catalog-access";
 import { NonogramPreview } from "../../../common/components/nonogram-preview/nonogram-preview.component";
 import { CellKnowledge, NonogramState } from "../../../common/types/nonogram-types";
 import SavefileAccess from "../../../common/services/savefile/savefile-access"
-import { getSavestateForNonogram } from "../../../common/services/savefile/savefile-utils"
+import { SavefileUtils } from "../../../common/services/savefile/savefile-utils"
 import UIComponent from "../../../common/types/ui-component"
 import BoxComponent from "../../../common/components/box/box.component";
 import Color from "../../../common/types/color";
@@ -157,7 +157,9 @@ export class StartPage implements UIComponent {
         /* Fill body with a preview */
         const content = ret.querySelector(".preview-container") as HTMLElement;
         const savefile = await this.savefileAccess.fetchLocalSavefile();
-        const cells = getSavestateForNonogram(savefile, nonogram.id)?.cells;
+        const saveState = SavefileUtils.getSavestateForNonogram(savefile, nonogram.id);
+        const cells = saveState == undefined ? undefined :
+            SavefileUtils.calculateActiveState(nonogram.colHints.length, nonogram.rowHints.length, saveState.history);
         const nonogramState = cells ? 
             new NonogramState(nonogram.rowHints, nonogram.colHints, cells) : 
             NonogramState.empty(nonogram.rowHints, nonogram.colHints);
@@ -191,8 +193,9 @@ export class StartPage implements UIComponent {
 
         const content = ret.querySelector(".preview-container") as HTMLElement;
         const savefile = await this.savefileAccess.fetchLocalSavefile();
-        const saveState = getSavestateForNonogram(savefile, nonogram.id);
-        const cells = saveState?.cells;
+        const saveState = SavefileUtils.getSavestateForNonogram(savefile, nonogram.id);
+        const cells = saveState == undefined ? undefined :
+            SavefileUtils.calculateActiveState(nonogram.colHints.length, nonogram.rowHints.length, saveState.history);
         const nonogramState = cells ? 
             new NonogramState(nonogram.rowHints, nonogram.colHints, cells) : 
             NonogramState.empty(nonogram.rowHints, nonogram.colHints);

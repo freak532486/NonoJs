@@ -95,7 +95,7 @@ export default class StartPage implements UIComponent
         catalogBox.create(leftCol);
 
         /* Links box */
-        const settingsHandler = new DesktopStartpageSettingsHandler(this.savefileAccess, this.authService, this.root);
+        const settingsHandler = new DesktopStartpageSettingsHandler(this.savefileAccess, this.authService, this.catalogAccess, this.root);
         const navigationBox = new BoxComponent("Other", Color.GREEN);
         new LinkCollection(this.catalogAccess, this.onNonogramSelected, settingsHandler).create(navigationBox.content);
         navigationBox.create(leftCol);
