@@ -5,7 +5,7 @@ import SavefileAccess from "../common/services/savefile/savefile-access";
 import SavefileManager from "../common/services/savefile/savefile-manager";
 import AuthService from "../common/services/auth/auth-service";
 import { CatalogAccess } from "../common/services/catalog/catalog-access";
-import SavefileMigrator from "../common/services/savefile/savefile-migrator";
+import ClientSavefileMigrator from "../common/services/savefile/savefile-migrator";
 import { Menu } from "./menu/menu.component";
 import { Header } from "./header/header.component";
 
@@ -13,7 +13,7 @@ export default class AppInitializer
 {
 
     private savefileManager: SavefileManager;
-    private savefileMigrator: SavefileMigrator;
+    private savefileMigrator: ClientSavefileMigrator;
 
     constructor(
         private readonly authService: AuthService,
@@ -23,8 +23,8 @@ export default class AppInitializer
         private readonly menu: Menu,
         private readonly header: Header
     ) {
-        this.savefileManager = new SavefileManager(authService, savefileAccess);
-        this.savefileMigrator = new SavefileMigrator(savefileAccess);
+        this.savefileManager = new SavefileManager(authService, savefileAccess, catalogAccess);
+        this.savefileMigrator = new ClientSavefileMigrator(savefileAccess);
     }
 
     async initApp() {

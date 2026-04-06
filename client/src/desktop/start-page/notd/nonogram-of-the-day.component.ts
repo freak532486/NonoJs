@@ -6,9 +6,8 @@ import { StartPageNonogramSelector } from "../../../common/services/start-page/s
 import { CatalogAccess } from "../../../common/services/catalog/catalog-access";
 import { NonogramState } from "../../../common/types/nonogram-types";
 import NonogramButton from "../nonogram-button/nonogram-button.component"
-import NonogramThumbnail from "../../../common/components/nonogram-thumbnail/nonogram-thumbnail.component";
 import SavefileAccess from "../../../common/services/savefile/savefile-access";
-import { getSavestateForNonogram } from "../../../common/services/savefile/savefile-utils";
+import { SavefileUtils } from "../../../common/services/savefile/savefile-utils";
 
 export default class NonogramsOfTheDay implements UIComponent
 {
@@ -37,9 +36,16 @@ export default class NonogramsOfTheDay implements UIComponent
                 continue;
             }
 
-            const savestate = getSavestateForNonogram(savefile, nonogramId);
-            const nonogramState = savestate ? 
-                new NonogramState(nonogram.rowHints, nonogram.colHints, savestate.cells) : 
+            const savestate = SavefileUtils.getSavestateForNonogram(savefile, nonogramId);
+            const cells = savestate == undefined ? undefined :
+                SavefileUtils.calculateActiveState(
+                    nonogram.colHints.length,
+                    nonogram.rowHints.length, 
+                    savestate.history
+                );
+                
+            const nonogramState = cells ? 
+                new NonogramState(nonogram.rowHints, nonogram.colHints, cells) :
                 NonogramState.empty(nonogram.rowHints, nonogram.colHints);
                 
             const button = NonogramButton.withMaximumSize(

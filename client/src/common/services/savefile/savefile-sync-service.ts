@@ -1,4 +1,5 @@
 import AuthService from "../auth/auth-service";
+import { CatalogAccess } from "../catalog/catalog-access";
 import SavefileAccess from "./savefile-access";
 import SavefileMerger from "./savefile-merger";
 
@@ -13,10 +14,11 @@ export default class SavefileSyncService
 
     constructor(
         private readonly authService: AuthService,
-        private readonly savefileAccess: SavefileAccess
+        private readonly savefileAccess: SavefileAccess,
+        private readonly catalogAccess: CatalogAccess
     )
     {
-        this.merger = new SavefileMerger(authService, savefileAccess);
+        this.merger = new SavefileMerger(authService, savefileAccess, catalogAccess);
     }
 
     /**
@@ -42,7 +44,7 @@ export default class SavefileSyncService
     async #doSync() {
         const serverSavefile = await this.savefileAccess.fetchServerSavefile() ;
         const localSavefile = await this.savefileAccess.fetchLocalSavefile();
-        const merged = this.merger.mergeSavefiles(serverSavefile, localSavefile);
+        const merged = await this.merger.mergeSavefiles(serverSavefile, localSavefile);
         await this.savefileAccess.writeServerSavefile(merged);
 
         /* Failed syncs are ignored, in case you are sitting in the train and have no internet or something. */

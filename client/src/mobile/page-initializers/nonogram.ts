@@ -1,4 +1,4 @@
-import { getSavestateForNonogram, putSavestate } from "../../common/services/savefile/savefile-utils";
+import { SavefileUtils } from "../../common/services/savefile/savefile-utils";
 import { PlayfieldComponent } from "../playfield/playfield.component";
 import PlayfieldMenuButtonManager from "../menu/button-managers/playfield-menu-button-manager";
 import { deduceAll } from "../../common/services/solver/solver";
@@ -27,7 +27,7 @@ export default class NonogramPageInitializer
         private readonly menu: Menu
     )
     {
-        this.savefileSyncService = new SavefileSyncService(authService, savefileAccess);
+        this.savefileSyncService = new SavefileSyncService(authService, savefileAccess, catalogAccess);
     }
 
     async run(nonogramId: string): Promise<void> {
@@ -42,7 +42,7 @@ export default class NonogramPageInitializer
     
         /* Load current state */
         const savefile = await this.savefileAccess.fetchLocalSavefile();
-        var stored = savefile ? getSavestateForNonogram(savefile, nonogramId) : undefined;
+        var stored = savefile ? SavefileUtils.getSavestateForNonogram(savefile, nonogramId) : undefined;
 
         /* Presolve the nonogram */
         const solution = deduceAll(NonogramState.empty(nonogram.rowHints, nonogram.colHints));
@@ -57,7 +57,11 @@ export default class NonogramPageInitializer
             nonogramId,
             nonogram.rowHints, nonogram.colHints,
             solution.newState,
-            stored?.cells,
+            stored == undefined ? undefined : SavefileUtils.calculateAllStates(
+                nonogram.colHints.length,
+                nonogram.rowHints.length,
+                stored.history
+            ).map(x => new NonogramState(nonogram.rowHints, nonogram.colHints, x)),
             stored?.elapsed
         );
     
@@ -126,8 +130,10 @@ export default class NonogramPageInitializer
         const curState = playfield.currentState;
         const savefile = await this.savefileAccess.fetchLocalSavefile();
 
-        putSavestate(savefile, playfield.nonogramId, {
-            cells: curState.cells,
+        SavefileUtils.putSavestate(savefile, playfield.nonogramId, {
+            history: SavefileUtils.getSavestateHistory(
+                playfield.history.map(x => new NonogramState(playfield.rowHints, playfield.colHints, x.cells))
+            ),
             elapsed: playfield.elapsed
         });
 

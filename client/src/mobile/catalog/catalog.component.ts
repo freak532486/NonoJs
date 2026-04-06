@@ -3,7 +3,7 @@ import { CellKnowledge } from "../../common/types/nonogram-types.js";
 import catalog from "./catalog.html"
 import catalogEntry from "./catalog-entry.html"
 import "./catalog.css"
-import { getAllStoredStates } from "../../common/services/savefile/savefile-utils.js";
+import { SavefileUtils } from "../../common/services/savefile/savefile-utils.js";
 import UIComponent from "../../common/types/ui-component.js";
 import { CatalogAccess } from "../../common/services/catalog/catalog-access.js";
 import SavefileAccess from "../../common/services/savefile/savefile-access.js";
@@ -61,15 +61,17 @@ export class Catalog implements UIComponent {
         });
         
         const savefile = await this.savefileAccess.fetchLocalSavefile();
-        const stored = getAllStoredStates(savefile);
+        const stored = SavefileUtils.getAllStoredStates(savefile);
         for (const nonogram of loaded) {
-            const numFilled = stored.get(nonogram.id)
-                ?.cells
-                .reduce((sum, x) => sum + (x == CellKnowledge.UNKNOWN ? 0 : 1), 0) 
+            const savestate = stored.get(nonogram.id);
+            const cells = savestate == undefined ? undefined :
+                SavefileUtils.calculateActiveState(nonogram.colHints.length, nonogram.rowHints.length, savestate.history);
+            const numFilled = cells
+                ?.reduce((sum, x) => sum + (x == CellKnowledge.UNKNOWN ? 0 : 1), 0) 
                 ?? 0;
                 
             const numTotal = nonogram.rowHints.length * nonogram.colHints.length;
-            const div = await this.#createEntry(
+            const div = this.#createEntry(
                 "#" + nonogram.id,
                 nonogram.colHints.length + "x" + nonogram.rowHints.length,
                 numFilled / numTotal

@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify'
 import { SaveFile, SaveFileSchema } from 'nonojs-common';
 import { getActiveUserIdOrThrow } from '../api-utils';
+import SavefileMigrator from 'nonojs-common/dist/service/savefile-migrator';
 
 const get: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     fastify.route<{
@@ -20,6 +21,9 @@ const get: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
             if (!ret) {
                 throw fastify.httpErrors.notFound();
             }
+
+            /* Always perform savefile migrations before responding, otherwise the schema validation might fail! */
+            await new SavefileMigrator().performSavefileMigration(ret);
 
             return ret; 
         }

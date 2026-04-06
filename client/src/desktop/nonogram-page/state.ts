@@ -56,24 +56,40 @@ export class NonogramComponentState
         public readonly nonogramId: string,
         public readonly rowHints: Array<Array<number>>,
         public readonly colHints: Array<Array<number>>,
-        cells: Array<CellKnowledge>,
+        history: Array<NonogramState> | undefined,
         elapsed: number
     )
     {
         this._elapsed = elapsed;
 
-        const initialState = new NonogramState(rowHints, colHints, cells);
-        const hintDeduction = this.performHintDeduction(initialState, this.allLineIds);
-        const intitialEntry: HistoryEntry = {
-            state: new NonogramState(rowHints, colHints, cells),
-            errorLines: hintDeduction.errorLines,
-            crossedOutHints: hintDeduction.newFinishedHints
-        };
+        if (history == undefined) {
+            const initialState = NonogramState.empty(rowHints, colHints);
+            const hintDeduction = this.performHintDeduction(initialState, this.allLineIds);
+            this._history = [{
+                state: initialState,
+                crossedOutHints: hintDeduction.newFinishedHints,
+                errorLines: hintDeduction.errorLines
+            }];
+        } else {
+            this._history = history.map(state => {
+                const initialState = new NonogramState(rowHints, colHints, state.cells);
+                const hintDeduction = this.performHintDeduction(initialState, this.allLineIds);
+                const intitialEntry: HistoryEntry = {
+                    state: new NonogramState(rowHints, colHints, state.cells),
+                    errorLines: hintDeduction.errorLines,
+                    crossedOutHints: hintDeduction.newFinishedHints
+                };
 
-        this._history = [intitialEntry];
+                return intitialEntry;
+            });
+        }
+
+        this._historyIdx = this._history.length - 1;
+
+        const initialState = this._history[0].state;
+        const latestState = this._history[this._history.length - 1].state;
         this._solution = deduceAll(initialState).newState;
-
-        this._isSolved = ListUtils.shallowEquals(this._solution.cells, initialState.cells);
+        this._isSolved = ListUtils.shallowEquals(this._solution.cells, latestState.cells);
 
         const timerAnim = (ts: number) => {
             if (this._isSolved) {

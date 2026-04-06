@@ -1,6 +1,7 @@
 import SavefileMerger, { MergeStrategy } from "./savefile-merger";
 import SavefileAccess from "./savefile-access";
 import AuthService from "../auth/auth-service";
+import { CatalogAccess } from "../catalog/catalog-access";
 
 export default class SavefileManager
 {
@@ -9,10 +10,11 @@ export default class SavefileManager
 
     constructor(
         private readonly authService: AuthService,
-        private readonly savefileAccess: SavefileAccess
+        private readonly savefileAccess: SavefileAccess,
+        private readonly catalogAccess: CatalogAccess
     )
     {
-        this.merger = new SavefileMerger(authService, savefileAccess);
+        this.merger = new SavefileMerger(authService, savefileAccess, catalogAccess);
     }
 
     /**
@@ -25,13 +27,13 @@ export default class SavefileManager
         const localSavefile = await this.savefileAccess.fetchLocalSavefile();
 
         /* When loading savefiles, the server savefile wins */
-        const merged = this.merger.getMergedSavefileForUser(
+        const merged = await this.merger.getMergedSavefileForUser(
             serverSavefile,
             localSavefile,
             username,
             MergeStrategy.SERVER_WINS
         );
 
-        this.savefileAccess.writeLocalSavefile(merged);
+        await this.savefileAccess.writeLocalSavefile(merged);
     }
 }

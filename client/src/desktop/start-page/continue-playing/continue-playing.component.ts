@@ -4,7 +4,7 @@ import { CatalogAccess } from "../../../common/services/catalog/catalog-access";
 import SavefileAccess from "../../../common/services/savefile/savefile-access";
 import UIComponent from "../../../common/types/ui-component";
 import { htmlToElement } from "../../../common/services/html-to-element";
-import { getSavestateForNonogram } from "../../../common/services/savefile/savefile-utils";
+import { SavefileUtils } from "../../../common/services/savefile/savefile-utils";
 import { NonogramState } from "../../../common/types/nonogram-types";
 import NonogramButton from "../nonogram-button/nonogram-button.component";
 import { SaveFile } from "nonojs-common";
@@ -42,9 +42,16 @@ export default class ContinuePlaying implements UIComponent
             return;
         }
 
-        const savestate = getSavestateForNonogram(savefile, nonogramId);
-        const state = savestate ? 
-            new NonogramState(loadedNonogram.rowHints, loadedNonogram.colHints, savestate.cells) :
+        const savestate = SavefileUtils.getSavestateForNonogram(savefile, nonogramId);
+        const cells = savestate == undefined ? undefined :
+            SavefileUtils.calculateActiveState(
+                loadedNonogram.colHints.length,
+                loadedNonogram.rowHints.length, 
+                savestate.history
+            );
+            
+        const state = cells ? 
+            new NonogramState(loadedNonogram.rowHints, loadedNonogram.colHints, cells) :
             NonogramState.empty(loadedNonogram.rowHints, loadedNonogram.colHints);
 
         const button = NonogramButton.withMaximumSize(state, 200, 200, () => this.onNonogramSelected(nonogramId));
