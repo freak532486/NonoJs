@@ -124,3 +124,14 @@
     opacity: 0.5;
     background-color: var(--bg1);
 }
+
+.image-preview {
+    grid-row: 1;
+    grid-column: 1;
+
+    min-width: 0;
+    min-height: 0;
+    
+    justify-self: stretch;
+    align-self: stretch;
+}
