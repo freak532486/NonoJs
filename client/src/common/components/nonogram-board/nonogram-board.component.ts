@@ -1,3 +1,4 @@
+import { ListUtils } from "../../services/list-utils.js";
 import { CellKnowledge, LineId, LineKnowledge, LineType } from "../../types/nonogram-types.js";
 import { Point } from "../../types/point.js";
 import UIComponent from "../../types/ui-component.js";
@@ -63,6 +64,8 @@ export class NonogramBoardComponent implements UIComponent {
 
     #state: Array<CellKnowledge>;
     #errorLines: Array<LineId> = [];
+
+    #imageThumbnail: HTMLCanvasElement;
 
     private previewColor: CellKnowledge = CellKnowledge.UNKNOWN;
 
@@ -162,6 +165,13 @@ export class NonogramBoardComponent implements UIComponent {
             }
         }
 
+        /* Create canvas for image preview */
+        this.#imageThumbnail = document.createElement("canvas");
+        this.#imageThumbnail.classList.add("image-preview");
+        this.#imageThumbnail.width = 0;
+        this.#imageThumbnail.height = 0;
+
+
         /* Create selection element */
         this.#selectionDiv.classList.add("selection-cursor");
 
@@ -202,12 +212,16 @@ export class NonogramBoardComponent implements UIComponent {
             }
         }
 
+        view.appendChild(this.#imageThumbnail);
         view.appendChild(this.#selectionDiv);
         this.#view = view;
     }
 
     create(parent: HTMLElement): HTMLElement {
         parent.append(this.view);
+
+        /* Need to update image preview because size can be calculated now */
+        this.updateImagePreview();
 
         /* Move selection to top-left corner */
         this.selection = new Point(0, 0);
@@ -306,7 +320,11 @@ export class NonogramBoardComponent implements UIComponent {
     /**
      * Sets the state of a cell.
      */
-    setCellState(x: number, y: number, state: CellKnowledge) {
+    setCellState(x: number, y: number, state: CellKnowledge, updateImagePreview: boolean = true) {
+        if (this.getCellState(x, y) == state) {
+            return;
+        }
+
         this.#state[x + y * this.#width] = state;
         
         const div = this.#getCellDiv(x, y);
@@ -314,7 +332,6 @@ export class NonogramBoardComponent implements UIComponent {
 
         switch (state) {
             case CellKnowledge.UNKNOWN:
-                
                 break;
 
             case CellKnowledge.DEFINITELY_WHITE:
@@ -328,6 +345,10 @@ export class NonogramBoardComponent implements UIComponent {
                 blackCell.classList.add("cell-state");
                 div.appendChild(blackCell);
                 break;
+        }
+
+        if (updateImagePreview) {
+            this.updateImagePreview();
         }
     }
 
@@ -355,9 +376,11 @@ export class NonogramBoardComponent implements UIComponent {
     updateCells(cells: Array<CellKnowledge>) {
         for (let y = 0; y < this.#height; y++) {
             for (let x = 0; x < this.#width; x++) {
-                this.setCellState(x, y, cells[x + y * this.#width]);
+                this.setCellState(x, y, cells[x + y * this.#width], false);
             }
         }
+
+        this.updateImagePreview();
     }
 
     /**
@@ -387,7 +410,7 @@ export class NonogramBoardComponent implements UIComponent {
             const x = i % this.#width;
             const y = Math.floor(i / this.#width);
 
-            this.setCellState(x, y, cells[i]);
+            this.setCellState(x, y, cells[i], false);
         }
 
         /* Apply finished row/column hints */
@@ -404,6 +427,7 @@ export class NonogramBoardComponent implements UIComponent {
         }
         
         this.#updateHintDivDisplay();
+        this.updateImagePreview();
     }
 
     /**
@@ -497,7 +521,7 @@ export class NonogramBoardComponent implements UIComponent {
      * Marks a line either erroneous or not.
      */
     markError(lineId: LineId, isError: boolean) {
-        removeIf(this.#errorLines, x => x.equals(lineId));
+        ListUtils.removeIf(this.#errorLines, x => x.equals(lineId));
         if (isError) {
             this.#errorLines.push(lineId);
         }
@@ -658,27 +682,61 @@ export class NonogramBoardComponent implements UIComponent {
 
     }
 
+    private updateImagePreview()
+    {
+        /* Determine actual canvas size */
+        const rect = this.#imageThumbnail.getBoundingClientRect();
+        const width = this.#imageThumbnail.offsetWidth;
+        const height = this.#imageThumbnail.offsetHeight;
+
+        this.#imageThumbnail.width = width;
+        this.#imageThumbnail.height = height;
+
+        /* Calculate drawing bounds */
+        const imageAspect = this.width / this.height;
+        const canvasAspect = width / height;
+
+        let minX = 0;
+        let minY = 0;
+        let maxX = 0;
+        let maxY = 0;
+
+        if (canvasAspect > imageAspect) {
+            const thumbnailWidth = height * imageAspect;
+
+            minX = (width - thumbnailWidth) / 2;
+            maxX = (width + thumbnailWidth) / 2;
+            minY = 0;
+            maxY = height;
+        } else {
+            const thumbnailHeight = width / imageAspect;
+
+            minX = 0;
+            maxX = width;
+            minY = (height - thumbnailHeight) / 2;
+            maxY = (height + thumbnailHeight) / 2;
+        }
+
+        /* Draw each square */
+        const squareWidth = (maxX - minX) / this.width;
+        const squareHeight = (maxY - minY) / this.height;
+        const ctx = this.#imageThumbnail.getContext("2d")!;
+        for (let x = 0; x < this.width; x++) {
+            for (let y = 0; y < this.height; y++) {
+                const cell = this.getCellState(x, y);
+
+                ctx.fillStyle = cell == CellKnowledge.DEFINITELY_BLACK ? "black" : "white";
+                ctx.fillRect(
+                    Math.floor(minX + x * squareWidth),
+                    Math.floor(minY + y * squareHeight),
+                    Math.ceil(squareWidth),
+                    Math.ceil(squareHeight)
+                );
+            }
+        }
+    }
+
 };
-
-/**
- * Removes all elements from the given array that satisfy the given predicate. Returns true if something was removed.
- */
-function removeIf<T>(arr: Array<T>, pred: (val: T) => boolean): boolean {
-    /* Create filtered array */
-    const newArr = arr.filter(x => !pred(x));
-
-    if (arr.length == newArr.length) {
-        return false;
-    }
-
-    /* Overwrite */
-    arr.length = newArr.length;
-    for (let i = 0; i < arr.length; i++) {
-        arr[i] = newArr[i];
-    }
-
-    return true;
-}
 
 /**
  * Returns 'true' iff the contents of the two arrays are equal.
