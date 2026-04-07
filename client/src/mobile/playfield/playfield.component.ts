@@ -624,7 +624,7 @@ function fullStateAnalysis(state: NonogramState): BoardComponentFullState
         finishedColHints.push(deduction.finishedHints);
     }
 
-    for (let y = 0; y < state.width; y++) {
+    for (let y = 0; y < state.height; y++) {
         const deduction = checkHints(state.getLineKnowledge(LineId.row(y)), state.rowHints[y]);
         if (deduction == undefined) {
             errLines.push(LineId.row(y));
