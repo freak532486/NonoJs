@@ -108,28 +108,31 @@ export default class SavefileMerger
         const activeNonogramIds = [];
         
         /* Merge entries: Overwrite based on merge strategy, but keep all entries from both sources */
-        const entryMap = new Map<string, SaveState>();
+        const entryMap = new Map<string, SaveFileEntry>();
 
         for (const entry of losingSavefile.entries) {
-            entryMap.set(entry.nonogramId, entry.state);
+            entryMap.set(entry.nonogramId, entry);
         }
 
         for (const entry of winningSavefile.entries) {
-            entryMap.set(entry.nonogramId, entry.state);
+            const losingEntry = entryMap.get(entry.nonogramId);
+
+            if (losingEntry == undefined || losingEntry.lastModified < entry.lastModified) {
+                entryMap.set(entry.nonogramId, entry);
+            }
         }
 
         const mergedEntries: Array<SaveFileEntry> = [];
-        for (const entry of entryMap.entries()) {
-            const nonogramId = entry[0];
+        for (const mapEntry of entryMap.entries()) {
+            const nonogramId = mapEntry[0];
             const nonogram = await this.catalogAccess.getNonogram(nonogramId);
             if (nonogram == undefined) {
                 continue;
             }
 
-            const savestate = entry[1];
-
-            mergedEntries.push({ nonogramId: nonogramId, state: savestate });
-            if (isActiveNonogram(savestate, nonogram)) {
+            const savefileEntry = mapEntry[1];
+            mergedEntries.push(savefileEntry);
+            if (isActiveNonogram(savefileEntry.state, nonogram)) {
                 activeNonogramIds.push(nonogramId);
             }
         }

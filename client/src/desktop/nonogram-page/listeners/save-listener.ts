@@ -30,14 +30,20 @@ export default class SaveListener implements NonogramComponentStateListener
 
 
         const savefile = await this.savefileAccess.fetchLocalSavefile();
-        let savestate = SavefileUtils.getSavestateForNonogram(savefile, this.state.nonogramId);
-        if (savestate == undefined) {
-            savestate = { history: [], elapsed: 0 };
-            savefile.entries.push({ nonogramId: this.state.nonogramId, state: savestate });
+        let entry = SavefileUtils.getEntryForNonogram(savefile, this.state.nonogramId);
+        if (entry == undefined) {
+            const savestate = { history: [], elapsed: 0 };
+            entry = {
+                nonogramId: this.state.nonogramId,
+                state: savestate,
+                lastModified: Date.now()
+            };
+            savefile.entries.push(entry);
         }
 
-        savestate.history = SavefileUtils.getSavestateHistory(this.state.history.map(x => x.state));
-        savestate.elapsed = this.state.elapsed;
+        entry.state.history = SavefileUtils.getSavestateHistory(this.state.history.map(x => x.state));
+        entry.state.elapsed = this.state.elapsed;
+        entry.lastModified = Date.now();
         if (!this.state.isSolved) {
             ListUtils.addIfNotExists(savefile.activeNonogramIds, this.state.nonogramId);
         } else {

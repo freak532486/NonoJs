@@ -1,6 +1,6 @@
 import { SaveFile } from "../api/savefile.js";
 
-export const ACTIVE_VERSION_KEY = 5;
+export const ACTIVE_VERSION_KEY = 6;
 const CELL_COLOR_UNKNOWN = 0;
 
 export default class SavefileMigrator {
@@ -14,6 +14,7 @@ export default class SavefileMigrator {
         await MIGR003_addUsername(savefile);
         await MIGR004_addActiveNonogramList(savefile);
         await MIGR005_stateToHistory(savefile);
+        await MIGR006_lastModifiedTimestamp(savefile);
     }
 
 }
@@ -123,4 +124,20 @@ function cellsToHistoryDelta(cells: Array<number>): Array<number>
     }
 
     return ret;
+}
+
+
+async function MIGR006_lastModifiedTimestamp(val: SaveFile)
+{
+    const VERSION_KEY = 6;
+    if (val.versionKey >= VERSION_KEY) {
+        return;
+    }
+    val.versionKey = VERSION_KEY;
+
+    for (const entry of val.entries) {
+        if (entry.lastModified == undefined) {
+            entry.lastModified = 0;
+        }
+    }
 }

@@ -25,7 +25,8 @@ export const SaveStateSchema = Type.Object({
 
 export const SaveFileEntrySchema = Type.Object({
     nonogramId: Type.String(),
-    state: SaveStateSchema
+    state: SaveStateSchema,
+    lastModified: Type.Number()
 });
 
 export const SaveFileSchema = Type.Object({
