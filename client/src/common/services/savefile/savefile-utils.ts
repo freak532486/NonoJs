@@ -1,4 +1,4 @@
-import { SaveFile, SaveState, SavestateHistoryDelta } from "nonojs-common";
+import { SaveFile, SaveFileEntry, SaveState, SavestateHistoryDelta } from "nonojs-common";
 import { ListUtils } from "../list-utils";
 import { CellKnowledge, NonogramState } from "../../types/nonogram-types";
 
@@ -8,7 +8,11 @@ export namespace SavefileUtils {
      * Returns the savestate for the given nonogram in the savefile.
      */
     export function getSavestateForNonogram(savefile: SaveFile, nonogramId: string): SaveState | undefined {
-        return savefile.entries.find(entry => entry.nonogramId == nonogramId)?.state;
+        return getEntryForNonogram(savefile, nonogramId)?.state;
+    }
+
+    export function getEntryForNonogram(savefile: SaveFile, nonogramId: string): SaveFileEntry | undefined {
+        return savefile.entries.find(entry => entry.nonogramId == nonogramId);
     }
 
     /**
@@ -32,7 +36,8 @@ export namespace SavefileUtils {
         } else {
             savefile.entries.push({
                 nonogramId: nonogramId,
-                state: state
+                state: state,
+                lastModified: Date.now()
             });
         }
     }

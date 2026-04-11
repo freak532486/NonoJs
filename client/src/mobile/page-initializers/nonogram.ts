@@ -127,15 +127,21 @@ export default class NonogramPageInitializer
      * Stores the current state of the playfield to the local savefile.
      */
     async #storePlayfieldStateToStorage(playfield: PlayfieldComponent) {
-        const curState = playfield.currentState;
         const savefile = await this.savefileAccess.fetchLocalSavefile();
 
-        SavefileUtils.putSavestate(savefile, playfield.nonogramId, {
-            history: SavefileUtils.getSavestateHistory(
-                playfield.history.map(x => new NonogramState(playfield.rowHints, playfield.colHints, x.cells))
-            ),
-            elapsed: playfield.elapsed
-        });
+        const history = SavefileUtils.getSavestateHistory(
+            playfield.history
+                .map(x => new NonogramState(playfield.rowHints, playfield.colHints, x.cells))
+        );
+        
+        SavefileUtils.putSavestate(
+            savefile,
+            playfield.nonogramId,
+            {
+                history: history,
+                elapsed: playfield.elapsed
+            }
+        );
 
         this.savefileAccess.writeLocalSavefile(savefile);
     }
