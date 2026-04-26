@@ -37,7 +37,7 @@ export default class MobileClient implements NonojsClient
         /* Add basic services */
         this.authService = new AuthService();
         this.catalogAccess = new CatalogAccess();
-        this.savefileAccess = new SavefileAccess(this.authService);
+        this.savefileAccess = new SavefileAccess(this.authService, this.catalogAccess);
         this.activeComponentManager = new ActiveComponentManager(this.mobileRoot);
 
         /* Initialize UI */
@@ -48,7 +48,6 @@ export default class MobileClient implements NonojsClient
         this.appInitializer = new AppInitializer(
             this.authService,
             this.catalogAccess,
-            this.savefileAccess,
             this.mobileRoot,
             this.menu,
             this.header

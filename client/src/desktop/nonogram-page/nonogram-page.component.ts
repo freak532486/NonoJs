@@ -74,7 +74,7 @@ export default class NonogramPage implements UIComponent
 
         document.title = PLAYFIELD_TITLE(nonogram.colHints.length, nonogram.rowHints.length);
 
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
         const savestate = SavefileUtils.getSavestateForNonogram(savefile, this.nonogramId);
         const history = savestate == undefined ? undefined :
             SavefileUtils.calculateAllStates(nonogram.colHints.length, nonogram.rowHints.length, savestate.history)
@@ -149,7 +149,7 @@ export default class NonogramPage implements UIComponent
         const solvedListener = new SolvedListener(state);
         state.listeners.push(solvedListener);
 
-        const saveListener = new SaveListener(state, this.authService, this.savefileAccess, this.catalogAccess);
+        const saveListener = new SaveListener(state, this.savefileAccess);
         state.listeners.push(saveListener);
 
         /* Create keyboard listener */

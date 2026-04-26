@@ -13,7 +13,7 @@ export class StartPageNonogramSelector {
      * Returns the nonogram that the player played most recently.
      */
     async getLastPlayedNonogramId(): Promise<string | undefined> {
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
         return savefile.activeNonogramIds.length == 0 ? undefined : savefile.activeNonogramIds[0];
     }
 

@@ -1,27 +1,16 @@
-import { SavestateHistoryDelta } from "nonojs-common";
-import AuthService from "../../../common/services/auth/auth-service";
 import { ListUtils } from "../../../common/services/list-utils";
 import SavefileAccess from "../../../common/services/savefile/savefile-access";
-import SavefileSyncService from "../../../common/services/savefile/savefile-sync-service";
 import { SavefileUtils } from "../../../common/services/savefile/savefile-utils";
-import { CellKnowledge, NonogramState } from "../../../common/types/nonogram-types";
 import { NonogramComponentState, NonogramComponentStateListener, StateChangeType } from "../state";
-import { CatalogAccess } from "../../../common/services/catalog/catalog-access";
 
 export default class SaveListener implements NonogramComponentStateListener
 {
 
-    private syncService: SavefileSyncService;
-
     constructor (
         private readonly state: NonogramComponentState,
-        private readonly authService: AuthService,
         private readonly savefileAccess: SavefileAccess,
-        private readonly catalogAccess: CatalogAccess
     )
-    {
-        this.syncService = new SavefileSyncService(authService, savefileAccess, catalogAccess);
-    }
+    {}
 
     async onChange(type: StateChangeType): Promise<void> {
         if (type !== StateChangeType.BOARD_STATE) {
@@ -29,7 +18,7 @@ export default class SaveListener implements NonogramComponentStateListener
         }
 
 
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
         let entry = SavefileUtils.getEntryForNonogram(savefile, this.state.nonogramId);
         if (entry == undefined) {
             const savestate = { history: [], elapsed: 0 };
@@ -50,8 +39,7 @@ export default class SaveListener implements NonogramComponentStateListener
             ListUtils.remove(savefile.activeNonogramIds, this.state.nonogramId);
         }
 
-        await this.savefileAccess.writeLocalSavefile(savefile);
-        this.syncService.queueSync();
+        await this.savefileAccess.writeSavefile(savefile);
     }
     
 }

@@ -5,7 +5,6 @@ import { deduceAll } from "../../common/services/solver/solver";
 import { DeductionStatus, NonogramState } from "../../common/types/nonogram-types";
 import { navigateTo } from "../../common/services/navigate-to";
 import SavefileAccess from "../../common/services/savefile/savefile-access";
-import SavefileSyncService from "../../common/services/savefile/savefile-sync-service";
 import { PLAYFIELD_TITLE } from "../../common/titles";
 import { CatalogAccess } from "../../common/services/catalog/catalog-access";
 import AuthService from "../../common/services/auth/auth-service";
@@ -17,8 +16,6 @@ import { ListUtils } from "../../common/services/list-utils";
 export default class NonogramPageInitializer 
 {
 
-    private readonly savefileSyncService: SavefileSyncService;
-
     constructor(
         private readonly activeComponentManager: ActiveComponentManager,
         private readonly savefileAccess: SavefileAccess,
@@ -27,7 +24,6 @@ export default class NonogramPageInitializer
         private readonly menu: Menu
     )
     {
-        this.savefileSyncService = new SavefileSyncService(authService, savefileAccess, catalogAccess);
     }
 
     async run(nonogramId: string): Promise<void> {
@@ -41,7 +37,7 @@ export default class NonogramPageInitializer
         }
     
         /* Load current state */
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
         var stored = savefile ? SavefileUtils.getSavestateForNonogram(savefile, nonogramId) : undefined;
 
         /* Presolve the nonogram */
@@ -87,7 +83,7 @@ export default class NonogramPageInitializer
                 await this.#storePlayfieldStateToStorage(playfield);
         
                 /* Update last played nonogram id */
-                const saveFile = await this.savefileAccess.fetchLocalSavefile();
+                const saveFile = await this.savefileAccess.getSavefile();
         
                 if (!playfield.hasWon) {
                     ListUtils.addIfNotExists(saveFile.activeNonogramIds, playfield.nonogramId);
@@ -95,13 +91,7 @@ export default class NonogramPageInitializer
                     ListUtils.remove(saveFile.activeNonogramIds, playfield.nonogramId);
                 }
         
-                await this.savefileAccess.writeLocalSavefile(saveFile);
-        
-                /* Queue sync */
-                const activeUsername = await this.authService.getCurrentUsername();
-                if (activeUsername) {
-                    this.savefileSyncService.queueSync();
-                }
+                await this.savefileAccess.writeSavefile(saveFile);
             }
         });
 
@@ -127,7 +117,7 @@ export default class NonogramPageInitializer
      * Stores the current state of the playfield to the local savefile.
      */
     async #storePlayfieldStateToStorage(playfield: PlayfieldComponent) {
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
 
         const history = SavefileUtils.getSavestateHistory(
             playfield.history
@@ -143,7 +133,7 @@ export default class NonogramPageInitializer
             }
         );
 
-        this.savefileAccess.writeLocalSavefile(savefile);
+        this.savefileAccess.writeSavefile(savefile);
     }
     
 }

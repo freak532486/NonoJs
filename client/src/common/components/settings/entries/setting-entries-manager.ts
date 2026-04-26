@@ -24,9 +24,9 @@ export default class SettingEntriesManager
 
         /* Entry for merging local savefile to user savefile */
         const username = await this.authService.getCurrentUsername();
-        const localSavefile = this.savefileAccess.fetchLocalSavefileForUser(undefined);
+        const localSavefile = await this.savefileAccess.getSavefile("USERLESS");
 
-        if (username && localSavefile) {
+        if (username && localSavefile.entries.length > 0) {
             const mergeEntry = new SavefileMergeEntry(this.authService, this.savefileAccess, this.catalogAccess, username);
             this.settings.addEntry(mergeEntry.view);
         }

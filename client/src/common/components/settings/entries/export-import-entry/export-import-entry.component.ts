@@ -35,7 +35,7 @@ export default class ExportImportEntry
 
             try {
                 const parsed = JSON.parse(await file.text()) as SaveFile;
-                this.savefileAccess.writeLocalSavefile(parsed);
+                this.savefileAccess.writeSavefile(parsed);
                 alert("Savefile imported");
             } catch (err: any) {
                 alert("Invalid savefile");
@@ -47,7 +47,7 @@ export default class ExportImportEntry
 
     async #export()
     {
-        const savefile = this.savefileAccess.fetchLocalSavefile();
+        const savefile = this.savefileAccess.getSavefile();
         const json = JSON.stringify(savefile);
 
         const blob = new Blob([json], { type: "application/json" });

@@ -44,7 +44,7 @@ export default class QuickplayComponent implements UIComponent
     }
 
     private async selectRandomNonogram(minWidth: number, minHeight: number, maxWidth: number, maxHeight: number) {
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
 
         const possibleNonograms = (await this.catalogAccess.getAllNonograms())
             .filter(nonogram => 
@@ -82,8 +82,7 @@ export default class QuickplayComponent implements UIComponent
         const chosenNonogramId = listToChooseFrom[r].id;
         if (listKeyToChooseFrom == "solved") {
             SavefileUtils.removeSavestate(savefile, chosenNonogramId);
-            await this.savefileAccess.writeLocalSavefile(savefile);
-            await this.savefileAccess.writeServerSavefile(savefile);
+            await this.savefileAccess.writeSavefile(savefile);
         }
 
         this.onNonogramSelected(chosenNonogramId);
