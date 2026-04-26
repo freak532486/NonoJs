@@ -29,8 +29,9 @@ export default class AppInitializer
 
     async initApp() {
         this.catalogAccess.invalidateCache();
-        await this.savefileManager.initializeLocalSavefile();
         await this.savefileMigrator.performStorageMigration();
+        await this.savefileManager.initializeLocalSavefile();
+        
     
         this.menu.create(this.mobileRoot.mainContainer);
         this.header.create(this.mobileRoot.headerContainer);
