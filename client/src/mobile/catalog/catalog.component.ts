@@ -60,7 +60,7 @@ export class Catalog implements UIComponent {
             }
         });
         
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
         const stored = SavefileUtils.getAllStoredStates(savefile);
         for (const nonogram of loaded) {
             const savestate = stored.get(nonogram.id);

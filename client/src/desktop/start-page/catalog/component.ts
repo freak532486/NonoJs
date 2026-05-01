@@ -89,7 +89,7 @@ export default class DesktopCatalogComponent implements UIComponent
         })
 
         /* Create new entries from matching nonograms */
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
         for (const nono of matchingNonograms) {
             const savestate = SavefileUtils.getSavestateForNonogram(savefile, nono.id);
             const progress = savestate ? getProgress(savestate, nono) : 0;

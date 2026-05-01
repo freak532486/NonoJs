@@ -1,79 +1,129 @@
 import { SaveFile } from "nonojs-common";
-import { ACTIVE_VERSION_KEY } from "./savefile-migrator";
 import * as api from "../api/api-client"
 import AuthService from "../auth/auth-service";
+import SavefileMigrator, { ACTIVE_VERSION_KEY } from "nonojs-common/dist/service/savefile-migrator";
+import SavefileMerger from "./impl/savefile-merger";
+import { CatalogAccess } from "../catalog/catalog-access";
+import RateLimitedJobExecutor from "./impl/rate-limited-job-executor";
 
 const STORAGE_KEY = "storage";
+const MS_BETWEEN_SERVER_SYNCS = 1000;
+
+export type SavefileType = "USER" | "USERLESS";
 
 export default class SavefileAccess
 {
 
+    /**
+     * Set of all savefile usernames for which a savefile migration has already been performed.
+     */
+    private migrationsPerformed: Set<string | undefined> = new Set();
+
+    /**
+     * Similarily, syncing with server savefile is done once per pageload and username.
+     */
+    private serverSyncsPerformed: Set<string> = new Set();
+
+    /**
+     * Map from username to matching executor that executes the server savefile sync.
+     */ 
+    private syncExceutors: Map<string, RateLimitedJobExecutor> = new Map();
+    
     constructor(
-        private readonly authService: AuthService
+        private readonly authService: AuthService,
+        private readonly catalogAccess: CatalogAccess
     ) {}
 
-     /**
-     * Fetches the savefile from local browser storage.
-     */
-    async fetchLocalSavefile(): Promise<SaveFile> {
-        const username = await this.authService.getCurrentUsername();
-        return this.fetchLocalSavefileForUser(username) || createEmptySavefile(username);
-    }
-
     /**
-     * Returns the locally stored save file for the given user. If the username is undefined, this represents the
-     * savefile that was made while not logged in. 
+     * Returns the active savefile. If no such savefile exists, a new empty savefile is returned.
      */
-    fetchLocalSavefileForUser(username: string | undefined): SaveFile | undefined
-    {
-        const key = STORAGE_KEY + (username ? "_" + username : "");
-        const serialized = window.localStorage.getItem(key);
-        if (!serialized) {
-            return undefined;
+    async getSavefile(type: SavefileType = "USER"): Promise<SaveFile> {
+        /* Fetch savefile from local storage */
+        const username = type == "USERLESS" ? undefined : await this.authService.getCurrentUsername();
+        const storageKey = STORAGE_KEY + (username ? "_" + username : "");
+        const serializedLocalSavefile = window.localStorage.getItem(storageKey);
+        const localSavefile = serializedLocalSavefile ?
+            JSON.parse(serializedLocalSavefile) as SaveFile :
+            createEmptySavefile(username);
+
+        /* Maybe perform local storage migration */
+        if (!this.migrationsPerformed.has(username)) {
+            new SavefileMigrator().performSavefileMigration(localSavefile);
+            window.localStorage.setItem(storageKey, JSON.stringify(localSavefile));
+            this.migrationsPerformed.add(username);
         }
 
-        return JSON.parse(serialized);
-    }
+        /* No sync with server necessary if this is a userless savefile or if sync was already done. */
+        if (username == undefined || this.serverSyncsPerformed.has(username)) {
+            return localSavefile;
+        }
 
-    /**
-     * Removes the local savefile for the given user.
-     */
-    deleteLocalSavefileForUser(username: string | undefined)
-    {
-        const key = STORAGE_KEY + (username ? "_" + username : "");
-        window.localStorage.removeItem(key);
-    }
-
-    /**
-     * Fetches the savefile for the currently logged-in user from the server.
-     */
-    async fetchServerSavefile(): Promise<SaveFile>
-    {
-        const username = await this.authService.getCurrentUsername();
+        /* Load server savefile */
         const request = new Request("/api/savefile", { "method": "GET" });
         const response = await api.performRequestWithSessionToken(request);
-        if (response.status !== "ok") {
-            return createEmptySavefile(username);
-        }
+        const serverSavefile = response.status == "ok" ?
+            await response.data.json() as SaveFile :
+            createEmptySavefile(username);
 
-        return await response.data.json() as SaveFile;
+        /* Merge local and server savefile */
+        const mergedSavefile = await new SavefileMerger(this.catalogAccess).mergeSavefiles(localSavefile, serverSavefile);
+        window.localStorage.setItem(storageKey, JSON.stringify(mergedSavefile));
+        this.serverSyncsPerformed.add(username);
+
+        /* Return merged savefile */
+        return mergedSavefile;
     }
 
     /**
-     * Writes the given savefile to local browser storage.
+     * Overwrites the current user's savefile.
      */
-    async writeLocalSavefile(savefile: SaveFile)
+    async writeSavefile(savefile: SaveFile, type: SavefileType = "USER"): Promise<void>
     {
-        const activeUsername = await this.authService.getCurrentUsername();
-        const key = STORAGE_KEY + (activeUsername ? "_" + activeUsername : "");
-        const serialized = JSON.stringify(savefile);
-        window.localStorage.setItem(key, serialized);
+        /* Overwrite local savefile */
+        const username = type == "USERLESS" ? undefined : await this.authService.getCurrentUsername();
+        const storageKey = STORAGE_KEY + (username ? "_" + username : "");
+        window.localStorage.setItem(storageKey, JSON.stringify(savefile));
+
+        /* Done if this was a userless savefile */
+        if (username == undefined) {
+            return;
+        }
+
+        /* Queue a server sync write */
+        if (!this.syncExceutors.has(username)) {
+            this.syncExceutors.set(username, new RateLimitedJobExecutor(
+                async () => {
+                    await this.writeServerSavefile(savefile);
+                },
+                MS_BETWEEN_SERVER_SYNCS
+            ));
+        }
+
+        this.syncExceutors.get(username)!.queue();
+    }
+
+    /**
+     * Deletes the savefile.
+     */
+    async deleteSavefile(type: SavefileType = "USER"): Promise<void>
+    {
+        /* Delete from local storage */
+        const username = type == "USERLESS" ? undefined : await this.authService.getCurrentUsername();
+        const storageKey = STORAGE_KEY + (username ? "_" + username : "");
+        window.localStorage.removeItem(storageKey);
+
+        /* Done if this was a userless savefile */
+        if (username == undefined) {
+            return;
+        }
+
+        /* Currently, deleting savefile from server is not possible (except by deleting the user itself) */
     }
 
     /**
      * Writes the given savefile to the server (based on the currently logged-in user)
      */
-    async writeServerSavefile(savefile: SaveFile): Promise<"ok" | "not_logged_in" | "error">
+    private async writeServerSavefile(savefile: SaveFile): Promise<"ok" | "not_logged_in" | "error">
     {
         const serialized = JSON.stringify(savefile);
         const request = new Request("/api/savefile", {

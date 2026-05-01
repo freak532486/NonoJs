@@ -2,8 +2,6 @@ import AuthService from "../common/services/auth/auth-service";
 import { CatalogAccess } from "../common/services/catalog/catalog-access";
 import { navigateTo } from "../common/services/navigate-to";
 import SavefileAccess from "../common/services/savefile/savefile-access";
-import SavefileManager from "../common/services/savefile/savefile-manager";
-import ClientSavefileMigrator from "../common/services/savefile/savefile-migrator";
 import { DEFAULT_TITLE, NOT_FOUND_TITLE } from "../common/titles";
 import NonojsClient from "../common/types/nonojs-client";
 import DesktopConfirmRegistrationPage from "./confirm-registration/component";
@@ -24,8 +22,8 @@ export default class DesktopClient implements NonojsClient
     constructor() {
         /* Basic services */
         this.authService = new AuthService();
-        this.savefileAccess = new SavefileAccess(this.authService);
         this.catalogAccess = new CatalogAccess();
+        this.savefileAccess = new SavefileAccess(this.authService, this.catalogAccess);
     
         this.root = new DesktopRoot();
         this.root.create(document.body);
@@ -35,8 +33,7 @@ export default class DesktopClient implements NonojsClient
     }
 
     async init(): Promise<void> {
-        await new SavefileManager(this.authService, this.savefileAccess, this.catalogAccess).initializeLocalSavefile();
-        await new ClientSavefileMigrator(this.savefileAccess).performStorageMigration();
+        // Nothing to do
     }
 
     async openStartPage(): Promise<void> {

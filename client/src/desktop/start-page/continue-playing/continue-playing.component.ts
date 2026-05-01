@@ -24,7 +24,7 @@ export default class ContinuePlaying implements UIComponent
     }
 
     async create(parent: HTMLElement): Promise<HTMLElement> {
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
 
         for (const nonogramId of savefile.activeNonogramIds) {
             await this.createButton(savefile, nonogramId);

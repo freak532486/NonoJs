@@ -49,7 +49,7 @@ export class StartPage implements UIComponent {
         parent.appendChild(this.#view);
 
         /* Continue */
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
 
         const continueRoot = this.#view.querySelector("#continue-root") as HTMLElement;
         const continueContainer = continueRoot.querySelector(".container") as HTMLElement;
@@ -156,7 +156,7 @@ export class StartPage implements UIComponent {
 
         /* Fill body with a preview */
         const content = ret.querySelector(".preview-container") as HTMLElement;
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
         const saveState = SavefileUtils.getSavestateForNonogram(savefile, nonogram.id);
         const cells = saveState == undefined ? undefined :
             SavefileUtils.calculateActiveState(nonogram.colHints.length, nonogram.rowHints.length, saveState.history);
@@ -192,7 +192,7 @@ export class StartPage implements UIComponent {
         }
 
         const content = ret.querySelector(".preview-container") as HTMLElement;
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
         const saveState = SavefileUtils.getSavestateForNonogram(savefile, nonogram.id);
         const cells = saveState == undefined ? undefined :
             SavefileUtils.calculateActiveState(nonogram.colHints.length, nonogram.rowHints.length, saveState.history);

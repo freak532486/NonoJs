@@ -25,7 +25,7 @@ export default class NonogramsOfTheDay implements UIComponent
     }
 
     async create(parent: HTMLElement): Promise<HTMLElement> {
-        const savefile = await this.savefileAccess.fetchLocalSavefile();
+        const savefile = await this.savefileAccess.getSavefile();
         parent.appendChild(this.view);
 
         /* Create nonogram buttons */
