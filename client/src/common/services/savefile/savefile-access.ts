@@ -48,7 +48,7 @@ export default class SavefileAccess
 
         /* Maybe perform local storage migration */
         if (!this.migrationsPerformed.has(username)) {
-            new SavefileMigrator().performSavefileMigration(localSavefile);
+            await new SavefileMigrator().performSavefileMigration(localSavefile);
             window.localStorage.setItem(storageKey, JSON.stringify(localSavefile));
             this.migrationsPerformed.add(username);
         }
